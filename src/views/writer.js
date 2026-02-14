@@ -6,6 +6,7 @@ import { store } from '../store.js';
 import { nfc } from '../nfc.js';
 import { renderHeader } from '../components/header.js';
 import { showToast } from '../components/toast.js';
+import { escapeHTML } from '../utils/sanitize.js';
 
 export function renderWriter() {
   const container = document.getElementById('page-content');
@@ -95,7 +96,7 @@ function renderIOSGuide(links) {
         ` : `
           <select class="form-select" id="iosCopySelect">
             <option value="">— Choose a link —</option>
-            ${links.map(l => `<option value="${l.url}" data-title="${l.title}">${l.title} — ${l.url}</option>`).join('')}
+            ${links.map(l => `<option value="${escapeHTML(l.url)}" data-title="${escapeHTML(l.title)}">${escapeHTML(l.title)} — ${escapeHTML(l.url)}</option>`).join('')}
           </select>
           <div class="ios-copy-preview" id="iosCopyPreview" style="display: none;">
             <code class="ios-copy-url" id="iosCopyUrl"></code>
@@ -207,7 +208,7 @@ function renderWriterUI(links, tags, compatInfo) {
             ` : `
               <select class="form-select" id="writerLinkSelect">
                 <option value="">— Choose a link to write —</option>
-                ${links.map(l => `<option value="${l.id}">${l.title} — ${l.url}</option>`).join('')}
+                ${links.map(l => `<option value="${l.id}">${escapeHTML(l.title)} — ${escapeHTML(l.url)}</option>`).join('')}
               </select>
               <div class="writer-link-preview" id="writerLinkPreview" style="display: none;">
                 <div class="preview-url" id="previewUrl"></div>
@@ -225,7 +226,7 @@ function renderWriterUI(links, tags, compatInfo) {
 
           <select class="form-select" id="writerTagSelect">
             <option value="">— No specific tag —</option>
-            ${tags.map(t => `<option value="${t.id}">${t.label}${t.serialNumber ? ` (${t.serialNumber})` : ''}</option>`).join('')}
+            ${tags.map(t => `<option value="${t.id}">${escapeHTML(t.label)}${t.serialNumber ? ` (${escapeHTML(t.serialNumber)})` : ''}</option>`).join('')}
           </select>
         </div>
 
@@ -306,7 +307,7 @@ function initWriterEvents() {
         <span class="status-icon">✅</span>
         <div>
           <strong>Tag written successfully!</strong>
-          <p>URL: ${link.url}</p>
+          <p>URL: ${escapeHTML(link.url)}</p>
         </div>
       `;
 
@@ -323,7 +324,7 @@ function initWriterEvents() {
         <span class="status-icon">❌</span>
         <div>
           <strong>Write failed</strong>
-          <p>${err.message}</p>
+          <p>${escapeHTML(err.message)}</p>
         </div>
       `;
       showToast(err.message, 'error');
