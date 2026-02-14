@@ -3,6 +3,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 import { store } from '../store.js';
+import { nfc } from '../nfc.js';
 import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
@@ -92,6 +93,8 @@ function initTagsEvents(links) {
     // Add tag
     const addBtn = document.getElementById('addTagBtn') || document.getElementById('emptyAddTag');
     addBtn?.addEventListener('click', () => {
+        const isSupported = nfc.isSupported();
+
         openModal({
             title: 'Register New Tag',
             content: `
@@ -100,10 +103,12 @@ function initTagsEvents(links) {
           <input class="form-input" type="text" id="tagLabel" name="label"
             placeholder="e.g. Blue Bracelet #1" required>
         </div>
-        <div class="form-group">
           <label class="form-label" for="tagSerial">Serial Number (optional)</label>
-          <input class="form-input" type="text" id="tagSerial" name="serialNumber"
-            placeholder="Will auto-fill when scanned">
+          <div style="display: flex; gap: 8px;">
+            <input class="form-input" type="text" id="tagSerial" name="serialNumber"
+              placeholder="${isSupported ? "Tap 'Scan' to read tag" : "Enter serial number manually (optional)"}" style="flex: 1;">
+            ${isSupported ? '<button class="btn btn-secondary" id="scanTagBtn" type="button">Scan</button>' : ''}
+          </div>
         </div>
       `,
             submitLabel: 'Register',
@@ -119,6 +124,38 @@ function initTagsEvents(links) {
                 renderTags();
             },
         });
+
+        // Attach scan listener if supported
+        if (isSupported) {
+            const scanBtn = document.getElementById('scanTagBtn');
+            scanBtn?.addEventListener('click', async () => {
+                const serialInput = document.getElementById('tagSerial');
+                if (!serialInput) return;
+
+                scanBtn.disabled = true;
+                const originalText = scanBtn.textContent;
+                scanBtn.innerHTML = '<span class="spinner"></span> Scanning...';
+
+                try {
+                    const result = await nfc.readTag();
+                    if (result.serialNumber) {
+                        serialInput.value = result.serialNumber;
+                        scanBtn.innerHTML = '✅ Scanned';
+                        showToast('Tag scanned successfully!', 'success');
+                    } else {
+                         throw new Error('No serial number found on tag');
+                    }
+                } catch (err) {
+                    scanBtn.innerHTML = originalText;
+                    showToast(err.message, 'error');
+                } finally {
+                    scanBtn.disabled = false;
+                     if (scanBtn.textContent !== '✅ Scanned') {
+                        scanBtn.innerHTML = originalText;
+                    }
+                }
+            });
+        }
     });
 
     // Assign link
