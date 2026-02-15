@@ -27,7 +27,7 @@ export function renderTags() {
       <div class="links-toolbar">
         <div class="search-bar">
           <span class="search-icon">🔍</span>
-          <input class="form-input" type="text" id="tagSearch" placeholder="Search tags...">
+          <input class="form-input" type="text" id="tagSearch" placeholder="Search tags..." aria-label="Search tags">
         </div>
         <button class="btn btn-primary" id="addTagBtn">
           <span>➕</span> Register Tag
@@ -77,10 +77,10 @@ function renderTagRow(tag, links, index) {
         <button class="btn btn-secondary assign-link-btn" data-id="${tag.id}">
           ${assignedLink ? '🔄 Reassign' : '🔗 Assign Link'}
         </button>
-        <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${tag.id}" title="Write to this tag">
+        <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${tag.id}" title="Write to this tag" aria-label="Write to tag ${tag.label.replace(/"/g, '&quot;')}">
           📡
         </button>
-        <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${tag.id}" title="Delete tag">
+        <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${tag.id}" title="Delete tag" aria-label="Delete tag ${tag.label.replace(/"/g, '&quot;')}">
           🗑️
         </button>
       </div>
