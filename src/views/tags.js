@@ -7,6 +7,7 @@ import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
 import { navigate } from '../router.js';
+import { escapeHTML } from '../utils/sanitize.js';
 
 function formatDate(dateStr) {
     if (!dateStr) return 'Never';
@@ -54,6 +55,9 @@ export function renderTags() {
 
 function renderTagRow(tag, links, index) {
     const assignedLink = tag.assignedLinkId ? links.find(l => l.id === tag.assignedLinkId) : null;
+    const safeLabel = escapeHTML(tag.label);
+    const safeSerial = tag.serialNumber ? escapeHTML(tag.serialNumber) : '';
+    const safeLinkTitle = assignedLink ? escapeHTML(assignedLink.title) : '';
 
     return `
     <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
@@ -62,11 +66,11 @@ function renderTagRow(tag, links, index) {
           <span class="tag-icon-big">🏷️</span>
         </div>
         <div class="tag-info">
-          <h3 class="tag-label">${tag.label}</h3>
+          <h3 class="tag-label">${safeLabel}</h3>
           <div class="tag-details">
-            ${tag.serialNumber ? `<span class="badge badge-info">SN: ${tag.serialNumber}</span>` : ''}
+            ${safeSerial ? `<span class="badge badge-info">SN: ${safeSerial}</span>` : ''}
             ${assignedLink
-            ? `<span class="badge badge-success">🔗 ${assignedLink.title}</span>`
+            ? `<span class="badge badge-success">🔗 ${safeLinkTitle}</span>`
             : `<span class="badge badge-warning">⚠️ No link assigned</span>`
         }
             <span class="tag-date">Last written: ${formatDate(tag.lastWritten)}</span>
