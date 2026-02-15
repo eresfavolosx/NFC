@@ -36,8 +36,27 @@ function saveData(data) {
   }
 }
 
+// Optimization: Debounce saveData to avoid blocking main thread on frequent updates
+function debounce(func, wait) {
+  let timeout;
+  return function(...args) {
+    const context = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), wait);
+  };
+}
+
+const debouncedSaveData = debounce(saveData, 500);
+
 let data = loadData();
 const listeners = new Set();
+
+// Flush pending save on page unload to prevent data loss
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    saveData(data);
+  });
+}
 
 export const store = {
   // ── Subscriptions ──
@@ -47,7 +66,7 @@ export const store = {
   },
 
   _notify() {
-    saveData(data);
+    debouncedSaveData(data);
     listeners.forEach(fn => fn(data));
   },
 
