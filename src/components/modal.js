@@ -23,13 +23,15 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
           <h3 id="modalTitle">${title}</h3>
           <button class="btn-icon btn-ghost modal-close" id="modalClose" aria-label="Close">✕</button>
         </div>
-        <div class="modal-body" id="modalBody">
-          ${content}
-        </div>
-        <div class="modal-footer">
-          ${showCancel ? '<button class="btn btn-secondary" id="modalCancel">Cancel</button>' : ''}
-          ${onSubmit ? `<button class="btn btn-primary" id="modalSubmit">${submitLabel}</button>` : ''}
-        </div>
+        <form id="modalForm">
+          <div class="modal-body" id="modalBody">
+            ${content}
+          </div>
+          <div class="modal-footer">
+            ${showCancel ? '<button type="button" class="btn btn-secondary" id="modalCancel">Cancel</button>' : ''}
+            ${onSubmit ? `<button type="submit" class="btn btn-primary" id="modalSubmit">${submitLabel}</button>` : ''}
+          </div>
+        </form>
       </div>
     </div>
   `;
@@ -45,11 +47,12 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
         if (e.target.id === 'modalBackdrop') close();
     });
 
-    if (onSubmit) {
-        document.getElementById('modalSubmit')?.addEventListener('click', () => {
+    document.getElementById('modalForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (onSubmit) {
             onSubmit();
-        });
-    }
+        }
+    });
 
     // Focus first input
     setTimeout(() => {

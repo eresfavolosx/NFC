@@ -27,7 +27,7 @@ export function renderTags() {
       <div class="links-toolbar">
         <div class="search-bar">
           <span class="search-icon">🔍</span>
-          <input class="form-input" type="text" id="tagSearch" placeholder="Search tags...">
+          <input class="form-input" type="text" id="tagSearch" placeholder="Search tags..." aria-label="Search tags">
         </div>
         <button class="btn btn-primary" id="addTagBtn">
           <span>➕</span> Register Tag
