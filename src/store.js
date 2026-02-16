@@ -38,6 +38,25 @@ function saveData(data) {
 
 let data = loadData();
 const listeners = new Set();
+let debounceTimer;
+const DEBOUNCE_DELAY = 500;
+
+function saveDataDebounced(data) {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    saveData(data);
+    debounceTimer = null;
+  }, DEBOUNCE_DELAY);
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      saveData(data);
+    }
+  });
+}
 
 export const store = {
   // ── Subscriptions ──
@@ -47,7 +66,7 @@ export const store = {
   },
 
   _notify() {
-    saveData(data);
+    saveDataDebounced(data);
     listeners.forEach(fn => fn(data));
   },
 
