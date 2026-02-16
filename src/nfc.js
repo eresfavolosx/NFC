@@ -13,9 +13,6 @@ export const nfc = {
             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     },
 
-    isAndroid() {
-        return /android/i.test(navigator.userAgent);
-    },
 
     async writeTag(url) {
         if (!this.isSupported()) {
