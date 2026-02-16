@@ -5,6 +5,7 @@
 import { store } from '../store.js';
 import { renderHeader } from '../components/header.js';
 import { navigate } from '../router.js';
+import { escapeHTML } from '../utils/security.js';
 
 function formatTimeAgo(dateStr) {
     const now = new Date();
@@ -104,7 +105,7 @@ export function renderDashboard() {
               <div class="activity-item">
                 <span class="activity-icon">${ACTIVITY_ICONS[item.type] || '📌'}</span>
                 <div class="activity-content">
-                  <span class="activity-message">${item.message}</span>
+                  <span class="activity-message">${escapeHTML(item.message)}</span>
                   <span class="activity-time">${formatTimeAgo(item.timestamp)}</span>
                 </div>
               </div>
