@@ -112,9 +112,7 @@ function renderLinkCard(link, index) {
 }
 
 function initLinksEvents() {
-    // Add link
-    const addBtn = document.getElementById('addLinkBtn') || document.getElementById('emptyAddLink');
-    addBtn?.addEventListener('click', () => {
+    const openAddLinkModal = () => {
         openModal({
             title: 'Create New Link',
             content: linkFormContent(),
@@ -137,13 +135,18 @@ function initLinksEvents() {
                 renderLinks();
             },
         });
-    });
+    };
 
-    // Edit link
-    document.querySelectorAll('.edit-link').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+    // Add link (Toolbar)
+    document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
+
+    // Event Delegation for Grid (Edit, Delete, Empty State Add)
+    document.getElementById('linksGrid')?.addEventListener('click', (e) => {
+        // Edit Link
+        const editBtn = e.target.closest('.edit-link');
+        if (editBtn) {
             e.stopPropagation();
-            const link = store.getLink(btn.dataset.id);
+            const link = store.getLink(editBtn.dataset.id);
             if (!link) return;
             openModal({
                 title: 'Edit Link',
@@ -161,14 +164,14 @@ function initLinksEvents() {
                     renderLinks();
                 },
             });
-        });
-    });
+            return;
+        }
 
-    // Delete link
-    document.querySelectorAll('.delete-link').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        // Delete Link
+        const deleteBtn = e.target.closest('.delete-link');
+        if (deleteBtn) {
             e.stopPropagation();
-            const link = store.getLink(btn.dataset.id);
+            const link = store.getLink(deleteBtn.dataset.id);
             if (!link) return;
             openModal({
                 title: 'Delete Link',
@@ -181,7 +184,14 @@ function initLinksEvents() {
                     renderLinks();
                 },
             });
-        });
+            return;
+        }
+
+        // Empty State Create Link
+        const emptyAddBtn = e.target.closest('#emptyAddLink');
+        if (emptyAddBtn) {
+            openAddLinkModal();
+        }
     });
 
     // Search
