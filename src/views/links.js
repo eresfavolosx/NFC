@@ -96,6 +96,7 @@ function renderLinkCard(link, index) {
       <div class="link-card-header">
         <span class="link-icon">${cat.icon}</span>
         <div class="link-card-actions">
+          <button class="btn btn-ghost btn-icon copy-link" data-url="${link.url}" title="Copy URL" aria-label="Copy URL">📋</button>
           <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit">✏️</button>
           <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete">🗑️</button>
         </div>
@@ -113,8 +114,7 @@ function renderLinkCard(link, index) {
 
 function initLinksEvents() {
     // Add link
-    const addBtn = document.getElementById('addLinkBtn') || document.getElementById('emptyAddLink');
-    addBtn?.addEventListener('click', () => {
+    const openAddLinkModal = () => {
         openModal({
             title: 'Create New Link',
             content: linkFormContent(),
@@ -136,6 +136,22 @@ function initLinksEvents() {
                 showToast(`Link "${data.title}" created!`, 'success');
                 renderLinks();
             },
+        });
+    };
+
+    document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
+    document.getElementById('emptyAddLink')?.addEventListener('click', openAddLinkModal);
+
+    // Copy link
+    document.querySelectorAll('.copy-link').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const url = btn.dataset.url;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Link copied to clipboard!', 'success');
+            }).catch(() => {
+                showToast('Failed to copy link', 'error');
+            });
         });
     });
 
