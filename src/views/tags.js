@@ -3,6 +3,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 import { store } from '../store.js';
+import { escapeHTML } from '../utils/security.js';
 import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
@@ -62,11 +63,11 @@ function renderTagRow(tag, links, index) {
           <span class="tag-icon-big">🏷️</span>
         </div>
         <div class="tag-info">
-          <h3 class="tag-label">${tag.label}</h3>
+          <h3 class="tag-label">${escapeHTML(tag.label)}</h3>
           <div class="tag-details">
-            ${tag.serialNumber ? `<span class="badge badge-info">SN: ${tag.serialNumber}</span>` : ''}
+            ${tag.serialNumber ? `<span class="badge badge-info">SN: ${escapeHTML(tag.serialNumber)}</span>` : ''}
             ${assignedLink
-            ? `<span class="badge badge-success">🔗 ${assignedLink.title}</span>`
+            ? `<span class="badge badge-success">🔗 ${escapeHTML(assignedLink.title)}</span>`
             : `<span class="badge badge-warning">⚠️ No link assigned</span>`
         }
             <span class="tag-date">Last written: ${formatDate(tag.lastWritten)}</span>
