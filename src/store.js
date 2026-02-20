@@ -4,9 +4,12 @@
 
 const STORAGE_KEY = 'nfc_tag_manager';
 
+// SHA-256 hash of '1234'
+const DEFAULT_PIN_HASH = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
+
 const defaultData = {
   settings: {
-    adminPin: '1234',
+    adminPin: DEFAULT_PIN_HASH,
     brandName: 'NFC Tag Manager',
     isAuthenticated: false,
   },
@@ -39,6 +42,13 @@ function saveData(data) {
 let data = loadData();
 const listeners = new Set();
 
+async function hashPin(pin) {
+  const msgBuffer = new TextEncoder().encode(pin);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export const store = {
   // ── Subscriptions ──
   subscribe(fn) {
@@ -54,11 +64,28 @@ export const store = {
   // ── Auth ──
   get isAuthenticated() { return data.settings.isAuthenticated; },
 
-  login(pin) {
-    if (pin === data.settings.adminPin) {
-      data.settings.isAuthenticated = true;
-      this._notify();
-      return true;
+  async login(pin) {
+    const storedPin = data.settings.adminPin;
+    // Check if stored PIN is a SHA-256 hash (64 hex chars)
+    const isHashed = storedPin.length === 64;
+
+    if (isHashed) {
+      const inputHash = await hashPin(pin);
+      if (inputHash === storedPin) {
+        data.settings.isAuthenticated = true;
+        this._notify();
+        return true;
+      }
+    } else {
+      // Legacy: compare plaintext
+      if (pin === storedPin) {
+        // Migration: upgrade to hash
+        const newHash = await hashPin(pin);
+        data.settings.adminPin = newHash;
+        data.settings.isAuthenticated = true;
+        this._notify();
+        return true;
+      }
     }
     return false;
   },
@@ -68,9 +95,21 @@ export const store = {
     this._notify();
   },
 
-  changePin(oldPin, newPin) {
-    if (oldPin === data.settings.adminPin) {
-      data.settings.adminPin = newPin;
+  async changePin(oldPin, newPin) {
+    const storedPin = data.settings.adminPin;
+    const isHashed = storedPin.length === 64;
+
+    let isOldValid = false;
+    if (isHashed) {
+      const oldHash = await hashPin(oldPin);
+      isOldValid = oldHash === storedPin;
+    } else {
+      isOldValid = oldPin === storedPin;
+    }
+
+    if (isOldValid) {
+      const newHash = await hashPin(newPin);
+      data.settings.adminPin = newHash;
       this._notify();
       return true;
     }
