@@ -36,7 +36,28 @@ function saveData(data) {
   }
 }
 
+let saveTimeout;
+function scheduleSave(dataToSave) {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveData(dataToSave);
+    saveTimeout = null;
+  }, 500);
+}
+
 let data = loadData();
+
+// Ensure data is saved when the page is hidden or closed
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && saveTimeout) {
+      clearTimeout(saveTimeout);
+      saveData(data);
+      saveTimeout = null;
+    }
+  });
+}
+
 const listeners = new Set();
 
 export const store = {
@@ -47,7 +68,7 @@ export const store = {
   },
 
   _notify() {
-    saveData(data);
+    scheduleSave(data);
     listeners.forEach(fn => fn(data));
   },
 
