@@ -96,8 +96,9 @@ function renderLinkCard(link, index) {
       <div class="link-card-header">
         <span class="link-icon">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete">🗑️</button>
+          <button class="btn btn-ghost btn-icon copy-link" data-url="${link.url}" title="Copy Link" aria-label="Copy Link">📋</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit Link" aria-label="Edit Link">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete Link" aria-label="Delete Link">🗑️</button>
         </div>
       </div>
       <h3 class="link-title">${link.title}</h3>
@@ -112,6 +113,21 @@ function renderLinkCard(link, index) {
 }
 
 function initLinksEvents() {
+    // Copy link
+    document.querySelectorAll('.copy-link').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const url = btn.dataset.url;
+            try {
+                await navigator.clipboard.writeText(url);
+                showToast('Link copied to clipboard!', 'success');
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                showToast('Failed to copy link', 'error');
+            }
+        });
+    });
+
     // Add link
     const addBtn = document.getElementById('addLinkBtn') || document.getElementById('emptyAddLink');
     addBtn?.addEventListener('click', () => {
