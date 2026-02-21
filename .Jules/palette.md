@@ -1,0 +1,3 @@
+## 2026-02-21 - Accessibility with Template Literals
+**Learning:** This project uses vanilla JS template literals for rendering components (e.g., `src/views/links.js`). While flexible, this means accessibility attributes like `aria-label` and `for` must be manually added to every new interactive element, as there is no framework-level enforcement or linting for a11y.
+**Action:** When adding new UI elements, always manually verify that icon-only buttons have `aria-label` and form inputs have associated labels (visible or `.sr-only`). Use the existing `.sr-only` utility in `src/css/global.css` for hidden labels.
