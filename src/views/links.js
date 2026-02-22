@@ -113,8 +113,7 @@ function renderLinkCard(link, index) {
 
 function initLinksEvents() {
     // Add link
-    const addBtn = document.getElementById('addLinkBtn') || document.getElementById('emptyAddLink');
-    addBtn?.addEventListener('click', () => {
+    const openAddLinkModal = () => {
         openModal({
             title: 'Create New Link',
             content: linkFormContent(),
@@ -137,7 +136,10 @@ function initLinksEvents() {
                 renderLinks();
             },
         });
-    });
+    };
+
+    document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
+    document.getElementById('emptyAddLink')?.addEventListener('click', openAddLinkModal);
 
     // Edit link
     document.querySelectorAll('.edit-link').forEach(btn => {

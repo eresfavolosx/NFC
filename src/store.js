@@ -28,7 +28,9 @@ function loadData() {
   return { ...defaultData };
 }
 
-function saveData(data) {
+let saveTimeout;
+
+function persistData(data) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (e) {
@@ -36,7 +38,26 @@ function saveData(data) {
   }
 }
 
+function saveData(data) {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    persistData(data);
+    saveTimeout = null;
+  }, 500);
+}
+
 let data = loadData();
+
+// Flush pending saves on visibility change (e.g. closing tab)
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && saveTimeout) {
+      clearTimeout(saveTimeout);
+      persistData(data);
+      saveTimeout = null;
+    }
+  });
+}
 const listeners = new Set();
 
 export const store = {
