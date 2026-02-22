@@ -4,9 +4,19 @@
 
 const STORAGE_KEY = 'nfc_tag_manager';
 
+// Helper to hash PIN (SHA-256)
+async function hashPin(pin) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(pin);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 const defaultData = {
   settings: {
-    adminPin: '1234',
+    // SHA-256 hash of '1234'
+    adminPin: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4',
     brandName: 'NFC Tag Manager',
     isAuthenticated: false,
   },
@@ -54,12 +64,24 @@ export const store = {
   // ── Auth ──
   get isAuthenticated() { return data.settings.isAuthenticated; },
 
-  login(pin) {
-    if (pin === data.settings.adminPin) {
+  async login(pin) {
+    const hashedPin = await hashPin(pin);
+
+    // Standard check (hashed)
+    if (hashedPin === data.settings.adminPin) {
       data.settings.isAuthenticated = true;
       this._notify();
       return true;
     }
+
+    // Legacy migration check (plaintext)
+    if (pin === data.settings.adminPin) {
+      data.settings.adminPin = hashedPin;
+      data.settings.isAuthenticated = true;
+      this._notify(); // Saves the new hash to storage
+      return true;
+    }
+
     return false;
   },
 
@@ -68,9 +90,11 @@ export const store = {
     this._notify();
   },
 
-  changePin(oldPin, newPin) {
-    if (oldPin === data.settings.adminPin) {
-      data.settings.adminPin = newPin;
+  async changePin(oldPin, newPin) {
+    const oldHash = await hashPin(oldPin);
+    if (oldHash === data.settings.adminPin) {
+      const newHash = await hashPin(newPin);
+      data.settings.adminPin = newHash;
       this._notify();
       return true;
     }
