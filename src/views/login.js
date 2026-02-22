@@ -21,20 +21,20 @@ export function renderLogin() {
         <h1 class="login-title">NFC Tag Manager</h1>
         <p class="login-subtitle">Enter your admin PIN to continue</p>
 
-        <div class="pin-display" id="pinDisplay">
+        <div class="pin-display" id="pinDisplay" role="status" aria-label="0 digits entered">
           <span class="pin-dot"></span>
           <span class="pin-dot"></span>
           <span class="pin-dot"></span>
           <span class="pin-dot"></span>
         </div>
 
-        <div class="pin-error" id="pinError"></div>
+        <div class="pin-error" id="pinError" aria-live="assertive"></div>
 
         <div class="pin-pad" id="pinPad">
           ${[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '⌫'].map(n => {
         if (n === '') return '<button class="pin-key empty" disabled></button>';
         if (n === '⌫') return `<button class="pin-key delete" data-action="delete" aria-label="Delete">⌫</button>`;
-        return `<button class="pin-key" data-digit="${n}">${n}</button>`;
+        return `<button class="pin-key" data-digit="${n}" aria-label="${n}">${n}</button>`;
     }).join('')}
         </div>
 
@@ -51,6 +51,7 @@ export function renderLogin() {
         dots.forEach((dot, i) => {
             dot.classList.toggle('filled', i < pin.length);
         });
+        document.getElementById('pinDisplay').setAttribute('aria-label', `${pin.length} digits entered`);
     }
 
     function tryLogin() {
