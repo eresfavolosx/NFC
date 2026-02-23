@@ -28,7 +28,7 @@ function loadData() {
   return { ...defaultData };
 }
 
-function saveData(data) {
+function persistData(data) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (e) {
@@ -36,7 +36,27 @@ function saveData(data) {
   }
 }
 
+function debounce(fn, ms) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn(...args), ms);
+  };
+}
+
+const saveData = debounce(persistData, 500);
+
 let data = loadData();
+
+// Flush pending saves when page is hidden/closed
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      persistData(data);
+    }
+  });
+}
+
 const listeners = new Set();
 
 export const store = {
