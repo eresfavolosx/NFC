@@ -53,8 +53,8 @@ export function renderLogin() {
         });
     }
 
-    function tryLogin() {
-        if (store.login(pin)) {
+    async function tryLogin() {
+        if (await store.login(pin)) {
             showToast('Welcome back!', 'success');
             navigate('/dashboard');
         } else {
