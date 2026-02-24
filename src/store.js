@@ -36,6 +36,35 @@ function saveData(data) {
   }
 }
 
+// Simple debounce to prevent blocking UI on rapid updates
+function debounce(func, wait) {
+  let timeout;
+  function debounced(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func.apply(this, args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  }
+  debounced.cancel = () => {
+    clearTimeout(timeout);
+  };
+  return debounced;
+}
+
+const debouncedSaveData = debounce(saveData, 500);
+
+// Flush pending saves when page is hidden/closed to prevent data loss
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      debouncedSaveData.cancel();
+      saveData(data);
+    }
+  });
+}
+
 let data = loadData();
 const listeners = new Set();
 
@@ -47,7 +76,7 @@ export const store = {
   },
 
   _notify() {
-    saveData(data);
+    debouncedSaveData(data);
     listeners.forEach(fn => fn(data));
   },
 
