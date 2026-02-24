@@ -96,8 +96,9 @@ function renderLinkCard(link, index) {
       <div class="link-card-header">
         <span class="link-icon">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete">🗑️</button>
+          <button class="btn btn-ghost btn-icon copy-link" data-url="${link.url}" title="Copy URL" aria-label="Copy URL for ${link.title.replace(/"/g, '&quot;')}">📋</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit ${link.title.replace(/"/g, '&quot;')}">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete ${link.title.replace(/"/g, '&quot;')}">🗑️</button>
         </div>
       </div>
       <h3 class="link-title">${link.title}</h3>
@@ -113,8 +114,7 @@ function renderLinkCard(link, index) {
 
 function initLinksEvents() {
     // Add link
-    const addBtn = document.getElementById('addLinkBtn') || document.getElementById('emptyAddLink');
-    addBtn?.addEventListener('click', () => {
+    const openAddModal = () => {
         openModal({
             title: 'Create New Link',
             content: linkFormContent(),
@@ -136,6 +136,24 @@ function initLinksEvents() {
                 showToast(`Link "${data.title}" created!`, 'success');
                 renderLinks();
             },
+        });
+    };
+
+    document.getElementById('addLinkBtn')?.addEventListener('click', openAddModal);
+    document.getElementById('emptyAddLink')?.addEventListener('click', openAddModal);
+
+    // Copy link
+    document.querySelectorAll('.copy-link').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const url = btn.dataset.url;
+            try {
+                await navigator.clipboard.writeText(url);
+                showToast('Link copied to clipboard!', 'success');
+            } catch (err) {
+                showToast('Failed to copy link', 'error');
+                console.error('Copy failed', err);
+            }
         });
     });
 
