@@ -96,6 +96,7 @@ function renderLinkCard(link, index) {
       <div class="link-card-header">
         <span class="link-icon">${cat.icon}</span>
         <div class="link-card-actions">
+          <button class="btn btn-ghost btn-icon copy-link" data-id="${link.id}" title="Copy Link" aria-label="Copy Link">📋</button>
           <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit">✏️</button>
           <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete">🗑️</button>
         </div>
@@ -136,6 +137,18 @@ function initLinksEvents() {
                 showToast(`Link "${data.title}" created!`, 'success');
                 renderLinks();
             },
+        });
+    });
+
+    // Copy link
+    document.querySelectorAll('.copy-link').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const link = store.getLink(btn.dataset.id);
+            if (!link) return;
+            navigator.clipboard.writeText(link.url)
+                .then(() => showToast('Link copied to clipboard!', 'success'))
+                .catch(() => showToast('Failed to copy link', 'error'));
         });
     });
 
