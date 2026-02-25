@@ -36,7 +36,29 @@ function saveData(data) {
   }
 }
 
+function debounce(func, wait) {
+  let timeout;
+  const debounced = (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+  debounced.cancel = () => clearTimeout(timeout);
+  return debounced;
+}
+
+const debouncedSaveData = debounce(saveData, 500); // Debounce saves to prevent blocking main thread
+
 let data = loadData();
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      debouncedSaveData.cancel();
+      saveData(data);
+    }
+  });
+}
+
 const listeners = new Set();
 
 export const store = {
@@ -47,7 +69,7 @@ export const store = {
   },
 
   _notify() {
-    saveData(data);
+    debouncedSaveData(data);
     listeners.forEach(fn => fn(data));
   },
 
