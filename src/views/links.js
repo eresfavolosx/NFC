@@ -2,7 +2,7 @@
    NFC Tag Manager — Links View
    ═══════════════════════════════════════════════════════════ */
 
-import { store } from '../store.js';
+import { store, escapeHTML } from '../store.js';
 import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
@@ -96,8 +96,8 @@ function renderLinkCard(link, index) {
       <div class="link-card-header">
         <span class="link-icon">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete">🗑️</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit ${escapeHTML(link.title)}">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete ${escapeHTML(link.title)}">🗑️</button>
         </div>
       </div>
       <h3 class="link-title">${link.title}</h3>
