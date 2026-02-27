@@ -36,7 +36,33 @@ function saveData(data) {
   }
 }
 
+function debounce(func, wait) {
+  let timeout;
+  const debounced = (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+  debounced.cancel = () => clearTimeout(timeout);
+  debounced.flush = (...args) => {
+    clearTimeout(timeout);
+    func(...args);
+  };
+  return debounced;
+}
+
+const debouncedSaveData = debounce(saveData, 500);
+
 let data = loadData();
+
+// Flush pending saves when the page becomes hidden or is about to unload
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      debouncedSaveData.flush(data);
+    }
+  });
+}
+
 const listeners = new Set();
 
 export const store = {
@@ -47,7 +73,7 @@ export const store = {
   },
 
   _notify() {
-    saveData(data);
+    debouncedSaveData(data);
     listeners.forEach(fn => fn(data));
   },
 
