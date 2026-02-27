@@ -2,7 +2,7 @@
    NFC Tag Manager — Tags View
    ═══════════════════════════════════════════════════════════ */
 
-import { store } from '../store.js';
+import { store, escapeHTML } from '../store.js';
 import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
@@ -54,6 +54,9 @@ export function renderTags() {
 
 function renderTagRow(tag, links, index) {
     const assignedLink = tag.assignedLinkId ? links.find(l => l.id === tag.assignedLinkId) : null;
+    const safeLabel = escapeHTML(tag.label);
+    const safeSerial = escapeHTML(tag.serialNumber);
+    const safeLinkTitle = assignedLink ? escapeHTML(assignedLink.title) : '';
 
     return `
     <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
@@ -62,11 +65,11 @@ function renderTagRow(tag, links, index) {
           <span class="tag-icon-big">🏷️</span>
         </div>
         <div class="tag-info">
-          <h3 class="tag-label">${tag.label}</h3>
+          <h3 class="tag-label">${safeLabel}</h3>
           <div class="tag-details">
-            ${tag.serialNumber ? `<span class="badge badge-info">SN: ${tag.serialNumber}</span>` : ''}
+            ${tag.serialNumber ? `<span class="badge badge-info">SN: ${safeSerial}</span>` : ''}
             ${assignedLink
-            ? `<span class="badge badge-success">🔗 ${assignedLink.title}</span>`
+            ? `<span class="badge badge-success">🔗 ${safeLinkTitle}</span>`
             : `<span class="badge badge-warning">⚠️ No link assigned</span>`
         }
             <span class="tag-date">Last written: ${formatDate(tag.lastWritten)}</span>
@@ -80,7 +83,7 @@ function renderTagRow(tag, links, index) {
         <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${tag.id}" title="Write to this tag">
           📡
         </button>
-        <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${tag.id}" title="Delete tag">
+        <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${tag.id}" aria-label="Delete ${safeLabel}" title="Delete tag">
           🗑️
         </button>
       </div>
@@ -133,7 +136,7 @@ function initTagsEvents(links) {
             }
 
             openModal({
-                title: `Assign Link to "${tag.label}"`,
+                title: `Assign Link to "${escapeHTML(tag.label)}"`,
                 content: `
           <div class="form-group">
             <label class="form-label">Select a link to assign</label>
@@ -141,7 +144,7 @@ function initTagsEvents(links) {
               <option value="">— Choose a link —</option>
               ${links.map(l => `
                 <option value="${l.id}" ${tag.assignedLinkId === l.id ? 'selected' : ''}>
-                  ${l.title} — ${l.url}
+                  ${escapeHTML(l.title)} — ${escapeHTML(l.url)}
                 </option>
               `).join('')}
             </select>
@@ -177,7 +180,7 @@ function initTagsEvents(links) {
             if (!tag) return;
             openModal({
                 title: 'Delete Tag',
-                content: `<p>Are you sure you want to delete <strong>"${tag.label}"</strong>?</p>`,
+                content: `<p>Are you sure you want to delete <strong>"${escapeHTML(tag.label)}"</strong>?</p>`,
                 submitLabel: 'Delete',
                 onSubmit: () => {
                     store.deleteTag(tag.id);

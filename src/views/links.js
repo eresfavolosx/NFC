@@ -2,7 +2,7 @@
    NFC Tag Manager — Links View
    ═══════════════════════════════════════════════════════════ */
 
-import { store } from '../store.js';
+import { store, escapeHTML } from '../store.js';
 import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
@@ -27,12 +27,12 @@ function linkFormContent(link = null) {
     <div class="form-group">
       <label class="form-label" for="linkTitle">Title</label>
       <input class="form-input" type="text" id="linkTitle" name="title"
-        placeholder="e.g. My Instagram" value="${link?.title || ''}" required>
+        placeholder="e.g. My Instagram" value="${escapeHTML(link?.title || '')}" required>
     </div>
     <div class="form-group">
       <label class="form-label" for="linkUrl">URL</label>
       <input class="form-input" type="url" id="linkUrl" name="url"
-        placeholder="https://..." value="${link?.url || ''}" required>
+        placeholder="https://..." value="${escapeHTML(link?.url || '')}" required>
     </div>
     <div class="form-group">
       <label class="form-label" for="linkCategory">Category</label>
@@ -90,18 +90,20 @@ export function renderLinks() {
 function renderLinkCard(link, index) {
     const cat = getCategoryInfo(link.category);
     const assignedTags = store.getTagsForLink(link.id);
+    const safeTitle = escapeHTML(link.title);
+    const safeUrl = escapeHTML(link.url);
 
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
       <div class="link-card-header">
         <span class="link-icon">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete">🗑️</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" aria-label="Edit ${safeTitle}" title="Edit">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" aria-label="Delete ${safeTitle}" title="Delete">🗑️</button>
         </div>
       </div>
-      <h3 class="link-title">${link.title}</h3>
-      <a class="link-url truncate" href="${link.url}" target="_blank" rel="noopener">${link.url}</a>
+      <h3 class="link-title">${safeTitle}</h3>
+      <a class="link-url truncate" href="${safeUrl}" target="_blank" rel="noopener">${safeUrl}</a>
       <div class="link-meta">
         <span class="badge badge-primary">${cat.label}</span>
         ${assignedTags.length > 0 ? `<span class="badge badge-success">🏷️ ${assignedTags.length} tag${assignedTags.length > 1 ? 's' : ''}</span>` : ''}
@@ -172,7 +174,7 @@ function initLinksEvents() {
             if (!link) return;
             openModal({
                 title: 'Delete Link',
-                content: `<p>Are you sure you want to delete <strong>"${link.title}"</strong>? This will also unassign it from any tags.</p>`,
+                content: `<p>Are you sure you want to delete <strong>"${escapeHTML(link.title)}"</strong>? This will also unassign it from any tags.</p>`,
                 submitLabel: 'Delete',
                 onSubmit: () => {
                     store.deleteLink(link.id);
