@@ -57,11 +57,11 @@ export function renderLinks() {
     <div class="page-container">
       <div class="links-toolbar">
         <div class="search-bar">
-          <span class="search-icon">🔍</span>
-          <input class="form-input" type="text" id="linkSearch" placeholder="Search links...">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input class="form-input" type="text" id="linkSearch" aria-label="Search links" placeholder="Search links...">
         </div>
         <div class="toolbar-actions">
-          <select class="form-select" id="categoryFilter" style="width: auto; min-width: 150px;">
+          <select class="form-select" id="categoryFilter" aria-label="Filter by category" style="width: auto; min-width: 150px;">
             <option value="">All Categories</option>
             ${CATEGORIES.map(c => `<option value="${c.value}">${c.icon} ${c.label}</option>`).join('')}
           </select>
@@ -94,10 +94,10 @@ function renderLinkCard(link, index) {
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
       <div class="link-card-header">
-        <span class="link-icon">${cat.icon}</span>
+        <span class="link-icon" aria-hidden="true">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete">🗑️</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit link">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete link">🗑️</button>
         </div>
       </div>
       <h3 class="link-title">${link.title}</h3>

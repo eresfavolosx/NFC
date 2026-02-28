@@ -1,0 +1,3 @@
+## 2026-02-28 - Explicit ARIA labels on Icon-only Buttons & Unlabelled Inputs
+**Learning:** Found a common accessibility issue pattern across this application where icon-only action buttons (e.g., delete/edit icons without visible text) and search inputs lacking a visible `<label>` are missing explicit `aria-label` attributes. This negatively impacts screen reader users, who will just hear 'button' or 'edit' when tabbing through action menus, or won't have context for search bars.
+**Action:** Always ensure that icon-only buttons receive an explicit `aria-label` describing their action. Additionally, search inputs should be wrapped in semantic `<form>` tags or at minimum have an `aria-label` describing their purpose if a visible `<label>` isn't designed for.
