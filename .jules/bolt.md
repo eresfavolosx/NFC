@@ -1,0 +1,3 @@
+## 2024-03-02 - Replace O(N*M) array iterations with O(N) Map lookups for UI rendering
+**Learning:** During UI rendering and filtering functions in views like `src/views/links.js` and `src/views/tags.js`, calculating relation bindings using nested `.find` and `.filter` loop causes major UI bottlenecks (O(N^2) or O(N*M)). Calling methods like `store.getTagsForLink` inside an `.map()` iterator runs the array filter redundantly over elements.
+**Action:** When rendering lists that require related data, always pre-calculate relationship counts or models using a `new Map()` outside the rendering loop. By taking an initial pass over related items to construct an O(1) hash map, you flatten the time complexity to O(N + M).
