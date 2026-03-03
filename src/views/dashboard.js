@@ -102,7 +102,7 @@ export function renderDashboard() {
               </div>
             ` : activity.slice(0, 8).map(item => `
               <div class="activity-item">
-                <span class="activity-icon">${ACTIVITY_ICONS[item.type] || '📌'}</span>
+                <span class="activity-icon" aria-hidden="true">${ACTIVITY_ICONS[item.type] || '📌'}</span>
                 <div class="activity-content">
                   <span class="activity-message">${item.message}</span>
                   <span class="activity-time">${formatTimeAgo(item.timestamp)}</span>

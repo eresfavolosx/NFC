@@ -26,7 +26,7 @@ export function renderTags() {
     <div class="page-container">
       <div class="links-toolbar">
         <div class="search-bar">
-          <span class="search-icon">🔍</span>
+          <span class="search-icon" aria-hidden="true">🔍</span>
           <input class="form-input" type="text" id="tagSearch" placeholder="Search tags...">
         </div>
         <button class="btn btn-primary" id="addTagBtn">
@@ -59,7 +59,7 @@ function renderTagRow(tag, links, index) {
     <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
       <div class="tag-row-main">
         <div class="tag-icon-wrap">
-          <span class="tag-icon-big">🏷️</span>
+          <span class="tag-icon-big" aria-hidden="true">🏷️</span>
         </div>
         <div class="tag-info">
           <h3 class="tag-label">${tag.label}</h3>
@@ -77,10 +77,10 @@ function renderTagRow(tag, links, index) {
         <button class="btn btn-secondary assign-link-btn" data-id="${tag.id}">
           ${assignedLink ? '🔄 Reassign' : '🔗 Assign Link'}
         </button>
-        <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${tag.id}" title="Write to this tag">
+        <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${tag.id}" title="Write to this tag" aria-label="Write to this tag">
           📡
         </button>
-        <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${tag.id}" title="Delete tag">
+        <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${tag.id}" title="Delete tag" aria-label="Delete tag">
           🗑️
         </button>
       </div>

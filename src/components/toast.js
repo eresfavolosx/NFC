@@ -27,7 +27,7 @@ export function showToast(message, type = 'info', duration = 3500) {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type} animate-fade-up`;
     toast.innerHTML = `
-    <span class="toast-icon">${ICONS[type]}</span>
+    <span class="toast-icon" aria-hidden="true">${ICONS[type]}</span>
     <span class="toast-message">${message}</span>
     <button class="toast-close" aria-label="Close">✕</button>
   `;
