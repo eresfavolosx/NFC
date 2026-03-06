@@ -20,6 +20,9 @@ export function renderTags() {
     const tags = store.tags;
     const links = store.links;
 
+    // Performance optimization: Pre-calculate links map to avoid O(N*M) lookup in renderTagRow
+    const linksMap = new Map(links.map(l => [l.id, l]));
+
     container.innerHTML = `
     ${renderHeader('Tags', 'Manage your NFC bracelet tags')}
 
@@ -43,7 +46,7 @@ export function renderTags() {
         </div>
       ` : `
         <div class="tags-list" id="tagsList">
-          ${tags.map((tag, i) => renderTagRow(tag, links, i)).join('')}
+          ${tags.map((tag, i) => renderTagRow(tag, linksMap, i)).join('')}
         </div>
       `}
     </div>
@@ -52,8 +55,8 @@ export function renderTags() {
     initTagsEvents(links);
 }
 
-function renderTagRow(tag, links, index) {
-    const assignedLink = tag.assignedLinkId ? links.find(l => l.id === tag.assignedLinkId) : null;
+function renderTagRow(tag, linksMap, index) {
+    const assignedLink = tag.assignedLinkId ? linksMap.get(tag.assignedLinkId) || null : null;
 
     return `
     <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
@@ -192,8 +195,12 @@ function initTagsEvents(links) {
     // Search
     document.getElementById('tagSearch')?.addEventListener('input', (e) => {
         const q = e.target.value.toLowerCase();
+
+        // Performance optimization: Pre-calculate tags map to avoid O(N^2) lookup
+        const tagsMap = new Map(store.tags.map(t => [t.id, t]));
+
         document.querySelectorAll('.tag-row').forEach(row => {
-            const tag = store.getTag(row.dataset.id);
+            const tag = tagsMap.get(row.dataset.id);
             if (!tag) return;
             const match = tag.label.toLowerCase().includes(q) ||
                 (tag.serialNumber && tag.serialNumber.toLowerCase().includes(q));

@@ -51,6 +51,15 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
 
+    // Performance optimization: Pre-calculate tags by link to avoid O(N*M) lookup in renderLinkCard
+    const tagsByLink = new Map();
+    store.tags.forEach(t => {
+        if (t.assignedLinkId) {
+            if (!tagsByLink.has(t.assignedLinkId)) tagsByLink.set(t.assignedLinkId, []);
+            tagsByLink.get(t.assignedLinkId).push(t);
+        }
+    });
+
     container.innerHTML = `
     ${renderHeader('Links', 'Manage your destination URLs')}
 
@@ -79,7 +88,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, i)).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLink)).join('')}
       </div>
     </div>
   `;
@@ -87,9 +96,9 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, index) {
+function renderLinkCard(link, index, tagsByLink) {
     const cat = getCategoryInfo(link.category);
-    const assignedTags = store.getTagsForLink(link.id);
+    const assignedTags = tagsByLink.get(link.id) || [];
 
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
@@ -201,8 +210,11 @@ function filterLinks(search, category) {
     const cards = document.querySelectorAll('.link-card');
     const links = store.links;
 
+    // Performance optimization: Pre-calculate links map to avoid O(N^2) lookup
+    const linksMap = new Map(links.map(l => [l.id, l]));
+
     cards.forEach(card => {
-        const link = links.find(l => l.id === card.dataset.id);
+        const link = linksMap.get(card.dataset.id);
         if (!link) return;
 
         const matchSearch = !search ||
