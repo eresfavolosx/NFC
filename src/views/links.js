@@ -51,6 +51,14 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
 
+    // ⚡ Bolt Optimization: Pre-calculate tag counts per link in O(N) instead of O(N*M)
+    const tagCounts = new Map();
+    store.tags.forEach(tag => {
+        if (tag.assignedLinkId) {
+            tagCounts.set(tag.assignedLinkId, (tagCounts.get(tag.assignedLinkId) || 0) + 1);
+        }
+    });
+
     container.innerHTML = `
     ${renderHeader('Links', 'Manage your destination URLs')}
 
@@ -79,7 +87,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, i)).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, i, tagCounts)).join('')}
       </div>
     </div>
   `;
@@ -87,9 +95,10 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, index) {
+function renderLinkCard(link, index, tagCounts) {
     const cat = getCategoryInfo(link.category);
-    const assignedTags = store.getTagsForLink(link.id);
+    // ⚡ Bolt Optimization: O(1) lookup
+    const assignedTagsCount = tagCounts ? (tagCounts.get(link.id) || 0) : store.getTagsForLink(link.id).length;
 
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
@@ -104,7 +113,7 @@ function renderLinkCard(link, index) {
       <a class="link-url truncate" href="${link.url}" target="_blank" rel="noopener">${link.url}</a>
       <div class="link-meta">
         <span class="badge badge-primary">${cat.label}</span>
-        ${assignedTags.length > 0 ? `<span class="badge badge-success">🏷️ ${assignedTags.length} tag${assignedTags.length > 1 ? 's' : ''}</span>` : ''}
+        ${assignedTagsCount > 0 ? `<span class="badge badge-success">🏷️ ${assignedTagsCount} tag${assignedTagsCount > 1 ? 's' : ''}</span>` : ''}
         <span class="link-clicks">👆 ${link.clicks} tap${link.clicks !== 1 ? 's' : ''}</span>
       </div>
     </div>
@@ -201,8 +210,11 @@ function filterLinks(search, category) {
     const cards = document.querySelectorAll('.link-card');
     const links = store.links;
 
+    // ⚡ Bolt Optimization: O(1) link lookup Map
+    const linksMap = new Map(links.map(l => [l.id, l]));
+
     cards.forEach(card => {
-        const link = links.find(l => l.id === card.dataset.id);
+        const link = linksMap.get(card.dataset.id);
         if (!link) return;
 
         const matchSearch = !search ||
