@@ -20,7 +20,7 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal animate-scale-in" role="dialog" aria-labelledby="modalTitle">
         <div class="modal-header">
-          <h3 id="modalTitle">${title}</h3>
+          <h3 id="modalTitle"></h3>
           <button class="btn-icon btn-ghost modal-close" id="modalClose" aria-label="Close">✕</button>
         </div>
         <div class="modal-body" id="modalBody">
@@ -28,11 +28,16 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
         </div>
         <div class="modal-footer">
           ${showCancel ? '<button class="btn btn-secondary" id="modalCancel">Cancel</button>' : ''}
-          ${onSubmit ? `<button class="btn btn-primary" id="modalSubmit">${submitLabel}</button>` : ''}
+          ${onSubmit ? `<button class="btn btn-primary" id="modalSubmit"></button>` : ''}
         </div>
       </div>
     </div>
   `;
+
+    container.querySelector('#modalTitle').textContent = title;
+    if (onSubmit) {
+        container.querySelector('#modalSubmit').textContent = submitLabel;
+    }
 
     container.style.display = 'block';
     document.body.style.overflow = 'hidden';
@@ -82,6 +87,19 @@ export function closeModal() {
         container.style.display = 'none';
         document.body.style.overflow = '';
     }
+}
+
+export function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g,
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag)
+    );
 }
 
 export function getModalFormData() {
