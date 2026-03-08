@@ -43,7 +43,12 @@ export function renderTags() {
         </div>
       ` : `
         <div class="tags-list" id="tagsList">
-          ${tags.map((tag, i) => renderTagRow(tag, links, i)).join('')}
+          ${(() => {
+            // ⚡ Bolt: Replace O(N*M) nested loop with O(N) lookup
+            // Pre-calculate links map for O(1) lookups
+            const linksMap = new Map(links.map(l => [l.id, l]));
+            return tags.map((tag, i) => renderTagRow(tag, linksMap, i)).join('');
+          })()}
         </div>
       `}
     </div>
@@ -52,8 +57,8 @@ export function renderTags() {
     initTagsEvents(links);
 }
 
-function renderTagRow(tag, links, index) {
-    const assignedLink = tag.assignedLinkId ? links.find(l => l.id === tag.assignedLinkId) : null;
+function renderTagRow(tag, linksMap, index) {
+    const assignedLink = tag.assignedLinkId ? linksMap.get(tag.assignedLinkId) : null;
 
     return `
     <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
