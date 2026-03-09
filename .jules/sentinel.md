@@ -1,0 +1,4 @@
+## 2024-05-18 - Prevent DOM-based XSS in Link and Tag Rendering
+**Vulnerability:** User inputs (link titles, URLs, tag labels) were being directly interpolated into HTML string templates (`innerHTML`) in `src/views/links.js` and `src/views/tags.js` without sanitization. This allowed attackers to execute arbitrary JavaScript if they created links or tags with malicious payloads (DOM-based XSS).
+**Learning:** The project relies heavily on template literals for rendering HTML components dynamically but lacked a centralized HTML escaping mechanism, leading developers to unknowingly introduce XSS when rendering user-supplied properties.
+**Prevention:** Implement a centralized `escapeHTML` utility to sanitize all user-controlled data before it is rendered into template literals. Specifically, ensure the helper explicitly checks for `null` and `undefined` instead of falsy values so it doesn't accidentally drop valid data like `0`.
