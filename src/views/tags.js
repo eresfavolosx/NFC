@@ -192,8 +192,13 @@ function initTagsEvents(links) {
     // Search
     document.getElementById('tagSearch')?.addEventListener('input', (e) => {
         const q = e.target.value.toLowerCase();
+
+        // ⚡ Bolt Optimization: Pre-calculate map for O(1) lookups instead of O(N) store.getTag inside loop
+        // Reduces algorithmic complexity from O(N^2) to O(N)
+        const tagsMap = new Map(store.tags.map(t => [t.id, t]));
+
         document.querySelectorAll('.tag-row').forEach(row => {
-            const tag = store.getTag(row.dataset.id);
+            const tag = tagsMap.get(row.dataset.id);
             if (!tag) return;
             const match = tag.label.toLowerCase().includes(q) ||
                 (tag.serialNumber && tag.serialNumber.toLowerCase().includes(q));

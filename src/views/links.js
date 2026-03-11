@@ -201,8 +201,12 @@ function filterLinks(search, category) {
     const cards = document.querySelectorAll('.link-card');
     const links = store.links;
 
+    // ⚡ Bolt Optimization: Use Map for O(1) lookups instead of O(N) Array.find inside the loop
+    // Reduces algorithmic complexity from O(N^2) to O(N)
+    const linksMap = new Map(links.map(l => [l.id, l]));
+
     cards.forEach(card => {
-        const link = links.find(l => l.id === card.dataset.id);
+        const link = linksMap.get(card.dataset.id);
         if (!link) return;
 
         const matchSearch = !search ||
