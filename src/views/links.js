@@ -51,6 +51,17 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
 
+    // ⚡ Bolt: Pre-calculate tags by link ID to avoid O(N*M) lookups during render
+    const tagsByLinkId = new Map();
+    store.tags.forEach(tag => {
+        if (tag.assignedLinkId) {
+            if (!tagsByLinkId.has(tag.assignedLinkId)) {
+                tagsByLinkId.set(tag.assignedLinkId, []);
+            }
+            tagsByLinkId.get(tag.assignedLinkId).push(tag);
+        }
+    });
+
     container.innerHTML = `
     ${renderHeader('Links', 'Manage your destination URLs')}
 
@@ -79,7 +90,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, i)).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLinkId.get(link.id) || [])).join('')}
       </div>
     </div>
   `;
@@ -87,9 +98,8 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, index) {
+function renderLinkCard(link, index, assignedTags) {
     const cat = getCategoryInfo(link.category);
-    const assignedTags = store.getTagsForLink(link.id);
 
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
