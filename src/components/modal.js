@@ -2,6 +2,16 @@
    NFC Tag Manager — Modal Component
    ═══════════════════════════════════════════════════════════ */
 
+export function escapeHTML(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 let modalContainer = null;
 
 function getContainer() {
@@ -20,7 +30,7 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal animate-scale-in" role="dialog" aria-labelledby="modalTitle">
         <div class="modal-header">
-          <h3 id="modalTitle">${title}</h3>
+          <h3 id="modalTitle">${escapeHTML(title)}</h3>
           <button class="btn-icon btn-ghost modal-close" id="modalClose" aria-label="Close">✕</button>
         </div>
         <div class="modal-body" id="modalBody">
