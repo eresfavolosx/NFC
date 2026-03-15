@@ -28,12 +28,12 @@ function linkFormContent(link = null) {
     <div class="form-group">
       <label class="form-label" for="linkTitle">Title</label>
       <input class="form-input" type="text" id="linkTitle" name="title"
-        placeholder="e.g. My Instagram" value="${link ? escapeHTML(link.title) : ''}" required>
+        placeholder="e.g. My Instagram" value="${escapeHTML(link?.title || '')}" required>
     </div>
     <div class="form-group">
       <label class="form-label" for="linkUrl">URL</label>
       <input class="form-input" type="url" id="linkUrl" name="url"
-        placeholder="https://..." value="${link ? escapeHTML(link.url) : ''}" required>
+        placeholder="https://..." value="${escapeHTML(link?.url || '')}" required>
     </div>
     <div class="form-group">
       <label class="form-label" for="linkCategory">Category</label>
@@ -103,7 +103,7 @@ function renderLinkCard(link, index) {
         </div>
       </div>
       <h3 class="link-title">${escapeHTML(link.title)}</h3>
-      <a class="link-url truncate" href="${safeUrl}" target="_blank" rel="noopener">${escapeHTML(link.url)}</a>
+      <a class="link-url truncate" href="${sanitizeURL(link.url)}" target="_blank" rel="noopener">${escapeHTML(link.url)}</a>
       <div class="link-meta">
         <span class="badge badge-primary">${cat.label}</span>
         ${assignedTags.length > 0 ? `<span class="badge badge-success">🏷️ ${assignedTags.length} tag${assignedTags.length > 1 ? 's' : ''}</span>` : ''}

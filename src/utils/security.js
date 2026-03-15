@@ -1,11 +1,11 @@
 /**
- * Escapes HTML characters in a string to prevent XSS.
+ * Escapes specific characters in HTML to prevent XSS attacks.
  * @param {string} str - The string to escape.
  * @returns {string} The escaped string.
  */
 export function escapeHTML(str) {
-  if (str === null || str === undefined) return '';
-  return String(str)
+  if (typeof str !== 'string') return str;
+  return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -14,22 +14,23 @@ export function escapeHTML(str) {
 }
 
 /**
- * Sanitizes a URL to prevent javascript: protocol attacks.
+ * Sanitizes a URL to ensure it is safe to use in an href attribute.
+ * Only allows http, https, and mailto protocols.
  * @param {string} url - The URL to sanitize.
- * @returns {string} The sanitized URL or '#' if invalid.
+ * @returns {string} The sanitized URL.
  */
 export function sanitizeURL(url) {
-  if (!url) return '';
-  // Allow relative URLs starting with / or . or just path characters
-  if (/^[\w\-\.\/]+$/.test(url)) return url;
-
+  if (typeof url !== 'string') return '#';
   try {
-    const parsed = new URL(url, window.location.origin); // Use base for relative URLs
-    if (['http:', 'https:', 'mailto:', 'tel:'].includes(parsed.protocol)) {
+    const parsed = new URL(url);
+    if (['http:', 'https:', 'mailto:'].includes(parsed.protocol)) {
       return url;
     }
+    // Allow relative URLs if needed, but for now strict external links seem safer based on context
+    // If the app uses internal navigation via hash or relative paths, this might need adjustment.
+    // Given the app is a link manager, external links are primary.
+    return '#';
   } catch (e) {
-    // invalid url
+    return '#';
   }
-  return '#';
 }
