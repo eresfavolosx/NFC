@@ -52,11 +52,13 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
 
-    // ⚡ Bolt: Pre-calculate tags count per link to avoid O(N*M) lookups during rendering
-    const tagCountsByLink = new Map();
+    const tagsByLinkId = new Map();
     store.tags.forEach(tag => {
         if (tag.assignedLinkId) {
-            tagCountsByLink.set(tag.assignedLinkId, (tagCountsByLink.get(tag.assignedLinkId) || 0) + 1);
+            if (!tagsByLinkId.has(tag.assignedLinkId)) {
+                tagsByLinkId.set(tag.assignedLinkId, []);
+            }
+            tagsByLinkId.get(tag.assignedLinkId).push(tag);
         }
     });
 
@@ -88,7 +90,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, tagCountsByLink.get(link.id) || 0, i)).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLinkId.get(link.id) || [])).join('')}
       </div>
     </div>
   `;
@@ -96,7 +98,7 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, assignedTagCount, index) {
+function renderLinkCard(link, index, assignedTags) {
     const cat = getCategoryInfo(link.category);
 
     return `
@@ -260,11 +262,10 @@ function filterLinks(search, category) {
     const cards = document.querySelectorAll('.link-card');
     const links = store.links;
 
-    // ⚡ Bolt: Pre-calculate links map to avoid O(N^2) lookups during filtering
-    const linksMap = new Map(links.map(l => [l.id, l]));
+    const linkMap = new Map(links.map(l => [l.id, l]));
 
     cards.forEach(card => {
-        const link = linksMap.get(card.dataset.id);
+        const link = linkMap.get(card.dataset.id);
         if (!link) return;
 
         const matchSearch = !search ||
