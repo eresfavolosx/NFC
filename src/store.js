@@ -44,11 +44,33 @@ function persistData(data) {
   }
 }
 
-async function sha256(message) {
-  const msgBuffer = new TextEncoder().encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+// Simple debounce to prevent blocking UI on rapid updates
+function debounce(func, wait) {
+  let timeout;
+  function debounced(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func.apply(this, args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  }
+  debounced.cancel = () => {
+    clearTimeout(timeout);
+  };
+  return debounced;
+}
+
+const debouncedSaveData = debounce(saveData, 500);
+
+// Flush pending saves when page is hidden/closed to prevent data loss
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      debouncedSaveData.cancel();
+      saveData(data);
+    }
+  });
 }
 
 let data = loadData();
@@ -79,7 +101,7 @@ export const store = {
   },
 
   _notify() {
-    scheduleSave(data);
+    debouncedSaveData(data);
     listeners.forEach(fn => fn(data));
   },
 
