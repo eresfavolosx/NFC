@@ -35,6 +35,7 @@ export function showToast(message, type = 'info', duration = 3500) {
     <span class="toast-message"></span>
     <button class="toast-close" aria-label="Close">✕</button>
   `;
+    // Use textContent instead of innerHTML interpolation to prevent DOM-based XSS
     toast.querySelector('.toast-message').textContent = message;
 
     container.appendChild(toast);

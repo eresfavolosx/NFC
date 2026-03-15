@@ -24,6 +24,7 @@ function getCategoryInfo(val) {
 }
 
 function linkFormContent(link = null) {
+    // Sanitize user inputs using escapeHTML to prevent DOM-based XSS when creating form HTML
     return `
     <div class="form-group">
       <label class="form-label" for="linkTitle">Title</label>
@@ -101,6 +102,7 @@ function renderLinkCard(link, index, tagCounts) {
     // ⚡ Bolt Optimization: O(1) lookup
     const assignedTagsCount = tagCounts ? (tagCounts.get(link.id) || 0) : store.getTagsForLink(link.id).length;
 
+    // Escape dynamic properties before injecting into template literals
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
       <div class="link-card-header">

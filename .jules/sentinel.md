@@ -1,4 +1,4 @@
-## 2024-05-24 - [Fix DOM-based XSS via Template Literals in Modals and Toasts]
-**Vulnerability:** Core UI components (Toast, Modal) directly assigned unsanitized user inputs (e.g., error messages, modal titles) via `innerHTML` using template literals.
-**Learning:** This approach bypasses browser XSS protection by rendering user inputs as live DOM nodes, enabling script execution if user input contains unescaped HTML.
-**Prevention:** For elements rendering only text, assign inputs directly to `.textContent` *after* structure creation, rather than interpolating into an `innerHTML` string. For elements requiring markup (e.g., `<p>...</p>`), explicitly sanitize any interpolated dynamic variables using an `escapeHTML` utility function before injection.
+## 2025-03-08 - DOM-based XSS via Template Literals
+**Vulnerability:** User-controlled data (e.g., toast messages, link titles) was directly interpolated into HTML using template literals and injected via `innerHTML`.
+**Learning:** This architectural pattern—using vanilla JS template literals without a templating engine (like React/Vue) that auto-escapes by default—leaves the application highly susceptible to DOM-based XSS when assigning content dynamically to `innerHTML`.
+**Prevention:** Avoid `innerHTML` for dynamic content where possible, preferring `textContent`. For cases where HTML structures must be generated via template literals, explicitly sanitize user inputs using a utility like `escapeHTML` before interpolation.

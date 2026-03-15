@@ -24,7 +24,7 @@ function getContainer() {
     return modalContainer;
 }
 
-// 🛡️ Sentinel: Centralized utility for XSS prevention when building HTML strings
+// Security enhancement: Prevent DOM-based XSS when using template literals
 export function escapeHTML(str) {
     if (typeof str !== 'string') return str;
     return str.replace(/[&<>'"]/g,
@@ -34,7 +34,7 @@ export function escapeHTML(str) {
             '>': '&gt;',
             "'": '&#39;',
             '"': '&quot;'
-        }[tag])
+        }[tag] || tag)
     );
 }
 
@@ -73,6 +73,9 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
     if (onSubmit) {
         container.querySelector('#modalSubmit').textContent = submitLabel;
     }
+
+    // Secure assignment via textContent to prevent DOM-based XSS in title
+    container.querySelector('#modalTitle').textContent = title;
 
     container.style.display = 'block';
     document.body.style.overflow = 'hidden';
