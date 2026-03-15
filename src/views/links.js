@@ -111,8 +111,8 @@ function renderLinkCard(link, linkTagsMap, index) {
       <div class="link-card-header">
         <span class="link-icon" aria-hidden="true">${cat.icon}</span>
         <div class="link-card-actions">
-          <button aria-label="Edit link" class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit">✏️</button>
-          <button aria-label="Delete link" class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete">🗑️</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit link">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete link">🗑️</button>
         </div>
       </div>
       <h3 class="link-title">${safeTitle}</h3>

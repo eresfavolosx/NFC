@@ -1,3 +1,3 @@
-## 2024-05-18 - Keyboard Accessible Action Buttons
-**Learning:** Hiding interactive elements (like icon buttons inside `.link-card`) using `opacity: 0` and revealing them only on `:hover` breaks keyboard accessibility, as users tabbing through the interface cannot see the controls they are focused on.
-**Action:** Always use `:focus-within` on the parent container (in addition to `:hover`) when using `opacity: 0` to hide action buttons, to ensure keyboard users can reveal and access the controls when tabbing.
+## 2024-05-18 - Keyboard accessibility for hidden list item actions
+**Learning:** When hiding elements (like list actions) using `opacity: 0` and revealing them on `:hover`, keyboard accessibility is broken because the elements cannot be seen when tabbing into them.
+**Action:** Always pair `:hover` with `:focus-within` on the parent container so that tabbing into the hidden actions reveals them.
