@@ -50,15 +50,17 @@ function persistData(data) {
   }
 }
 
-export function escapeHTML(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+// Optimization: Debounce saveData to avoid blocking main thread on frequent updates
+function debounce(func, wait) {
+  let timeout;
+  return function(...args) {
+    const context = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), wait);
+  };
 }
+
+const debouncedSaveData = debounce(saveData, 500);
 
 let data = loadData();
 
@@ -73,11 +75,11 @@ if (typeof document !== 'undefined') {
 
 const listeners = new Set();
 
-async function hashPin(pin) {
-  const msgBuffer = new TextEncoder().encode(pin);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+// Flush pending save on page unload to prevent data loss
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    saveData(data);
+  });
 }
 
 export const store = {
