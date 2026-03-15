@@ -74,6 +74,25 @@ if (typeof document !== 'undefined') {
 }
 
 const listeners = new Set();
+let debounceTimer;
+const DEBOUNCE_DELAY = 500;
+
+function saveDataDebounced(data) {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    saveData(data);
+    debounceTimer = null;
+  }, DEBOUNCE_DELAY);
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      saveData(data);
+    }
+  });
+}
 
 // Flush pending save on page unload to prevent data loss
 if (typeof window !== 'undefined') {
@@ -90,7 +109,7 @@ export const store = {
   },
 
   _notify() {
-    debouncedSaveData(data);
+    saveDataDebounced(data);
     listeners.forEach(fn => fn(data));
   },
 
