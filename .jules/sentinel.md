@@ -1,4 +1,4 @@
-## 2025-03-08 - DOM-based XSS via Template Literals
-**Vulnerability:** User-controlled data (e.g., toast messages, link titles) was directly interpolated into HTML using template literals and injected via `innerHTML`.
-**Learning:** This architectural pattern—using vanilla JS template literals without a templating engine (like React/Vue) that auto-escapes by default—leaves the application highly susceptible to DOM-based XSS when assigning content dynamically to `innerHTML`.
-**Prevention:** Avoid `innerHTML` for dynamic content where possible, preferring `textContent`. For cases where HTML structures must be generated via template literals, explicitly sanitize user inputs using a utility like `escapeHTML` before interpolation.
+## 2024-05-18 - Prevent DOM-based XSS in Link and Tag Rendering
+**Vulnerability:** User inputs (link titles, URLs, tag labels) were being directly interpolated into HTML string templates (`innerHTML`) in `src/views/links.js` and `src/views/tags.js` without sanitization. This allowed attackers to execute arbitrary JavaScript if they created links or tags with malicious payloads (DOM-based XSS).
+**Learning:** The project relies heavily on template literals for rendering HTML components dynamically but lacked a centralized HTML escaping mechanism, leading developers to unknowingly introduce XSS when rendering user-supplied properties.
+**Prevention:** Implement a centralized `escapeHTML` utility to sanitize all user-controlled data before it is rendered into template literals. Specifically, ensure the helper explicitly checks for `null` and `undefined` instead of falsy values so it doesn't accidentally drop valid data like `0`.

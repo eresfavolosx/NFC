@@ -71,11 +71,11 @@ function renderTagRow(tag, linksMap, index) {
           <span class="tag-icon-big" aria-hidden="true">🏷️</span>
         </div>
         <div class="tag-info">
-          <h3 class="tag-label">${safeLabel}</h3>
+          <h3 class="tag-label">${escapeHTML(tag.label)}</h3>
           <div class="tag-details">
-            ${safeSerial ? `<span class="badge badge-info">SN: ${safeSerial}</span>` : ''}
+            ${tag.serialNumber ? `<span class="badge badge-info">SN: ${escapeHTML(tag.serialNumber)}</span>` : ''}
             ${assignedLink
-            ? `<span class="badge badge-success">🔗 ${safeLinkTitle}</span>`
+            ? `<span class="badge badge-success">🔗 ${escapeHTML(assignedLink.title)}</span>`
             : `<span class="badge badge-warning">⚠️ No link assigned</span>`
         }
             <span class="tag-date">Last written: ${formatDate(tag.lastWritten)}</span>

@@ -24,18 +24,15 @@ function getContainer() {
     return modalContainer;
 }
 
-// Security enhancement: Prevent DOM-based XSS when using template literals
+
 export function escapeHTML(str) {
-    if (typeof str !== 'string') return str;
-    return str.replace(/[&<>'"]/g,
-        tag => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            "'": '&#39;',
-            '"': '&quot;'
-        }[tag] || tag)
-    );
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 export function openModal({ title, content, onSubmit, submitLabel = 'Save', showCancel = true }) {
@@ -77,6 +74,7 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
     // Secure assignment via textContent to prevent DOM-based XSS in title
     container.querySelector('#modalTitle').textContent = title;
 
+    container.querySelector('#modalTitle').textContent = title;
     container.style.display = 'block';
     document.body.style.overflow = 'hidden';
 
