@@ -1,4 +1,4 @@
-## 2024-05-24 - XSS in UI Components via innerHTML
-**Vulnerability:** The application extensively uses `innerHTML` with template literals to render views and components (like Toasts). User-controlled data (e.g., link titles and URLs) was directly interpolated into HTML, leading to Stored XSS.
-**Learning:** Transient components (Toasts) and persistent views (Link Cards) are both critical XSS vectors if they reflect unsanitized input. The absence of a centralized escaping utility led to an insecure pattern across the codebase.
-**Prevention:** Always use `.textContent` for dynamic text injection in DOM nodes (e.g., in Toasts). For string-based rendering, implement and enforce a standard `escapeHTML` utility to sanitize all user-generated content before DOM injection.
+## 2026-03-01 - [XSS via innerHTML Template Strings]
+**Vulnerability:** Found a Cross-Site Scripting (XSS) vulnerability in `src/components/toast.js` where user-controlled input (like link titles or category names) was directly interpolated into an `innerHTML` template string. If a malicious title (e.g., `<script>alert('XSS')</script>`) was saved, it would execute when the toast was displayed.
+**Learning:** The project relies heavily on template literals and `innerHTML` for rendering views and components, without a central HTML escaping utility function. This makes the entire application highly susceptible to XSS anywhere user input is displayed.
+**Prevention:** Avoid interpolating user input directly into `innerHTML` strings. Instead, either create elements programmatically and use `.textContent` to set their text values (as done in the `toast.js` fix), or implement a robust escaping utility for template strings. When rendering complex strings, prefer safe DOM manipulation methods.
