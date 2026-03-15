@@ -59,14 +59,11 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
       </div>
     </div>
   `;
+    // Security: Use textContent to prevent DOM XSS when setting arbitrary modal titles
     container.querySelector('#modalTitle').textContent = title;
     if (onSubmit) {
+        // Security: Use textContent to prevent DOM XSS on the submit button label
         container.querySelector('#modalSubmit').textContent = submitLabel;
-    }
-
-    document.getElementById('modalTitle').textContent = title;
-    if (onSubmit) {
-        document.getElementById('modalSubmit').textContent = submitLabel;
     }
 
     container.style.display = 'block';

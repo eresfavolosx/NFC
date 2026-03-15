@@ -32,9 +32,10 @@ export function showToast(message, type = 'info', duration = 3500) {
     // 🛡️ Sentinel: Prevent XSS by using textContent for user-controlled message
     toast.innerHTML = `
     <span class="toast-icon">${ICONS[type]}</span>
-    <span class="toast-message">${escapeHTML(message)}</span>
+    <span class="toast-message"></span>
     <button class="toast-close" aria-label="Close">✕</button>
   `;
+    // Security: Use textContent to prevent DOM XSS when setting arbitrary messages
     toast.querySelector('.toast-message').textContent = message;
 
     container.appendChild(toast);
