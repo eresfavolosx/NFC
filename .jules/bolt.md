@@ -1,3 +1,3 @@
-## 2024-05-24 - O(N*M) View Rendering Bottlenecks
-**Learning:** Found O(N*M) performance bottlenecks in `src/views/tags.js` and `src/views/links.js` during view rendering. Specifically, `Array.prototype.find()` and `store.getTagsForLink()` (which contains a `find`/`filter`) were being called inside nested render loops for each tag and link, causing significant performance degradation for large datasets.
-**Action:** Always pre-calculate lookups using a `Map` before iterating over large lists or DOM nodes in render/filter functions to ensure O(N) performance.
+## 2024-03-05 - Optimize array lookups in view rendering
+**Learning:** Rendering views with `N` items while performing a linear search `.find()` or `.filter()` over `M` items (e.g., finding tags for each link, or links for each tag) creates an $O(N \times M)$ performance bottleneck on the main thread, leading to poor UI rendering performance.
+**Action:** When rendering lists or filtering, pre-calculate a lookup map (e.g., a `Map` or an object) from the secondary array, changing the complexity to $O(N + M)$.

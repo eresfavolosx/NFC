@@ -52,19 +52,14 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
 
-    // Pre-calculate tags map to prevent O(N*M) lookup in render loop
-    const tags = store.tags;
-    const linkTagsMap = new Map();
-    for (const t of tags) {
-        if (t.assignedLinkId) {
-            const group = linkTagsMap.get(t.assignedLinkId);
-            if (group) {
-                group.push(t);
-            } else {
-                linkTagsMap.set(t.assignedLinkId, [t]);
-            }
+    // ⚡ Bolt: Pre-calculate tags per link to avoid O(N*M) lookup in renderLinkCard
+    const tagsByLink = new Map();
+    store.tags.forEach(tag => {
+        if (tag.assignedLinkId) {
+            const count = tagsByLink.get(tag.assignedLinkId) || 0;
+            tagsByLink.set(tag.assignedLinkId, count + 1);
         }
-    }
+    });
 
     container.innerHTML = `
     ${renderHeader('Links', 'Manage your destination URLs')}
@@ -94,7 +89,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, linkTagsMap, i)).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLink.get(link.id) || 0)).join('')}
       </div>
     </div>
   `;
@@ -102,9 +97,8 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, linkTagsMap, index) {
+function renderLinkCard(link, index, assignedTagsCount) {
     const cat = getCategoryInfo(link.category);
-    const assignedTags = linkTagsMap.get(link.id) || [];
 
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
@@ -119,7 +113,7 @@ function renderLinkCard(link, linkTagsMap, index) {
       <a class="link-url truncate" href="${safeHref}" target="_blank" rel="noopener">${safeUrlText}</a>
       <div class="link-meta">
         <span class="badge badge-primary">${cat.label}</span>
-        ${assignedTagCount > 0 ? `<span class="badge badge-success">🏷️ ${assignedTagCount} tag${assignedTagCount > 1 ? 's' : ''}</span>` : ''}
+        ${assignedTagsCount > 0 ? `<span class="badge badge-success">🏷️ ${assignedTagsCount} tag${assignedTagsCount > 1 ? 's' : ''}</span>` : ''}
         <span class="link-clicks">👆 ${link.clicks} tap${link.clicks !== 1 ? 's' : ''}</span>
       </div>
     </div>
@@ -265,7 +259,9 @@ function initLinksEvents() {
 
 function filterLinks(search, category) {
     const cards = document.querySelectorAll('.link-card');
-    const links = store.links;
+
+    // ⚡ Bolt: Pre-calculate map to avoid O(N*C) lookup during filtering
+    const linksMap = new Map(store.links.map(l => [l.id, l]));
 
     // Pre-calculate links map to prevent O(N^2) lookup inside querySelectorAll loop
     const linksMap = new Map(links.map(l => [l.id, l]));
