@@ -50,22 +50,29 @@ function persistData(data) {
   }
 }
 
-async function hashPin(pin) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(pin);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  return hashHex;
+function debounce(func, wait) {
+  let timeout;
+  const debounced = (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+  debounced.cancel = () => clearTimeout(timeout);
+  debounced.flush = (...args) => {
+    clearTimeout(timeout);
+    func(...args);
+  };
+  return debounced;
 }
+
+const debouncedSaveData = debounce(saveData, 500);
 
 let data = loadData();
 
+// Flush pending saves when the page becomes hidden or is about to unload
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
-      debouncedSaveData.cancel();
-      saveData(data);
+      debouncedSaveData.flush(data);
     }
   });
 }

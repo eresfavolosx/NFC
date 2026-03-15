@@ -1,3 +1,3 @@
-## 2026-02-26 - Synchronous LocalStorage Blocking
-**Learning:** `localStorage.setItem` is synchronous and blocking. Frequent writes (e.g., on every state change) can freeze the UI, especially with large JSON payloads.
-**Action:** Debounce persistence operations and use `visibilitychange` to flush pending writes to ensure data integrity without performance penalty.
+## 2025-05-23 - [Debounce Persistence Safety]
+**Learning:** Debouncing `localStorage` writes improves performance but introduces data loss risk if the user closes the tab before the timer fires.
+**Action:** Always implement a `flush()` method on the debounce utility and trigger it via `document.addEventListener('visibilitychange')` (checking for `hidden` state) to ensure pending writes are persisted on unload.
