@@ -44,42 +44,25 @@ function persistData(data) {
   }
 }
 
-// Simple debounce to prevent blocking UI on rapid updates
 function debounce(func, wait) {
   let timeout;
-  function debounced(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func.apply(this, args);
-    };
+  const debounced = (...args) => {
     clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  }
-  debounced.cancel = () => {
-    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
   };
+  debounced.cancel = () => clearTimeout(timeout);
   return debounced;
 }
 
-const debouncedSaveData = debounce(saveData, 500);
+const debouncedSaveData = debounce(saveData, 500); // Debounce saves to prevent blocking main thread
 
-// Flush pending saves when page is hidden/closed to prevent data loss
+let data = loadData();
+
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
       debouncedSaveData.cancel();
       saveData(data);
-    }
-  });
-}
-
-let data = loadData();
-
-// Flush pending saves when page is hidden/closed
-if (typeof document !== 'undefined') {
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-      persistData(data);
     }
   });
 }
