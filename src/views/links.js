@@ -53,16 +53,15 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
 
-    // ⚡ Bolt Optimization: Pre-calculate tags by link to avoid O(N*M) rendering
-    // Replaces O(N) store.getTagsForLink() call inside the O(M) links.map() loop
+    // Performance optimization: O(N) lookup for tags
     const tagsByLink = new Map();
-    store.tags.forEach(tag => {
-        if (tag.assignedLinkId) {
-            if (!tagsByLink.has(tag.assignedLinkId)) {
-                tagsByLink.set(tag.assignedLinkId, []);
-            }
-            tagsByLink.get(tag.assignedLinkId).push(tag);
+    store.tags.forEach(t => {
+      if (t.assignedLinkId) {
+        if (!tagsByLink.has(t.assignedLinkId)) {
+          tagsByLink.set(t.assignedLinkId, []);
         }
+        tagsByLink.get(t.assignedLinkId).push(t);
+      }
     });
 
     container.innerHTML = `
@@ -93,7 +92,10 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLink)).join('')}
+        ` : links.map((link, i) => {
+          const assignedTags = tagsByLink.get(link.id) || [];
+          return renderLinkCard(link, assignedTags, i);
+        }).join('')}
       </div>
     </div>
   `;
@@ -101,9 +103,8 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, index, tagsByLink) {
+function renderLinkCard(link, assignedTags, index) {
     const cat = getCategoryInfo(link.category);
-    const assignedTags = tagsByLink.get(link.id) || [];
 
     // Escape dynamic properties before injecting into template literals
     return `
