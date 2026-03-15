@@ -1,3 +1,4 @@
-## 2024-05-24 - [Avoid O(N*M) lookups in rendering lists by using Map]
-**Learning:** Using Array `.find()` or `.filter()` inside loops or event handlers (e.g. rendering loops like `renderLinkCard` inside a `.map()`) leads to severe O(N*M) or O(N^2) bottlenecks as list sizes grow.
-**Action:** Always pre-calculate lookups using `Map` prior to iterating over the primary list, reducing lookups to O(1) operations.
+
+## 2024-10-24 - Avoid Array Lookups in Template Loops
+**Learning:** $O(N \times M)$ operations inside template rendering loops cause severe performance bottlenecks, especially in vanilla JS apps rendering deep HTML strings.
+**Action:** Pre-compute maps outside loops for $O(1)$ lookups and pass them into row/card render functions.

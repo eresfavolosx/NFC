@@ -52,14 +52,11 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
 
-    // Pre-calculate tags per link to avoid O(N*M) lookups in renderLinkCard
-    const tagsByLinkId = new Map();
-    store.tags.forEach(tag => {
-        if (tag.assignedLinkId) {
-            if (!tagsByLinkId.has(tag.assignedLinkId)) {
-                tagsByLinkId.set(tag.assignedLinkId, []);
-            }
-            tagsByLinkId.get(tag.assignedLinkId).push(tag);
+    // ⚡ Bolt: Pre-calculate tag counts to avoid O(N*M) lookups inside the map loop
+    const tagCounts = new Map();
+    store.tags.forEach(t => {
+        if (t.assignedLinkId) {
+            tagCounts.set(t.assignedLinkId, (tagCounts.get(t.assignedLinkId) || 0) + 1);
         }
     });
 
@@ -91,7 +88,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLinkId)).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, i, tagCounts)).join('')}
       </div>
     </div>
   `;
@@ -99,9 +96,10 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, index, tagsByLinkId) {
+function renderLinkCard(link, index, tagCounts) {
     const cat = getCategoryInfo(link.category);
-    const assignedTags = tagsByLinkId.get(link.id) || [];
+    // ⚡ Bolt: Use pre-calculated map if provided, otherwise fallback to store lookup
+    const assignedTagsCount = tagCounts ? (tagCounts.get(link.id) || 0) : store.getTagsForLink(link.id).length;
 
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
@@ -115,8 +113,8 @@ function renderLinkCard(link, index, tagsByLinkId) {
       <h3 class="link-title">${escapeHTML(link.title)}</h3>
       <a class="link-url truncate" href="${escapeHTML(link.url)}" target="_blank" rel="noopener">${escapeHTML(link.url)}</a>
       <div class="link-meta">
-        <span class="badge badge-primary">${escapeHTML(cat.label)}</span>
-        ${assignedTags.length > 0 ? `<span class="badge badge-success">🏷️ ${assignedTags.length} tag${assignedTags.length > 1 ? 's' : ''}</span>` : ''}
+        <span class="badge badge-primary">${cat.label}</span>
+        ${assignedTagsCount > 0 ? `<span class="badge badge-success">🏷️ ${assignedTagsCount} tag${assignedTagsCount > 1 ? 's' : ''}</span>` : ''}
         <span class="link-clicks">👆 ${link.clicks} tap${link.clicks !== 1 ? 's' : ''}</span>
       </div>
     </div>
