@@ -8,7 +8,7 @@ import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
 import { navigate } from '../router.js';
-import { escapeHTML } from '../utils/security.js';
+import { escapeHTML } from '../utils/sanitize.js';
 
 function formatDate(dateStr) {
     if (!dateStr) return 'Never';
