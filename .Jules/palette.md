@@ -1,3 +1,7 @@
-## 2025-02-18 - Visual PIN Feedback Accessibility
-**Learning:** Visual-only indicators (like filling dots) leave screen reader users completely unaware of input progress. Adding `aria-label` to buttons isn't enough; they need to know *how many* digits they've entered.
-**Action:** Always pair visual progress indicators with a hidden `aria-live` region that explicitly narrates the state change (e.g., "1 digit entered").
+# Palette's UX Journal
+
+This journal documents critical UX and accessibility learnings from the project.
+
+## 2026-02-19 - Quick Copy Actions
+**Learning:** Users often need to copy URLs from list views without entering edit mode. Providing a dedicated, labeled action (📋) reduces friction significantly.
+**Action:** When displaying lists of copyable items (URLs, IDs, keys), always include a direct "Copy to Clipboard" action with visual feedback (toast).

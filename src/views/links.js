@@ -99,8 +99,9 @@ function renderLinkCard(link, index) {
       <div class="link-card-header">
         <span class="link-icon">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit link">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete link">🗑️</button>
+          <button class="btn btn-ghost btn-icon copy-link" data-url="${link.url}" title="Copy URL" aria-label="Copy URL">📋</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete">🗑️</button>
         </div>
       </div>
       <h3 class="link-title">${escapeHTML(link.title)}</h3>
@@ -136,7 +137,7 @@ function initLinksEvents() {
     });
 
     // Add link
-    function openAddLinkModal() {
+    const openAddLinkModal = () => {
         openModal({
             title: 'Create New Link',
             content: linkFormContent(),
@@ -159,13 +160,23 @@ function initLinksEvents() {
                 renderLinks();
             },
         });
-    }
+    };
 
-    const addBtn = document.getElementById('addLinkBtn');
-    addBtn?.addEventListener('click', openAddLinkModal);
+    document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
+    document.getElementById('emptyAddLink')?.addEventListener('click', openAddLinkModal);
 
-    const emptyAddBtn = document.getElementById('emptyAddLink');
-    emptyAddBtn?.addEventListener('click', openAddLinkModal);
+    // Copy link
+    document.querySelectorAll('.copy-link').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const url = btn.dataset.url;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Link copied to clipboard!', 'success');
+            }).catch(() => {
+                showToast('Failed to copy link', 'error');
+            });
+        });
+    });
 
     // Edit link
     document.querySelectorAll('.edit-link').forEach(btn => {
