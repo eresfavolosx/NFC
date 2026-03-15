@@ -21,7 +21,7 @@ export function renderTags() {
     const tags = store.tags;
     const links = store.links;
 
-    // ⚡ Bolt: Pre-calculate map to avoid O(N*M) lookup in renderTagRow
+    // Performance optimization: Pre-calculate links map to avoid O(N*M) lookup in renderTagRow
     const linksMap = new Map(links.map(l => [l.id, l]));
 
     container.innerHTML = `
@@ -47,7 +47,7 @@ export function renderTags() {
         </div>
       ` : `
         <div class="tags-list" id="tagsList">
-          ${tags.map((tag, i) => renderTagRow(tag, linksMap.get(tag.assignedLinkId), i)).join('')}
+          ${tags.map((tag, i) => renderTagRow(tag, linksMap, i)).join('')}
         </div>
       `}
     </div>
@@ -56,7 +56,9 @@ export function renderTags() {
     initTagsEvents(links);
 }
 
-function renderTagRow(tag, assignedLink, index) {
+function renderTagRow(tag, linksMap, index) {
+    const assignedLink = tag.assignedLinkId ? linksMap.get(tag.assignedLinkId) || null : null;
+
     return `
     <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
       <div class="tag-row-main">
@@ -230,7 +232,8 @@ function initTagsEvents(links) {
     // Search
     document.getElementById('tagSearch')?.addEventListener('input', (e) => {
         const q = e.target.value.toLowerCase();
-        // ⚡ Bolt: Pre-calculate map to avoid O(N*C) lookup during filtering
+
+        // Performance optimization: Pre-calculate tags map to avoid O(N^2) lookup
         const tagsMap = new Map(store.tags.map(t => [t.id, t]));
 
         document.querySelectorAll('.tag-row').forEach(row => {

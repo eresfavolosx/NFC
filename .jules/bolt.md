@@ -1,3 +1,3 @@
-## 2024-03-05 - Optimize array lookups in view rendering
-**Learning:** Rendering views with `N` items while performing a linear search `.find()` or `.filter()` over `M` items (e.g., finding tags for each link, or links for each tag) creates an $O(N \times M)$ performance bottleneck on the main thread, leading to poor UI rendering performance.
-**Action:** When rendering lists or filtering, pre-calculate a lookup map (e.g., a `Map` or an object) from the secondary array, changing the complexity to $O(N + M)$.
+## 2024-06-18 - Replacing O(N*M) lookups with Maps in view rendering and filtering loops
+**Learning:** Found a major performance bottleneck where views were executing linear searches via `.find()` or `.filter()` nested inside rendering and filtering loops. In list scenarios (e.g. `renderLinks` and `renderTags`), this led to O(N*M) or O(N^2) complexity, significantly degrading performance on large data sets, particularly during typing in search boxes.
+**Action:** When filtering or rendering lists of models that map to other models (like Links and Tags), always pre-calculate a lookup `Map` outside the loop before mapping or iterating over the collection to ensure lookups operate in O(1) time.

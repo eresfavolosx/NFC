@@ -52,12 +52,12 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
 
-    // ⚡ Bolt: Pre-calculate tags per link to avoid O(N*M) lookup in renderLinkCard
+    // Performance optimization: Pre-calculate tags by link to avoid O(N*M) lookup in renderLinkCard
     const tagsByLink = new Map();
-    store.tags.forEach(tag => {
-        if (tag.assignedLinkId) {
-            const count = tagsByLink.get(tag.assignedLinkId) || 0;
-            tagsByLink.set(tag.assignedLinkId, count + 1);
+    store.tags.forEach(t => {
+        if (t.assignedLinkId) {
+            if (!tagsByLink.has(t.assignedLinkId)) tagsByLink.set(t.assignedLinkId, []);
+            tagsByLink.get(t.assignedLinkId).push(t);
         }
     });
 
@@ -89,7 +89,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLink.get(link.id) || 0)).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLink)).join('')}
       </div>
     </div>
   `;
@@ -97,8 +97,9 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, index, assignedTagsCount) {
+function renderLinkCard(link, index, tagsByLink) {
     const cat = getCategoryInfo(link.category);
+    const assignedTags = tagsByLink.get(link.id) || [];
 
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
@@ -264,6 +265,9 @@ function filterLinks(search, category) {
     const linksMap = new Map(store.links.map(l => [l.id, l]));
 
     // Pre-calculate links map to prevent O(N^2) lookup inside querySelectorAll loop
+    const linksMap = new Map(links.map(l => [l.id, l]));
+
+    // Performance optimization: Pre-calculate links map to avoid O(N^2) lookup
     const linksMap = new Map(links.map(l => [l.id, l]));
 
     cards.forEach(card => {
