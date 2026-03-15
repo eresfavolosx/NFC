@@ -1,3 +1,3 @@
-## 2024-05-23 - Synchronous Storage Bottleneck
-**Learning:** The `store.js` implementation used a synchronous `localStorage.setItem` call inside the `_notify` loop, which runs on every single state mutation. This creates a linear performance degradation (O(N) IO operations) as the number of updates increases, blocking the main thread for seconds during batch operations (e.g., 3.4s for 2000 updates).
-**Action:** Always wrap persistence layers in a debounced handler (e.g., 500ms) to coalesce rapid updates into a single IO operation, while ensuring data integrity with `visibilitychange` listeners.
+## 2024-05-24 - Synchronous LocalStorage Blocking
+**Learning:** `localStorage.setItem` is synchronous and blocks the main thread. In `src/store.js`, this was called on every update, potentially causing jank during rapid interactions. The empty state "Create Link" button (`#emptyAddLink`) in `src/views/links.js` was previously non-functional due to selector logic prioritizing `#addLinkBtn`.
+**Action:** Implement debouncing (500ms) for persistence operations, coupled with `visibilitychange` flush to prevent data loss. Ensure DOM selectors account for multiple potential elements (e.g., toolbar vs empty state buttons) to avoid silent failures in event listeners.

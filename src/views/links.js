@@ -133,8 +133,7 @@ function initLinksEvents() {
     });
 
     // Add link
-    const addBtn = document.getElementById('addLinkBtn') || document.getElementById('emptyAddLink');
-    addBtn?.addEventListener('click', () => {
+    const openAddLinkModal = () => {
         openModal({
             title: 'Create New Link',
             content: linkFormContent(),
@@ -158,6 +157,9 @@ function initLinksEvents() {
             },
         });
     };
+
+    document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
+    document.getElementById('emptyAddLink')?.addEventListener('click', openAddLinkModal);
 
     // Add link (Toolbar)
     document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);

@@ -33,7 +33,7 @@ function loadData() {
 
 let saveTimeout;
 
-function persistData(dataToSave) {
+function persistData(data) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
   } catch (e) {
@@ -41,17 +41,19 @@ function persistData(dataToSave) {
   }
 }
 
-function saveData(dataToSave) {
+function saveData(data) {
   if (saveTimeout) clearTimeout(saveTimeout);
   saveTimeout = setTimeout(() => {
-    persistData(dataToSave);
+    persistData(data);
     saveTimeout = null;
   }, 500);
 }
 
-// Flush pending saves when page becomes hidden to prevent data loss
-if (typeof window !== 'undefined') {
-  window.addEventListener('visibilitychange', () => {
+let data = loadData();
+
+// Flush pending saves on visibility change (e.g. closing tab)
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden' && saveTimeout) {
       clearTimeout(saveTimeout);
       persistData(data);
@@ -59,20 +61,6 @@ if (typeof window !== 'undefined') {
     }
   });
 }
-
-let data = loadData();
-
-// Ensure data is saved when the page is hidden or closed
-if (typeof document !== 'undefined') {
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && saveTimeout) {
-      clearTimeout(saveTimeout);
-      saveData(data);
-      saveTimeout = null;
-    }
-  });
-}
-
 const listeners = new Set();
 
 async function hashPin(pin) {
