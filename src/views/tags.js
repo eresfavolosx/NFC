@@ -194,7 +194,7 @@ function initTagsEvents(links) {
                     }
                     store.assignLinkToTag(tag.id, data.linkId);
                     closeModal();
-                    showToast(`Link assigned to "${escapeHTML(tag.label)}"!`, 'success');
+                    showToast(`Link assigned to "${escapeHTML(tag.label)}"\!`, 'success');
                     renderTags();
                 },
             });

@@ -6,7 +6,7 @@ import { store } from '../store.js';
 import { nfc } from '../nfc.js';
 import { renderHeader } from '../components/header.js';
 import { showToast } from '../components/toast.js';
-import { escapeHTML, sanitizeURL } from '../utils/security.js';
+import { escapeHTML } from '../utils/security.js';
 
 export function renderWriter() {
   const container = document.getElementById('page-content');
@@ -96,7 +96,7 @@ function renderIOSGuide(links) {
         ` : `
           <select class="form-select" id="iosCopySelect">
             <option value="">— Choose a link —</option>
-            ${links.map(l => `<option value="${sanitizeURL(l.url)}" data-title="${escapeHTML(l.title)}">${escapeHTML(l.title)} — ${escapeHTML(l.url)}</option>`).join('')}
+            ${links.map(l => `<option value="${escapeHTML(l.url)}" data-title="${escapeHTML(l.title)}">${escapeHTML(l.title)} — ${escapeHTML(l.url)}</option>`).join('')}
           </select>
           <div class="ios-copy-preview" id="iosCopyPreview" style="display: none;">
             <code class="ios-copy-url" id="iosCopyUrl"></code>
@@ -187,7 +187,7 @@ function renderWriterUI(links, tags, compatInfo) {
         <div class="card nfc-compat-warning animate-fade-up">
           <div class="nfc-compat-icon">⚠️</div>
           <h3>NFC Not Available</h3>
-          <p>${compatInfo.message}</p>
+          <p>${escapeHTML(compatInfo.message)}</p>
           <p class="nfc-compat-note">You can still manage links and tags — just use an Android device with Chrome to write them.</p>
         </div>
       ` : ''}
