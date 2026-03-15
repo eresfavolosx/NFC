@@ -21,11 +21,8 @@ export function renderTags() {
     const tags = store.tags;
     const links = store.links;
 
-    // ⚡ Bolt Performance Optimization: Pre-calculate map for O(1) lookups instead of O(N*M)
-    const linksMap = new Map();
-    for (const link of links) {
-        linksMap.set(link.id, link);
-    }
+    // ⚡ Bolt: O(N) map lookup to prevent O(N*M) bottleneck when rendering tags
+    const linksById = new Map(links.map(l => [l.id, l]));
 
     container.innerHTML = `
     ${renderHeader('Tags', 'Manage your NFC bracelet tags')}
@@ -50,7 +47,7 @@ export function renderTags() {
         </div>
       ` : `
         <div class="tags-list" id="tagsList">
-          ${tags.map((tag, i) => renderTagRow(tag, linksMap.get(tag.assignedLinkId) || null, i)).join('')}
+          ${tags.map((tag, i) => renderTagRow(tag, linksById, i)).join('')}
         </div>
       `}
     </div>
@@ -59,7 +56,9 @@ export function renderTags() {
     initTagsEvents(links);
 }
 
-function renderTagRow(tag, assignedLink, index) {
+function renderTagRow(tag, linksById, index) {
+    const assignedLink = tag.assignedLinkId ? linksById.get(tag.assignedLinkId) : null;
+
     return `
     <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
       <div class="tag-row-main">

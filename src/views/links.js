@@ -76,6 +76,17 @@ export function renderLinks() {
         }
     }
 
+    // ⚡ Bolt: O(N) map lookup to prevent O(N*M) bottleneck when rendering links
+    const tagsByLinkId = new Map();
+    for (const tag of store.tags) {
+        if (tag.assignedLinkId) {
+            if (!tagsByLinkId.has(tag.assignedLinkId)) {
+                tagsByLinkId.set(tag.assignedLinkId, []);
+            }
+            tagsByLinkId.get(tag.assignedLinkId).push(tag);
+        }
+    }
+
     container.innerHTML = `
     ${renderHeader('Links', 'Manage your destination URLs')}
 
@@ -104,7 +115,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLink.get(link.id) || [])).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, tagsByLinkId.get(link.id) || [], i)).join('')}
       </div>
     </div>
   `;
@@ -112,7 +123,7 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, index, assignedTags) {
+function renderLinkCard(link, assignedTags, index) {
     const cat = getCategoryInfo(link.category);
 
     // Escape dynamic properties before injecting into template literals
