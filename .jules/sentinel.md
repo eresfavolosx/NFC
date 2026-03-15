@@ -1,4 +1,4 @@
-## 2026-02-18 - Stored XSS via Direct DOM Manipulation
-**Vulnerability:** Direct interpolation of user-supplied data (link titles, URLs, tag labels) into `innerHTML` strings in multiple views (`links.js`, `tags.js`, `dashboard.js`, `writer.js`).
-**Learning:** The project relies heavily on vanilla JS `innerHTML` updates for rendering, which makes it extremely prone to XSS if manual escaping is missed. There is no framework-level auto-escaping (like React or Vue).
-**Prevention:** Created a centralized `escapeHTML` utility. Future views must always wrap user input with `escapeHTML` or use `textContent` instead of `innerHTML` where possible.
+## 2025-02-17 - Secure PIN Storage
+**Vulnerability:** Admin PIN was stored in plaintext in `src/store.js` and `localStorage`, exposing it to anyone with access to the client-side code or storage.
+**Learning:** Client-side only applications must use standard Web Crypto API (`crypto.subtle`) to hash secrets before storage, even if there is no backend. Backward compatibility for legacy plaintext data must be handled carefully during migration (hash on first successful login).
+**Prevention:** Always use hashing (SHA-256 or better) for any secret storage, and never commit secrets to source code.
