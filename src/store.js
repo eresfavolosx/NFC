@@ -31,21 +31,33 @@ function loadData() {
   return { ...defaultData };
 }
 
-function saveData(data) {
+let saveTimeout;
+
+function persistData(dataToSave) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
   } catch (e) {
     console.error('Failed to save store data:', e);
   }
 }
 
-let saveTimeout;
-function scheduleSave(dataToSave) {
+function saveData(dataToSave) {
   if (saveTimeout) clearTimeout(saveTimeout);
   saveTimeout = setTimeout(() => {
-    saveData(dataToSave);
+    persistData(dataToSave);
     saveTimeout = null;
   }, 500);
+}
+
+// Flush pending saves when page becomes hidden to prevent data loss
+if (typeof window !== 'undefined') {
+  window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && saveTimeout) {
+      clearTimeout(saveTimeout);
+      persistData(data);
+      saveTimeout = null;
+    }
+  });
 }
 
 let data = loadData();
