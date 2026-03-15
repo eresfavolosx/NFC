@@ -36,6 +36,28 @@ function saveData(data) {
   }
 }
 
+// ⚡ Bolt Optimization: Debounce storage writes to avoid blocking main thread
+let saveTimeout = null;
+
+function debouncedSave(data) {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveData(data);
+    saveTimeout = null;
+  }, 500);
+}
+
+// Flush pending saves when page is hidden to prevent data loss
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && saveTimeout) {
+      clearTimeout(saveTimeout);
+      saveData(data);
+      saveTimeout = null;
+    }
+  });
+}
+
 let data = loadData();
 let saveTimeout = null;
 
@@ -70,7 +92,7 @@ export const store = {
   },
 
   _notify() {
-    scheduleSave(data);
+    debouncedSave(data);
     listeners.forEach(fn => fn(data));
   },
 

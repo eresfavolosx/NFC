@@ -1,3 +1,3 @@
-## 2025-02-18 - localStorage Debouncing Discrepancy
-**Learning:** The documentation/memory claimed that localStorage persistence was debounced, but codebase inspection revealed it was synchronous and blocking. This caused performance degradation on rapid updates.
-**Action:** Always verify performance claims in the actual codebase (read the source) before assuming optimizations are in place. Debouncing localStorage is a critical optimization for this app.
+## 2024-03-22 - Synchronous LocalStorage Writes
+**Learning:** Synchronous `localStorage` writes on every state change block the main thread significantly (over 200ms for 1000 items).
+**Action:** Always debounce `localStorage` persistence and use `visibilitychange` to flush pending writes.
