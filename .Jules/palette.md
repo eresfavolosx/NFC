@@ -1,7 +1,5 @@
-# Palette's UX Journal
+# Palette's Journal
 
-This journal documents critical UX and accessibility learnings from the project.
-
-## 2026-02-19 - Quick Copy Actions
-**Learning:** Users often need to copy URLs from list views without entering edit mode. Providing a dedicated, labeled action (📋) reduces friction significantly.
-**Action:** When displaying lists of copyable items (URLs, IDs, keys), always include a direct "Copy to Clipboard" action with visual feedback (toast).
+## 2025-05-15 - Missing Copy Functionality
+**Learning:** Users managing links often need to copy the URLs they create. The current UI lacks a quick, accessible way to do this without opening the link or selecting text.
+**Action:** Add a "Copy to Clipboard" button to link cards with proper ARIA labels and visual feedback (toast).
