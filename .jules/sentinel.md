@@ -1,4 +1,4 @@
-## 2024-03-11 - [HIGH] DOM-based XSS in UI Component Templates
-**Vulnerability:** UI components (`modal.js`, `toast.js`, and `links.js`) were rendering user-supplied strings directly into the DOM using template literals assigned to `.innerHTML` without escaping HTML characters, allowing malicious users to execute arbitrary JavaScript (DOM-based XSS) via payloads like `<script>` or event handlers (e.g. `<img src=x onerror=alert(1)>`) injected into fields such as title or URL.
-**Learning:** This existed because vanilla JS applications building UI with string interpolation are inherently vulnerable to injection unless data is manually sanitized or assigned securely via `.textContent`. Developer oversight in component architecture omitted a central sanitization utility.
-**Prevention:** Always use explicit text sanitization functions (like `escapeHTML`) when interpolating user-controlled variables into `.innerHTML` template strings, or assign directly via `.textContent` where possible. Check carefully for falsy values like `0` to avoid data loss.
+## 2024-03-13 - XSS in Links and Tags UI
+**Vulnerability:** DOM-based Cross-Site Scripting (XSS) in UI views via unescaped string interpolation in HTML template literals for `title`, `url`, `label`, and `serialNumber`.
+**Learning:** Due to the lack of an HTML rendering framework that automatically escapes variables (like React or Vue), all user inputs were injected directly into the DOM using raw template literals.
+**Prevention:** Always use the dedicated `escapeHTML` utility function (now defined in `src/components/modal.js`) to wrap any user-supplied or externally-provided data before interpolating it into HTML template strings.
