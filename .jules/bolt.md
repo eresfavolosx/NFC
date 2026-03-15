@@ -1,3 +1,4 @@
-## 2024-05-15 - DOM Filtering Loops Bottleneck
-**Learning:** Calling `Array.prototype.find()` or helper wrappers like `store.getTag()` inside a DOM element iteration loop (e.g. `querySelectorAll().forEach()`) causes an $O(N^2)$ algorithmic bottleneck, resulting in severe frame drops and jank during search/filter operations on large datasets.
-**Action:** Always pre-calculate a lookup `Map` ($O(N)$) outside the DOM iteration loop to ensure $O(1)$ property access per item, which is critical for maintaining responsive UI filtering when dealing with datasets over 1,000 items.
+
+## 2024-05-23 - Map-based lookup optimization
+**Learning:** This codebase uses a vanilla JS rendering approach where views iterate over `store.links` or `store.tags`. Performing searches or filters (like `links.find` or `store.getTagsForLink`) inside these render loops creates massive O(N^2) or O(N*M) bottlenecks.
+**Action:** When rendering related lists, always pre-calculate a `Map` outside the render loop for O(1) lookups, achieving an O(N) rendering performance.

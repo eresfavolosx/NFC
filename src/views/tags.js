@@ -21,9 +21,9 @@ export function renderTags() {
     const tags = store.tags;
     const links = store.links;
 
-    // Performance optimization: O(N) lookup for links
+    // ⚡ Bolt: Pre-calculate links by ID to avoid O(N*M) lookups during render
     const linksById = new Map();
-    links.forEach(l => linksById.set(l.id, l));
+    links.forEach(link => linksById.set(link.id, link));
 
     container.innerHTML = `
     ${renderHeader('Tags', 'Manage your NFC bracelet tags')}
