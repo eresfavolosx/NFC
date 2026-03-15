@@ -23,6 +23,13 @@ const defaultData = {
   activity: [],
 };
 
+async function hashPin(pin) {
+  const msgBuffer = new TextEncoder().encode(pin);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -92,36 +99,25 @@ export const store = {
   get isAuthenticated() { return data.settings.isAuthenticated; },
 
   async login(pin) {
+    const inputHash = await hashPin(pin);
     const storedPin = data.settings.adminPin;
+    const isStoredHash = storedPin.length === 64 && /^[0-9a-f]+$/i.test(storedPin);
 
-    // Migration check: legacy pins are short (e.g. 4 chars), hash is 64 chars
-    const isLegacy = storedPin.length < 64;
-
-    if (isLegacy) {
-      if (pin === storedPin) {
-        // Migrate to hash immediately
-        data.settings.adminPin = await hashPin(pin);
-        data.settings.isAuthenticated = true;
-        this._notify();
-        return true;
-      }
-    } else {
-      const inputHash = await hashPin(pin);
+    if (isStoredHash) {
       if (inputHash === storedPin) {
         data.settings.isAuthenticated = true;
         this._notify();
         return true;
       }
-    }
-
-    // Legacy migration: check if stored PIN is plaintext
-    // If stored PIN length is not 64 (SHA-256 hex length), it might be legacy
-    if (data.settings.adminPin === pin) {
-      // Migrate to hash
-      data.settings.adminPin = hashedPin;
-      data.settings.isAuthenticated = true;
-      this._notify();
-      return true;
+    } else {
+      // Legacy: storedPin is plaintext
+      if (pin === storedPin) {
+        // Migrate to hash
+        data.settings.adminPin = inputHash;
+        data.settings.isAuthenticated = true;
+        this._notify();
+        return true;
+      }
     }
 
     return false;
@@ -133,18 +129,18 @@ export const store = {
   },
 
   async changePin(oldPin, newPin) {
+    const inputHash = await hashPin(oldPin);
     const storedPin = data.settings.adminPin;
-    const isLegacy = storedPin.length < 64;
-    let oldPinValid = false;
+    const isStoredHash = storedPin.length === 64 && /^[0-9a-f]+$/i.test(storedPin);
+    let isValid = false;
 
-    if (isLegacy) {
-      if (oldPin === storedPin) oldPinValid = true;
+    if (isStoredHash) {
+      if (inputHash === storedPin) isValid = true;
     } else {
-      const inputHash = await hashPin(oldPin);
-      if (inputHash === storedPin) oldPinValid = true;
+      if (oldPin === storedPin) isValid = true;
     }
 
-    if (oldPinValid) {
+    if (isValid) {
       data.settings.adminPin = await hashPin(newPin);
       this._notify();
       return true;
