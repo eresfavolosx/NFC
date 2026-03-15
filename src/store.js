@@ -61,7 +61,7 @@ function debounce(func, wait) {
   return debounced;
 }
 
-const debouncedSaveData = debounce(saveData, 500); // Debounce saves to prevent blocking main thread
+const debouncedSaveData = debounce(saveData, 500);
 
 let data = loadData();
 
