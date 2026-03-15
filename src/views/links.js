@@ -6,7 +6,7 @@ import { store } from '../store.js';
 import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
-import { escapeHTML, sanitizeURL } from '../utils/security.js';
+import { escapeHTML } from '../utils/security.js';
 
 const CATEGORIES = [
     { value: 'general', label: 'General', icon: '🔗' },
@@ -103,7 +103,7 @@ function renderLinkCard(link, index) {
         </div>
       </div>
       <h3 class="link-title">${escapeHTML(link.title)}</h3>
-      <a class="link-url truncate" href="${sanitizeURL(link.url)}" target="_blank" rel="noopener">${escapeHTML(link.url)}</a>
+      <a class="link-url truncate" href="${escapeHTML(link.url)}" target="_blank" rel="noopener">${escapeHTML(link.url)}</a>
       <div class="link-meta">
         <span class="badge badge-primary">${cat.label}</span>
         ${assignedTags.length > 0 ? `<span class="badge badge-success">🏷️ ${assignedTags.length} tag${assignedTags.length > 1 ? 's' : ''}</span>` : ''}
