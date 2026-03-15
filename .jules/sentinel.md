@@ -1,4 +1,5 @@
-## 2024-05-24 - Unsafe innerHTML Interpolation XSS
-**Vulnerability:** XSS via unescaped string interpolations into `innerHTML` inside `src/components/toast.js` and `src/components/modal.js` templates.
-**Learning:** Shared UI components used across the entire app directly interpolated arbitrary arguments (`message`, `title`, etc.) into `innerHTML` template strings. This means any caller passing user-controlled data to these components would accidentally introduce XSS vulnerabilities, because the components trusted the inputs.
-**Prevention:** Always use safe DOM APIs like `.textContent` to set text elements dynamically, instead of interpolating strings directly into `innerHTML`. Extract standard utility functions like `escapeHTML` to centralize safe sanitization when `innerHTML` interpolation is strictly necessary.
+
+## 2024-05-24 - Fix DOM-based XSS in UI Components
+**Vulnerability:** DOM-based Cross-Site Scripting (XSS) in `showToast` and `openModal` components via string interpolation into `innerHTML`.
+**Learning:** `innerHTML` was used to construct entire UI elements, including injecting user-controlled text directly into the markup. This allowed malicious payloads (e.g., `<img src=x onerror=...>`) to be executed by the browser.
+**Prevention:** Avoid injecting dynamic data directly into `innerHTML`. Instead, create the structural HTML safely (without data), and then assign user-provided text using `.textContent` on the specific elements.
