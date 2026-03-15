@@ -38,8 +38,6 @@ function loadData() {
   return { ...defaultData };
 }
 
-let saveTimeout;
-
 function persistData(data) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
@@ -48,26 +46,27 @@ function persistData(data) {
   }
 }
 
-function saveData(data) {
-  if (saveTimeout) clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => {
-    persistData(data);
-    saveTimeout = null;
-  }, 500);
+function debounce(fn, ms) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn(...args), ms);
+  };
 }
+
+const saveData = debounce(persistData, 500);
 
 let data = loadData();
 
-// Flush pending saves on visibility change (e.g. closing tab)
+// Flush pending saves when page is hidden/closed
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && saveTimeout) {
-      clearTimeout(saveTimeout);
+    if (document.visibilityState === 'hidden') {
       persistData(data);
-      saveTimeout = null;
     }
   });
 }
+
 const listeners = new Set();
 
 async function hashPin(pin) {

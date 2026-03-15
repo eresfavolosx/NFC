@@ -1,3 +1,5 @@
-## 2024-05-24 - Synchronous LocalStorage Blocking
-**Learning:** `localStorage.setItem` is synchronous and blocks the main thread. In `src/store.js`, this was called on every update, potentially causing jank during rapid interactions. The empty state "Create Link" button (`#emptyAddLink`) in `src/views/links.js` was previously non-functional due to selector logic prioritizing `#addLinkBtn`.
-**Action:** Implement debouncing (500ms) for persistence operations, coupled with `visibilitychange` flush to prevent data loss. Ensure DOM selectors account for multiple potential elements (e.g., toolbar vs empty state buttons) to avoid silent failures in event listeners.
+# Bolt's Journal
+
+## 2025-01-22 - Debouncing LocalStorage Writes
+**Learning:** Synchronous `localStorage.setItem` blocks the main thread, especially when serializing large JSON objects.
+**Action:** Always debounce persistence operations for large state objects and use `visibilitychange` to flush pending writes.
