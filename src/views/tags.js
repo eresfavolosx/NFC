@@ -80,10 +80,10 @@ function renderTagRow(tag, links, index) {
         <button class="btn btn-secondary assign-link-btn" data-id="${tag.id}">
           ${assignedLink ? '🔄 Reassign' : '🔗 Assign Link'}
         </button>
-        <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${tag.id}" title="Write to this tag" aria-label="Write to tag">
+        <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${tag.id}" aria-label="Write to tag" title="Write to this tag">
           📡
         </button>
-        <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${tag.id}" title="Delete tag" aria-label="Delete tag">
+        <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${tag.id}" aria-label="Delete tag" title="Delete tag">
           🗑️
         </button>
       </div>

@@ -1,3 +1,3 @@
-## 2024-05-22 - [Revealing Hidden Actions]
-**Learning:** Using `opacity: 0` to hide action buttons until hover creates an accessibility barrier for keyboard users.
-**Action:** Always include `.parent:focus-within` alongside `.parent:hover` to reveal interactive elements when they receive keyboard focus.
+## 2024-05-22 - Keyboard Accessibility for Hidden Actions
+**Learning:** Elements hidden with `opacity: 0` remain focusable but invisible to keyboard users. Using `:hover` alone to reveal them creates an accessibility barrier.
+**Action:** Always pair `:hover` reveal effects with `:focus-within` on the parent container (or `:focus` on the element itself) to ensure keyboard users can perceive the controls when they tab to them.

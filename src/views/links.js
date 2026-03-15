@@ -99,9 +99,8 @@ function renderLinkCard(link, index) {
       <div class="link-card-header">
         <span class="link-icon">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon copy-link" data-id="${link.id}" title="Copy Link" aria-label="Copy Link">📋</button>
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete">🗑️</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" aria-label="Edit link" title="Edit">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" aria-label="Delete link" title="Delete">🗑️</button>
         </div>
       </div>
       <h3 class="link-title">${escapeHTML(link.title)}</h3>
