@@ -8,6 +8,7 @@ import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
 import { navigate } from '../router.js';
+import { escapeHTML } from '../utils/security.js';
 
 function formatDate(dateStr) {
     if (!dateStr) return 'Never';
@@ -63,11 +64,11 @@ function renderTagRow(tag, links, index) {
           <span class="tag-icon-big">🏷️</span>
         </div>
         <div class="tag-info">
-          <h3 class="tag-label">${tag.label}</h3>
+          <h3 class="tag-label">${escapeHTML(tag.label)}</h3>
           <div class="tag-details">
-            ${tag.serialNumber ? `<span class="badge badge-info">SN: ${tag.serialNumber}</span>` : ''}
+            ${tag.serialNumber ? `<span class="badge badge-info">SN: ${escapeHTML(tag.serialNumber)}</span>` : ''}
             ${assignedLink
-            ? `<span class="badge badge-success">🔗 ${assignedLink.title}</span>`
+            ? `<span class="badge badge-success">🔗 ${escapeHTML(assignedLink.title)}</span>`
             : `<span class="badge badge-warning">⚠️ No link assigned</span>`
         }
             <span class="tag-date">Last written: ${formatDate(tag.lastWritten)}</span>
@@ -120,7 +121,7 @@ function initTagsEvents(links) {
                 }
                 store.createTag(data);
                 closeModal();
-                showToast(`Tag "${data.label}" registered!`, 'success');
+                showToast(`Tag "${escapeHTML(data.label)}" registered!`, 'success');
                 renderTags();
             },
         });
@@ -170,7 +171,7 @@ function initTagsEvents(links) {
             }
 
             openModal({
-                title: `Assign Link to "${tag.label}"`,
+                title: `Assign Link to "${escapeHTML(tag.label)}"`,
                 content: `
           <div class="form-group">
             <label class="form-label">Select a link to assign</label>
@@ -178,7 +179,7 @@ function initTagsEvents(links) {
               <option value="">— Choose a link —</option>
               ${links.map(l => `
                 <option value="${l.id}" ${tag.assignedLinkId === l.id ? 'selected' : ''}>
-                  ${l.title} — ${l.url}
+                  ${escapeHTML(l.title)} — ${escapeHTML(l.url)}
                 </option>
               `).join('')}
             </select>
@@ -193,7 +194,7 @@ function initTagsEvents(links) {
                     }
                     store.assignLinkToTag(tag.id, data.linkId);
                     closeModal();
-                    showToast(`Link assigned to "${tag.label}"!`, 'success');
+                    showToast(`Link assigned to "${escapeHTML(tag.label)}"!`, 'success');
                     renderTags();
                 },
             });
@@ -214,7 +215,7 @@ function initTagsEvents(links) {
             if (!tag) return;
             openModal({
                 title: 'Delete Tag',
-                content: `<p>Are you sure you want to delete <strong>"${tag.label}"</strong>?</p>`,
+                content: `<p>Are you sure you want to delete <strong>"${escapeHTML(tag.label)}"</strong>?</p>`,
                 submitLabel: 'Delete',
                 onSubmit: () => {
                     store.deleteTag(tag.id);
