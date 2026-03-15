@@ -53,16 +53,16 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
 
-    // ⚡ Bolt: Pre-calculate tags by link ID to avoid O(N*M) lookups during render
+    // ⚡ Bolt: Optimize O(N^2) lookup to O(N) by grouping tags by assignedLinkId
     const tagsByLinkId = new Map();
-    store.tags.forEach(tag => {
+    for (const tag of store.tags) {
         if (tag.assignedLinkId) {
             if (!tagsByLinkId.has(tag.assignedLinkId)) {
                 tagsByLinkId.set(tag.assignedLinkId, []);
             }
             tagsByLinkId.get(tag.assignedLinkId).push(tag);
         }
-    });
+    }
 
     container.innerHTML = `
     ${renderHeader('Links', 'Manage your destination URLs')}
