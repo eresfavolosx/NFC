@@ -116,27 +116,6 @@ function renderLinkCard(link, index) {
 }
 
 function initLinksEvents() {
-    // Copy link
-    document.querySelectorAll('.copy-link').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const url = btn.dataset.url;
-            try {
-                await navigator.clipboard.writeText(url);
-                showToast('Link copied to clipboard!', 'success');
-
-                btn.textContent = '✅';
-                setTimeout(() => {
-                    btn.textContent = '📋';
-                }, 1500);
-            } catch (err) {
-                showToast('Failed to copy link', 'error');
-                console.error('Copy failed', err);
-            }
-        });
-    });
-
-    // Add link
     const openAddLinkModal = () => {
         openModal({
             title: 'Create New Link',
@@ -162,27 +141,16 @@ function initLinksEvents() {
         });
     };
 
+    // Add link (Toolbar)
     document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
-    document.getElementById('emptyAddLink')?.addEventListener('click', openAddLinkModal);
 
-    // Copy link
-    document.querySelectorAll('.copy-link').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+    // Event Delegation for Grid (Edit, Delete, Empty State Add)
+    document.getElementById('linksGrid')?.addEventListener('click', (e) => {
+        // Edit Link
+        const editBtn = e.target.closest('.edit-link');
+        if (editBtn) {
             e.stopPropagation();
-            const url = btn.dataset.url;
-            navigator.clipboard.writeText(url).then(() => {
-                showToast('Link copied to clipboard!', 'success');
-            }).catch(() => {
-                showToast('Failed to copy link', 'error');
-            });
-        });
-    });
-
-    // Edit link
-    document.querySelectorAll('.edit-link').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const link = store.getLink(btn.dataset.id);
+            const link = store.getLink(editBtn.dataset.id);
             if (!link) return;
             openModal({
                 title: 'Edit Link',
@@ -200,14 +168,14 @@ function initLinksEvents() {
                     renderLinks();
                 },
             });
-        });
-    });
+            return;
+        }
 
-    // Delete link
-    document.querySelectorAll('.delete-link').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        // Delete Link
+        const deleteBtn = e.target.closest('.delete-link');
+        if (deleteBtn) {
             e.stopPropagation();
-            const link = store.getLink(btn.dataset.id);
+            const link = store.getLink(deleteBtn.dataset.id);
             if (!link) return;
             openModal({
                 title: 'Delete Link',
@@ -220,7 +188,14 @@ function initLinksEvents() {
                     renderLinks();
                 },
             });
-        });
+            return;
+        }
+
+        // Empty State Create Link
+        const emptyAddBtn = e.target.closest('#emptyAddLink');
+        if (emptyAddBtn) {
+            openAddLinkModal();
+        }
     });
 
     // Search
