@@ -17,6 +17,7 @@ import { renderWriter } from './views/writer.js';
 import { renderSettings } from './views/settings.js';
 import { renderAnalytics } from './views/analytics.js';
 import { renderTemplates } from './views/templates.js';
+import { renderProfile } from './views/profile.js';
 import { renderRedirect } from './views/redirect.js';
 import { nfc } from './nfc.js';
 
@@ -31,6 +32,23 @@ function authGuard(renderFn) {
     updateSidebarActive(getCurrentRoute());
     renderFn();
   };
+}
+
+function premiumGuard(renderFn) {
+    return () => {
+        if (!store.isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+        if (!store.isPremium()) {
+            navigate('/profile');
+            showToast('Premium feature. Start your trial or upgrade to access!', 'warning');
+            return;
+        }
+        ensureAppLayout();
+        updateSidebarActive(getCurrentRoute());
+        renderFn();
+    };
 }
 
 // ── Ensure the sidebar + main layout is present ──
@@ -68,8 +86,9 @@ registerRoute('/links', authGuard(renderLinks));
 registerRoute('/tags', authGuard(renderTags));
 registerRoute('/writer', authGuard(renderWriter));
 registerRoute('/settings', authGuard(renderSettings));
-registerRoute('/analytics', authGuard(renderAnalytics));
-registerRoute('/templates', authGuard(renderTemplates));
+registerRoute('/analytics', premiumGuard(renderAnalytics));
+registerRoute('/templates', premiumGuard(renderTemplates));
+registerRoute('/profile', authGuard(renderProfile));
 registerRoute('/r/:id', renderRedirect);
 
 // 404

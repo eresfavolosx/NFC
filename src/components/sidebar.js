@@ -10,7 +10,10 @@ const NAV_ITEMS = [
     { path: '/links', icon: '🔗', label: 'Links' },
     { path: '/tags', icon: '🏷️', label: 'Tags' },
     { path: '/writer', icon: '📡', label: 'NFC Writer' },
+    { path: '/analytics', icon: '📈', label: 'Analytics', premium: true },
+    { path: '/templates', icon: '📋', label: 'Templates', premium: true },
     { path: '/settings', icon: '⚙️', label: 'Settings' },
+    { path: '/profile', icon: '👤', label: 'Profile' },
 ];
 
 export function renderSidebar() {
@@ -37,10 +40,12 @@ export function renderSidebar() {
     <nav class="sidebar-nav">
       ${NAV_ITEMS.map(item => `
         <a href="#${item.path}"
-           class="sidebar-nav-item ${currentPath === item.path ? 'active' : ''}"
+           class="sidebar-nav-item ${currentPath === item.path ? 'active' : ''} ${item.premium && !store.isPremium() ? 'nav-locked' : ''}"
            data-path="${item.path}">
           <span class="nav-icon">${item.icon}</span>
           <span class="nav-label">${item.label}</span>
+          ${item.premium && !store.isPremium() ? '<span class="lock-icon">🔒</span>' : ''}
+          ${item.path === '/profile' && store.isPremium() ? '<span class="pro-tag">PRO</span>' : ''}
         </a>
       `).join('')}
     </nav>

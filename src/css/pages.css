@@ -1279,3 +1279,122 @@
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
+
+/* ══════════════════════════════════
+   PROFILE & SUBSCRIPTION
+   ══════════════════════════════════ */
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xl);
+    padding: var(--space-md) 0;
+}
+
+.avatar-placeholder {
+    width: 64px;
+    height: 64px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+}
+
+.profile-avatar img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--color-primary);
+}
+
+.profile-name {
+    font-size: 1.25rem;
+    font-weight: var(--font-weight-bold);
+    margin-bottom: 2px;
+}
+
+.profile-email {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.card-pro {
+    border: 1px solid var(--color-primary);
+    box-shadow: 0 0 20px rgba(131, 110, 249, 0.1);
+}
+
+.plan-features {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-lg) 0;
+}
+
+.plan-features li {
+    padding: 6px 0;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.plan-features li::before {
+    content: '•';
+    color: var(--color-primary);
+}
+
+.feat-disabled {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+/* Comparison Table */
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-md);
+}
+
+.comparison-table th, .comparison-table td {
+    padding: var(--space-md);
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.comparison-table th:nth-child(2), .comparison-table td:nth-child(2),
+.comparison-table th:nth-child(3), .comparison-table td:nth-child(3) {
+    text-align: center;
+}
+
+.comparison-table th {
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Sidebar Lock */
+.nav-locked {
+    opacity: 0.7;
+}
+
+.lock-icon {
+    font-size: 0.8rem;
+    margin-left: auto;
+    filter: grayscale(1);
+}
+
+.pro-tag {
+    font-size: 10px;
+    background: var(--gradient-primary);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: auto;
+    font-weight: bold;
+}

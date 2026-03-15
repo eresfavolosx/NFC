@@ -214,12 +214,18 @@ function renderWriterUI(links, tags, compatInfo) {
             <div class="form-group-row" style="margin-top: var(--space-md)">
                 <div class="form-info">
                     <label class="form-label">Lock Tag (Permanent)</label>
-                    <p class="form-desc" style="font-size: 0.8rem; color: var(--status-error)">Warning: This cannot be undone.</p>
+                    <div class="form-group animate-fade-up" style="animation-delay: 0.1s">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem">
+                        <label class="form-label" style="margin-bottom:0">Lock Tag (Read-Only)</label>
+                        <span class="badge ${store.isPremium() ? 'badge-info' : 'badge-secondary'}">${store.isPremium() ? 'Pro' : 'Pro Feature'}</span>
+                    </div>
+                    <label class="toggle-switch ${!store.isPremium() ? 'disabled' : ''}">
+                        <input type="checkbox" id="lock-tag-toggle" ${!store.isPremium() ? 'disabled' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="text-sm text-muted" style="margin-top: 0.5rem">Permanent. Once locked, the tag cannot be erased or rewritten.</p>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="lockTagToggle">
-                    <span class="slider round"></span>
-                </label>
+                </div>
             </div>
 
             <div class="writer-actions">

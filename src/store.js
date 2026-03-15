@@ -25,6 +25,12 @@ const defaultData = {
     useBiometrics: false,
     dynamicRedirection: true,
   },
+  subscription: {
+    tier: 'free', // 'free' or 'pro'
+    trialStartedAt: null,
+    trialEndsAt: null,
+    status: 'active'
+  },
   links: [],
   tags: [],
   activity: [],
@@ -175,6 +181,39 @@ export const store = {
 
   getLink(id) { return data.links.find(l => l.id === id); },
 
+  // ── Subscription Logic ──
+  get subscription() { return data.subscription; },
+
+  isPremium() {
+    if (data.subscription.tier === 'pro') return true;
+    if (data.subscription.trialEndsAt) {
+      return new Date(data.subscription.trialEndsAt) > new Date();
+    }
+    return false;
+  },
+
+  startTrial() {
+    if (data.subscription.trialStartedAt) return;
+    const now = new Date();
+    const ends = new Date();
+    ends.setDate(now.getDate() + 14); // 14-day trial
+    data.subscription.trialStartedAt = now.toISOString();
+    data.subscription.trialEndsAt = ends.toISOString();
+    this._addActivity('trial_started', 'Started 14-day premium trial');
+    this._notify();
+  },
+
+  upgrade() {
+    data.subscription.tier = 'pro';
+    this._addActivity('subscription_upgraded', 'Upgraded to Professional plan');
+    this._notify();
+  },
+
+  canCreateTag() {
+    if (this.isPremium()) return true;
+    return data.tags.length < 3;
+  },
+
   createLink({ title, url, category = 'general', icon = '🔗' }) {
     const link = {
       id: crypto.randomUUID(),
@@ -232,6 +271,9 @@ export const store = {
   getTag(id) { return data.tags.find(t => t.id === id); },
 
   createTag({ label, serialNumber = null }) {
+    if (!this.canCreateTag()) {
+        throw new Error('Tag limit reached. Upgrade to Pro for unlimited tags.');
+    }
     const tag = {
       id: crypto.randomUUID(),
       label,
@@ -249,6 +291,9 @@ export const store = {
   },
 
   createBulkTags(prefix, count, startNum = 1) {
+    if (!this.isPremium() && data.tags.length + count > 3) {
+        throw new Error('Bulk creation exceeds limit. Upgrade to Pro for more tags.');
+    }
     const createdTags = [];
     for (let i = 0; i < count; i++) {
         const num = startNum + i;
