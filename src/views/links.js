@@ -52,12 +52,11 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
 
-    // Performance optimization: Pre-calculate tags by link to avoid O(N*M) lookup in renderLinkCard
-    const tagsByLink = new Map();
-    store.tags.forEach(t => {
-        if (t.assignedLinkId) {
-            if (!tagsByLink.has(t.assignedLinkId)) tagsByLink.set(t.assignedLinkId, []);
-            tagsByLink.get(t.assignedLinkId).push(t);
+    // ⚡ Bolt Optimization: Pre-calculate tag counts per link in O(N) instead of O(N*M)
+    const tagCounts = new Map();
+    store.tags.forEach(tag => {
+        if (tag.assignedLinkId) {
+            tagCounts.set(tag.assignedLinkId, (tagCounts.get(tag.assignedLinkId) || 0) + 1);
         }
     });
 
@@ -89,7 +88,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLink)).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, i, tagCounts)).join('')}
       </div>
     </div>
   `;
@@ -97,9 +96,10 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, index, tagsByLink) {
+function renderLinkCard(link, index, tagCounts) {
     const cat = getCategoryInfo(link.category);
-    const assignedTags = tagsByLink.get(link.id) || [];
+    // ⚡ Bolt Optimization: O(1) lookup
+    const assignedTagsCount = tagCounts ? (tagCounts.get(link.id) || 0) : store.getTagsForLink(link.id).length;
 
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
@@ -268,6 +268,9 @@ function filterLinks(search, category) {
     const linksMap = new Map(links.map(l => [l.id, l]));
 
     // Performance optimization: Pre-calculate links map to avoid O(N^2) lookup
+    const linksMap = new Map(links.map(l => [l.id, l]));
+
+    // ⚡ Bolt Optimization: O(1) link lookup Map
     const linksMap = new Map(links.map(l => [l.id, l]));
 
     cards.forEach(card => {

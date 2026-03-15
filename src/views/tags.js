@@ -21,7 +21,7 @@ export function renderTags() {
     const tags = store.tags;
     const links = store.links;
 
-    // Performance optimization: Pre-calculate links map to avoid O(N*M) lookup in renderTagRow
+    // ⚡ Bolt Optimization: O(1) link lookup Map for tag rendering
     const linksMap = new Map(links.map(l => [l.id, l]));
 
     container.innerHTML = `
@@ -57,7 +57,8 @@ export function renderTags() {
 }
 
 function renderTagRow(tag, linksMap, index) {
-    const assignedLink = tag.assignedLinkId ? linksMap.get(tag.assignedLinkId) || null : null;
+    // ⚡ Bolt Optimization: O(1) assigned link lookup
+    const assignedLink = tag.assignedLinkId ? (linksMap instanceof Map ? linksMap.get(tag.assignedLinkId) : linksMap.find(l => l.id === tag.assignedLinkId)) : null;
 
     return `
     <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
@@ -232,8 +233,7 @@ function initTagsEvents(links) {
     // Search
     document.getElementById('tagSearch')?.addEventListener('input', (e) => {
         const q = e.target.value.toLowerCase();
-
-        // Performance optimization: Pre-calculate tags map to avoid O(N^2) lookup
+        // ⚡ Bolt Optimization: O(1) tag lookup map for search
         const tagsMap = new Map(store.tags.map(t => [t.id, t]));
 
         document.querySelectorAll('.tag-row').forEach(row => {
