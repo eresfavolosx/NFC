@@ -1,4 +1,4 @@
-## 2025-02-17 - Secure PIN Storage
-**Vulnerability:** Admin PIN was stored in plaintext in `src/store.js` and `localStorage`, exposing it to anyone with access to the client-side code or storage.
-**Learning:** Client-side only applications must use standard Web Crypto API (`crypto.subtle`) to hash secrets before storage, even if there is no backend. Backward compatibility for legacy plaintext data must be handled carefully during migration (hash on first successful login).
-**Prevention:** Always use hashing (SHA-256 or better) for any secret storage, and never commit secrets to source code.
+## 2024-02-21 - Pervasive Stored XSS via innerHTML
+**Vulnerability:** The entire application rendered user input (links, tags, activity messages) directly into `innerHTML` using template literals, without any sanitization. The utility `src/utils/security.js` was missing entirely. Even auxiliary components like `toast.js` were vulnerable.
+**Learning:** In Vanilla JS apps using `innerHTML` for templating, every single variable interpolation is a potential XSS sink. Without a centralized sanitization mechanism or a framework that escapes by default (like React), developers must manually wrap every output.
+**Prevention:** Implement `escapeHTML` and `sanitizeURL` immediately. Mandate their usage in all template literals. Consider using a tagged template literal helper (e.g., `` html`<div>${unsafe}</div>` ``) that auto-escapes, to reduce human error.

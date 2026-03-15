@@ -7,7 +7,7 @@ import { escapeHTML, sanitizeURL } from '../utils/security.js';
 import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
-import { escapeHTML } from '../utils/security.js';
+import { escapeHTML, sanitizeURL } from '../utils/security.js';
 
 const CATEGORIES = [
     { value: 'general', label: 'General', icon: '🔗' },
