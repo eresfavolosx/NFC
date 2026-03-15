@@ -3,11 +3,11 @@
    ═══════════════════════════════════════════════════════════ */
 
 import { store } from '../store.js';
-import { escapeHTML } from '../utils/security.js';
 import { renderHeader } from '../components/header.js';
-import { escapeHTML } from '../components/modal.js';
 import { navigate } from '../router.js';
 import { escapeHTML } from '../utils/sanitize.js';
+import { openModal, closeModal, getModalFormData } from '../components/modal.js';
+import { showToast } from '../components/toast.js';
 
 function formatTimeAgo(dateStr) {
     const now = new Date();
@@ -33,11 +33,31 @@ export function renderDashboard() {
     const container = document.getElementById('page-content');
     const stats = store.stats;
     const activity = store.activity;
+    const totalLinks = store.data.links.length;
+    const totalTags = store.data.tags.length;
+    const totalScans = (store.getAnalytics() || []).length;
 
     container.innerHTML = `
-    ${renderHeader('Dashboard', 'Overview of your NFC tag operations')}
+        ${renderHeader('Control Center', `Welcome back, ${store.data.user?.displayName || 'Admin'}`)}
 
-    <div class="page-container">
+        <div class="page-container">
+            <div class="stats-grid">
+                <div class="stat-card animate-fade-up">
+                    <div class="stat-label">Active Links</div>
+                    <div class="stat-value">${totalLinks}</div>
+                    <div class="stat-trend trend-up">Ready to program</div>
+                </div>
+                <div class="stat-card animate-fade-up" style="animation-delay: 0.1s">
+                    <div class="stat-label">Registered Tags</div>
+                    <div class="stat-value">${totalTags}</div>
+                    <div class="stat-trend">Assets in field</div>
+                </div>
+                <div class="stat-card animate-fade-up" style="animation-delay: 0.2s">
+                    <div class="stat-label">Total Scans</div>
+                    <div class="stat-value">${totalScans}</div>
+                    <div class="stat-trend trend-up">Engagement data</div>
+                </div>
+            </div>
       <!-- Stats Grid -->
       <div class="grid grid-4 dashboard-stats">
         <div class="stat-card animate-fade-up" style="animation-delay: 0.05s">
@@ -71,6 +91,37 @@ export function renderDashboard() {
       </div>
 
       <div class="dashboard-grid">
+        <!-- Restaurant Onboarding (Conditional) -->
+        ${stats.restaurantMode ? `
+          <div class="card animate-fade-up restaurant-onboarding-card" style="animation-delay: 0.22s">
+            <div class="card-header">
+              <h2 class="card-title">🍴 Restaurant Onboarding</h2>
+            </div>
+            <div class="restaurant-onboarding">
+              <p class="onboarding-text">Get your restaurant ready for NFC-powered menus in 3 steps:</p>
+              <div class="onboarding-steps">
+                <div class="onboarding-step ${stats.totalLinks > 0 ? 'done' : ''}">
+                  <span class="step-icon">${stats.totalLinks > 0 ? '✅' : '1️⃣'}</span>
+                  <span>Create your menu link</span>
+                </div>
+                <div class="onboarding-step ${stats.totalTags > 0 ? 'done' : ''}">
+                  <span class="step-icon">${stats.totalTags > 0 ? '✅' : '2️⃣'}</span>
+                  <span>Register your tables</span>
+                </div>
+                <div class="onboarding-step">
+                  <span class="step-icon">3️⃣</span>
+                  <span>Program NFC tags for tables</span>
+                </div>
+              </div>
+              <div class="onboarding-actions">
+                <button class="btn btn-secondary w-full" id="bulkRegisterTables">
+                  <span>🪑</span> Bulk Register Tables
+                </button>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
         <!-- Quick Actions -->
         <div class="card animate-fade-up" style="animation-delay: 0.25s">
           <div class="card-header">
@@ -122,4 +173,34 @@ export function renderDashboard() {
     document.getElementById('qaNewLink')?.addEventListener('click', () => navigate('/links'));
     document.getElementById('qaNewTag')?.addEventListener('click', () => navigate('/tags'));
     document.getElementById('qaWriter')?.addEventListener('click', () => navigate('/writer'));
+
+    // Bulk Register Tables
+    document.getElementById('bulkRegisterTables')?.addEventListener('click', () => {
+        openModal({
+            title: 'Bulk Register Tables',
+            content: `
+                <div class="form-group">
+                    <label class="form-label">Table Name Prefix</label>
+                    <input class="form-input" type="text" name="prefix" value="Table" placeholder="e.g. Table">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Number of Tables</label>
+                    <input class="form-input" type="number" name="count" value="10" min="1" max="50">
+                </div>
+            `,
+            submitLabel: 'Create Tables',
+            onSubmit: () => {
+                const data = getModalFormData();
+                const count = parseInt(data.count);
+                if (isNaN(count) || count <= 0) {
+                    showToast('Invalid number of tables', 'error');
+                    return;
+                }
+                store.createBulkTags(data.prefix || 'Table', count);
+                closeModal();
+                showToast(`Successfully registered ${count} tables!`, 'success');
+                renderDashboard();
+            }
+        });
+    });
 }

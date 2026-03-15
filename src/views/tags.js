@@ -2,12 +2,13 @@
    NFC Tag Manager — Tags View
    ═══════════════════════════════════════════════════════════ */
 
-import { store, escapeHTML } from '../store.js';
+import { store } from '../store.js';
 import { renderHeader } from '../components/header.js';
-import { openModal, closeModal, getModalFormData, escapeHTML } from '../components/modal.js';
+import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
 import { navigate } from '../router.js';
 import { escapeHTML } from '../utils/sanitize.js';
+import { nfc } from '../nfc.js';
 
 function formatDate(dateStr) {
     if (!dateStr) return 'Never';
@@ -21,7 +22,7 @@ export function renderTags() {
     const tags = store.tags;
     const links = store.links;
 
-    // ⚡ Bolt: O(N) map lookup to prevent O(N*M) bottleneck when rendering tags
+    // Map links by ID for O(1) lookup
     const linksById = new Map(links.map(l => [l.id, l]));
 
     container.innerHTML = `
@@ -73,7 +74,11 @@ function renderTagRow(tag, linksById, index) {
             ? `<span class="badge badge-success">🔗 ${escapeHTML(assignedLink.title)}</span>`
             : `<span class="badge badge-warning">⚠️ No link assigned</span>`
         }
-            <span class="tag-date">Last written: ${formatDate(tag.lastWritten)}</span>
+            <div class="tag-meta">
+              ${tag.isLocked ? '<span class="tag-badge status-locked">🔒 Locked</span>' : ''}
+              ${tag.location ? `<span class="tag-badge location-badge" title="${tag.location.lat}, ${tag.location.lng}">📍 Geo-tagged</span>` : ''}
+              <span class="tag-date">Added ${new Date(tag.createdAt).toLocaleDateString()}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -93,9 +98,7 @@ function renderTagRow(tag, linksById, index) {
 }
 
 function initTagsEvents(links) {
-    // Add tag
-    const addBtn = document.getElementById('addTagBtn') || document.getElementById('emptyAddTag');
-    addBtn?.addEventListener('click', () => {
+    const openRegisterModal = () => {
         const isSupported = nfc.isSupported();
 
         openModal({
@@ -106,6 +109,7 @@ function initTagsEvents(links) {
           <input class="form-input" type="text" id="tagLabel" name="label"
             placeholder="e.g. Blue Bracelet #1" required>
         </div>
+        <div class="form-group">
           <label class="form-label" for="tagSerial">Serial Number (optional)</label>
           <div style="display: flex; gap: 8px;">
             <input class="form-input" type="text" id="tagSerial" name="serialNumber"
@@ -123,15 +127,14 @@ function initTagsEvents(links) {
                 }
                 store.createTag(data);
                 closeModal();
-                showToast(`Tag "${escapeHTML(data.label)}" registered!`, 'success');
+                showToast(`Tag "${data.label}" registered!`, 'success');
                 renderTags();
             },
         });
 
-        // Attach scan listener if supported
         if (isSupported) {
-            const scanBtn = document.getElementById('scanTagBtn');
-            scanBtn?.addEventListener('click', async () => {
+            document.getElementById('scanTagBtn')?.addEventListener('click', async (e) => {
+                const scanBtn = e.target;
                 const serialInput = document.getElementById('tagSerial');
                 if (!serialInput) return;
 
@@ -153,18 +156,19 @@ function initTagsEvents(links) {
                     showToast(err.message, 'error');
                 } finally {
                     scanBtn.disabled = false;
-                     if (scanBtn.textContent !== '✅ Scanned') {
-                        scanBtn.innerHTML = originalText;
-                    }
                 }
             });
         }
-    });
+    };
 
-    // Assign link
-    document.querySelectorAll('.assign-link-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tag = store.getTag(btn.dataset.id);
+    document.getElementById('addTagBtn')?.addEventListener('click', openRegisterModal);
+    document.getElementById('emptyAddTag')?.addEventListener('click', openRegisterModal);
+
+    // event delegation for tag row actions
+    document.getElementById('tagsList')?.addEventListener('click', (e) => {
+        const assignBtn = e.target.closest('.assign-link-btn');
+        if (assignBtn) {
+            const tag = store.getTag(assignBtn.dataset.id);
             if (!tag) return;
 
             if (links.length === 0) {
@@ -173,7 +177,7 @@ function initTagsEvents(links) {
             }
 
             openModal({
-                title: `Assign Link to "${escapeHTML(tag.label)}"`,
+                title: `Assign Link to "${tag.label}"`,
                 content: `
           <div class="form-group">
             <label class="form-label">Select a link to assign</label>
@@ -196,24 +200,22 @@ function initTagsEvents(links) {
                     }
                     store.assignLinkToTag(tag.id, data.linkId);
                     closeModal();
-                    showToast(`Link assigned to "${escapeHTML(tag.label)}"\!`, 'success');
+                    showToast(`Link assigned to "${tag.label}"`, 'success');
                     renderTags();
                 },
             });
-        });
-    });
+            return;
+        }
 
-    // Write tag → navigate to writer
-    document.querySelectorAll('.write-tag-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        const writeBtn = e.target.closest('.write-tag-btn');
+        if (writeBtn) {
             navigate('/writer');
-        });
-    });
+            return;
+        }
 
-    // Delete tag
-    document.querySelectorAll('.delete-tag-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tag = store.getTag(btn.dataset.id);
+        const deleteBtn = e.target.closest('.delete-tag-btn');
+        if (deleteBtn) {
+            const tag = store.getTag(deleteBtn.dataset.id);
             if (!tag) return;
             openModal({
                 title: 'Delete Tag',
@@ -226,15 +228,13 @@ function initTagsEvents(links) {
                     renderTags();
                 },
             });
-        });
+            return;
+        }
     });
 
     // Search
     document.getElementById('tagSearch')?.addEventListener('input', (e) => {
         const q = e.target.value.toLowerCase();
-
-        // ⚡ Bolt Optimization: Pre-calculate map for O(1) lookups instead of O(N) store.getTag inside loop
-        // Reduces algorithmic complexity from O(N^2) to O(N)
         const tagsMap = new Map(store.tags.map(t => [t.id, t]));
 
         document.querySelectorAll('.tag-row').forEach(row => {

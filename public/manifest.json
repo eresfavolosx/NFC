@@ -9,6 +9,7 @@
     "background_color": "#0F0F1A",
     "theme_color": "#6C5CE7",
     "orientation": "any",
+    "prefer_related_applications": false,
     "categories": [
         "utilities",
         "productivity"

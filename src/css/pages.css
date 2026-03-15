@@ -271,6 +271,37 @@
     margin-bottom: var(--space-md);
 }
 
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin: var(--space-lg) 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+#googleLoginBtn {
+    justify-content: center;
+    gap: var(--space-md);
+    background: white !important;
+    color: #333 !important;
+    border-color: #ddd !important;
+}
+
+#googleLoginBtn:hover {
+    background: #f8f8f8 !important;
+    border-color: #ccc !important;
+}
+
 .pin-pad {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -412,6 +443,107 @@
     font-size: var(--font-size-xs);
     color: var(--text-muted);
     flex-shrink: 0;
+}
+
+/* Restaurant Onboarding */
+.restaurant-onboarding-card {
+    border: 1px solid rgba(108, 92, 231, 0.2);
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.05), rgba(0, 206, 201, 0.03));
+}
+
+.restaurant-onboarding {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.onboarding-text {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.onboarding-steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin: var(--space-xs) 0;
+}
+
+.onboarding-step {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-surface-elevated);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-fast);
+}
+
+.onboarding-step.done {
+    border-color: var(--color-success);
+    background: rgba(0, 184, 148, 0.05);
+}
+
+.onboarding-step.done span:last-child {
+    color: var(--text-muted);
+    text-decoration: line-through;
+}
+
+.step-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.onb#googleLoginBtn .btn-icon {
+  margin-right: var(--space-sm);
+}
+
+/* Tag Meta & Badges */
+.tag-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.tag-badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tag-badge.status-locked {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.tag-badge.location-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.tag-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.onboarding-actions {
+    margin-top: var(--space-sm);
+}
+
+.w-full {
+    width: 100%;
 }
 
 @media (max-width: 768px) {
@@ -1037,4 +1169,113 @@
     cursor: pointer;
     padding: 2px 4px;
     font-size: var(--font-size-xs);
+}
+
+/* ══════════════════════════════════
+   ANALYTICS & TEMPLATES
+   ══════════════════════════════════ */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.analytics-list, .recent-scans {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.analytics-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md);
+    background: var(--bg-surface-elevated);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.analytics-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.analytics-icon {
+    font-size: 1.5rem;
+}
+
+.count-number {
+    font-size: 1.25rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary-light);
+}
+
+.scan-log-item {
+    display: flex;
+    gap: var(--space-md);
+    font-size: 0.85rem;
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--border-color-hover);
+}
+
+.scan-time {
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    min-width: 70px;
+}
+
+/* Templates */
+.templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-xl);
+}
+
+.template-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.template-header {
+    margin-bottom: var(--space-md);
+}
+
+.template-title {
+    font-size: 1.1rem;
+    margin-bottom: var(--space-xs);
+}
+
+.template-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.template-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-xl);
+}
+
+.template-link-pill {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+}
+
+.template-apply-btn {
+    margin-top: auto;
+}
+
+/* Safari Fixes */
+.card-glass, .page-header, .tag-badge {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
 }

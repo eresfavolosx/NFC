@@ -10,6 +10,7 @@ const NAV_ITEMS = [
     { path: '/links', icon: '🔗', label: 'Links' },
     { path: '/tags', icon: '🏷️', label: 'Tags' },
     { path: '/writer', icon: '📡', label: 'NFC Writer' },
+    { path: '/settings', icon: '⚙️', label: 'Settings' },
 ];
 
 export function renderSidebar() {
@@ -19,10 +20,15 @@ export function renderSidebar() {
     sidebar.id = 'sidebar';
     sidebar.className = 'sidebar';
 
+    const settings = store.settings;
+    const brandLabel = settings.restaurantMode && settings.restaurantName 
+        ? settings.restaurantName 
+        : (settings.brandName || 'NFC Manager');
+
     sidebar.innerHTML = `
     <div class="sidebar-brand">
-      <div class="sidebar-brand-icon">📱</div>
-      <span class="sidebar-brand-text">NFC Manager</span>
+      <div class="sidebar-brand-icon">${settings.restaurantMode ? '🍴' : '📱'}</div>
+      <span class="sidebar-brand-text">${brandLabel}</span>
       <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
         <span class="toggle-icon">◀</span>
       </button>

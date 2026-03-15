@@ -2,28 +2,9 @@
    NFC Tag Manager — Modal Component
    ═══════════════════════════════════════════════════════════ */
 
-export function escapeHTML(str) {
-    if (str == null) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
+import { escapeHTML } from '../utils/sanitize.js';
 
 let modalContainer = null;
-
-export function escapeHTML(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>'"]/g, tag => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;'
-    }[tag] || tag));
-}
 
 function getContainer() {
     if (!modalContainer) {
@@ -34,20 +15,9 @@ function getContainer() {
     return modalContainer;
 }
 
-export function escapeHTML(str) {
-    if (str == null) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
 export function openModal({ title, content, onSubmit, submitLabel = 'Save', showCancel = true }) {
     const container = getContainer();
 
-    // 🛡️ Sentinel: Prevent XSS by using textContent for title and submitLabel
     container.innerHTML = `
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal animate-scale-in" role="dialog" aria-labelledby="modalTitle">
@@ -65,30 +35,18 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
       </div>
     </div>
   `;
-    // Security: Use textContent to prevent DOM XSS when setting arbitrary modal titles
-    container.querySelector('#modalTitle').textContent = title;
+
+    // Security: Use textContent for user-provided strings
+    const titleEl = container.querySelector('#modalTitle');
+    if (titleEl) titleEl.textContent = title;
+
     if (onSubmit) {
-        // Security: Use textContent to prevent DOM XSS on the submit button label
-        container.querySelector('#modalSubmit').textContent = submitLabel;
+        const submitBtn = container.querySelector('#modalSubmit');
+        if (submitBtn) submitBtn.textContent = submitLabel;
     }
 
-    container.querySelector('#modalTitle').textContent = title;
-    if (onSubmit) { container.querySelector('#modalSubmit').textContent = submitLabel; }
-
-    container.querySelector('#modalTitle').textContent = title;
-    if (onSubmit) {
-        container.querySelector('#modalSubmit').textContent = submitLabel;
-    }
-
-    // Secure assignment via textContent to prevent DOM-based XSS in title
-    container.querySelector('#modalTitle').textContent = title;
-
-    container.querySelector('#modalTitle').textContent = title;
     container.style.display = 'block';
     document.body.style.overflow = 'hidden';
-
-    const titleEl = document.getElementById('modalTitle');
-    if (titleEl) titleEl.textContent = title;
 
     const close = () => closeModal();
 
@@ -135,19 +93,6 @@ export function closeModal() {
         container.style.display = 'none';
         document.body.style.overflow = '';
     }
-}
-
-export function escapeHTML(str) {
-    if (!str) return '';
-    return str.replace(/[&<>'"]/g,
-        tag => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            "'": '&#39;',
-            '"': '&quot;'
-        }[tag] || tag)
-    );
 }
 
 export function getModalFormData() {

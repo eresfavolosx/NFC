@@ -2,7 +2,7 @@
    NFC Tag Manager — Toast Component
    ═══════════════════════════════════════════════════════════ */
 
-import { escapeHTML } from './modal.js';
+import { escapeHTML } from '../utils/sanitize.js';
 
 let toastContainer = null;
 

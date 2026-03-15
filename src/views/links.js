@@ -2,9 +2,9 @@
    NFC Tag Manager — Links View
    ═══════════════════════════════════════════════════════════ */
 
-import { store, escapeHTML } from '../store.js';
+import { store } from '../store.js';
 import { renderHeader } from '../components/header.js';
-import { openModal, closeModal, getModalFormData, escapeHTML } from '../components/modal.js';
+import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
 import { escapeHTML, isValidUrl } from '../utils/sanitize.js';
 
@@ -24,7 +24,6 @@ function getCategoryInfo(val) {
 }
 
 function linkFormContent(link = null) {
-    // Sanitize user inputs using escapeHTML to prevent DOM-based XSS when creating form HTML
     return `
     <div class="form-group">
       <label class="form-label" for="linkTitle">Title</label>
@@ -54,31 +53,9 @@ export function renderLinks() {
     const links = store.links;
     const tags = store.tags;
 
-    // ⚡ Bolt Performance Optimization: Pre-calculate map for O(1) lookups instead of O(N*M)
-    const tagsByLink = new Map();
+    // Group tags by link ID
+    const tagsByLinkId = new Map();
     for (const tag of tags) {
-        if (tag.assignedLinkId) {
-            if (!tagsByLink.has(tag.assignedLinkId)) {
-                tagsByLink.set(tag.assignedLinkId, []);
-            }
-            tagsByLink.get(tag.assignedLinkId).push(tag);
-        }
-    }
-
-    // ⚡ Bolt: Optimize O(N^2) lookup to O(N) by grouping tags by assignedLinkId
-    const tagsByLinkId = new Map();
-    for (const tag of store.tags) {
-        if (tag.assignedLinkId) {
-            if (!tagsByLinkId.has(tag.assignedLinkId)) {
-                tagsByLinkId.set(tag.assignedLinkId, []);
-            }
-            tagsByLinkId.get(tag.assignedLinkId).push(tag);
-        }
-    }
-
-    // ⚡ Bolt: O(N) map lookup to prevent O(N*M) bottleneck when rendering links
-    const tagsByLinkId = new Map();
-    for (const tag of store.tags) {
         if (tag.assignedLinkId) {
             if (!tagsByLinkId.has(tag.assignedLinkId)) {
                 tagsByLinkId.set(tag.assignedLinkId, []);
@@ -97,10 +74,9 @@ export function renderLinks() {
           <input class="form-input" type="text" id="linkSearch" placeholder="Search links..." aria-label="Search links">
         </div>
         <div class="toolbar-actions">
-          <select class="form-select" id="categoryFilter" style="width: auto; min-width: 150px;" aria-label="Filter by category">
-            <option value="">All Categories</option>
-            ${CATEGORIES.map(c => `<option value="${c.value}">${c.icon} ${c.label}</option>`).join('')}
-          </select>
+          <button class="btn btn-secondary" id="templateBtn">
+            <span>📋</span> Templates
+          </button>
           <button class="btn btn-primary" id="addLinkBtn">
             <span>➕</span> New Link
           </button>
@@ -125,13 +101,14 @@ export function renderLinks() {
 
 function renderLinkCard(link, assignedTags, index) {
     const cat = getCategoryInfo(link.category);
+    const assignedTagsCount = assignedTags.length;
 
-    // Escape dynamic properties before injecting into template literals
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
       <div class="link-card-header">
         <span class="link-icon" aria-hidden="true">${cat.icon}</span>
         <div class="link-card-actions">
+          <button class="btn btn-ghost btn-icon copy-link" data-url="${escapeHTML(link.url)}" title="Copy Link" aria-label="Copy link">📋</button>
           <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit link">✏️</button>
           <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete link">🗑️</button>
         </div>
@@ -148,23 +125,7 @@ function renderLinkCard(link, assignedTags, index) {
 }
 
 function initLinksEvents() {
-    // Copy link
-    document.querySelectorAll('.copy-link').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const url = btn.dataset.url;
-            try {
-                await navigator.clipboard.writeText(url);
-                showToast('Link copied to clipboard!', 'success');
-            } catch (err) {
-                console.error('Failed to copy: ', err);
-                showToast('Failed to copy link', 'error');
-            }
-        });
-    });
-
-    // Add link
-    const openAddModal = () => {
+    const openAddLinkModal = () => {
         openModal({
             title: 'Create New Link',
             content: linkFormContent(),
@@ -175,53 +136,38 @@ function initLinksEvents() {
                     showToast('Please fill in all fields', 'warning');
                     return;
                 }
-                try {
-                    new URL(data.url);
-                } catch {
+                if (!isValidUrl(data.url)) {
                     showToast('Please enter a valid URL', 'error');
                     return;
                 }
                 store.createLink(data);
                 closeModal();
-                showToast(`Link "${escapeHTML(data.title)}" created!`, 'success');
+                showToast(`Link "${data.title}" created!`, 'success');
                 renderLinks();
             },
         });
     };
 
-    document.getElementById('addLinkBtn')?.addEventListener('click', openAddModal);
-    document.getElementById('emptyAddLink')?.addEventListener('click', openAddModal);
+    document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
+    document.getElementById('emptyAddLink')?.addEventListener('click', openAddLinkModal);
 
-    // Copy link
-    document.querySelectorAll('.copy-link').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+    // Event delegation for card actions
+    document.getElementById('linksGrid')?.addEventListener('click', async (e) => {
+        const copyBtn = e.target.closest('.copy-link');
+        if (copyBtn) {
             e.stopPropagation();
-            const url = btn.dataset.url;
+            const url = copyBtn.dataset.url;
             try {
                 await navigator.clipboard.writeText(url);
                 showToast('Link copied to clipboard!', 'success');
             } catch (err) {
                 showToast('Failed to copy link', 'error');
-                console.error('Copy failed', err);
             }
-        });
-    });
+            return;
+        }
 
-    // Copy link
-    document.querySelectorAll('.copy-link').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const link = store.getLink(btn.dataset.id);
-            if (!link) return;
-            navigator.clipboard.writeText(link.url)
-                .then(() => showToast('Link copied to clipboard!', 'success'))
-                .catch(() => showToast('Failed to copy link', 'error'));
-        });
-    });
-
-    // Edit link
-    document.querySelectorAll('.edit-link').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.edit-link');
+        if (editBtn) {
             e.stopPropagation();
             const link = store.getLink(editBtn.dataset.id);
             if (!link) return;
@@ -244,7 +190,6 @@ function initLinksEvents() {
             return;
         }
 
-        // Delete Link
         const deleteBtn = e.target.closest('.delete-link');
         if (deleteBtn) {
             e.stopPropagation();
@@ -263,45 +208,22 @@ function initLinksEvents() {
             });
             return;
         }
-
-        // Empty State Create Link
-        const emptyAddBtn = e.target.closest('#emptyAddLink');
-        if (emptyAddBtn) {
-            openAddLinkModal();
-        }
     });
 
     // Search
     document.getElementById('linkSearch')?.addEventListener('input', (e) => {
-        const q = e.target.value.toLowerCase();
-        filterLinks(q, document.getElementById('categoryFilter')?.value);
+        filterLinks(e.target.value.toLowerCase(), document.getElementById('categoryFilter')?.value);
     });
 
     // Category filter
     document.getElementById('categoryFilter')?.addEventListener('change', (e) => {
-        const q = document.getElementById('linkSearch')?.value.toLowerCase() || '';
-        filterLinks(q, e.target.value);
+        filterLinks(document.getElementById('linkSearch')?.value.toLowerCase() || '', e.target.value);
     });
 }
 
 function filterLinks(search, category) {
     const cards = document.querySelectorAll('.link-card');
-
-    // ⚡ Bolt: Pre-calculate map to avoid O(N*C) lookup during filtering
     const linksMap = new Map(store.links.map(l => [l.id, l]));
-
-    // Pre-calculate links map to prevent O(N^2) lookup inside querySelectorAll loop
-    const linksMap = new Map(links.map(l => [l.id, l]));
-
-    // Performance optimization: Pre-calculate links map to avoid O(N^2) lookup
-    const linksMap = new Map(links.map(l => [l.id, l]));
-
-    // ⚡ Bolt Optimization: O(1) link lookup Map
-    const linksMap = new Map(links.map(l => [l.id, l]));
-
-    // ⚡ Bolt Optimization: Use Map for O(1) lookups instead of O(N) Array.find inside the loop
-    // Reduces algorithmic complexity from O(N^2) to O(N)
-    const linksMap = new Map(links.map(l => [l.id, l]));
 
     cards.forEach(card => {
         const link = linksMap.get(card.dataset.id);

@@ -14,6 +14,11 @@ import { renderDashboard } from './views/dashboard.js';
 import { renderLinks } from './views/links.js';
 import { renderTags } from './views/tags.js';
 import { renderWriter } from './views/writer.js';
+import { renderSettings } from './views/settings.js';
+import { renderAnalytics } from './views/analytics.js';
+import { renderTemplates } from './views/templates.js';
+import { renderRedirect } from './views/redirect.js';
+import { nfc } from './nfc.js';
 
 // ── Guard: redirect to login if not authenticated ──
 function authGuard(renderFn) {
@@ -62,6 +67,10 @@ registerRoute('/dashboard', authGuard(renderDashboard));
 registerRoute('/links', authGuard(renderLinks));
 registerRoute('/tags', authGuard(renderTags));
 registerRoute('/writer', authGuard(renderWriter));
+registerRoute('/settings', authGuard(renderSettings));
+registerRoute('/analytics', authGuard(renderAnalytics));
+registerRoute('/templates', authGuard(renderTemplates));
+registerRoute('/r/:id', renderRedirect);
 
 // 404
 registerRoute('/404', () => {
@@ -78,7 +87,22 @@ registerRoute('/404', () => {
 });
 
 // ── Boot ──
-startRouter();
+store.init().then(async () => {
+  // Biometric Auth check
+  const settings = store.settings;
+  if (settings.useBiometrics && nfc.isNative()) {
+      const available = await nfc.isBiometricAvailable();
+      if (available) {
+          const success = await nfc.authenticateWithBiometrics();
+          if (!success) {
+              // If biometric fails, force login or stay on current guard/login page
+              // For now, we just log it and let Pin/Google be fallbacks
+              console.warn('Biometric authentication failed or canceled.');
+          }
+      }
+  }
+  startRouter();
+});
 
 // ── PWA: Register Service Worker ──
 if ('serviceWorker' in navigator) {
@@ -87,4 +111,57 @@ if ('serviceWorker' in navigator) {
       // Service worker registration is optional
     });
   });
+}
+// ── Utilities ──
+
+export function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container') || createToastContainer();
+  const toast = document.createElement('div');
+  toast.className = `toast animate-fade-in ${type === 'success' ? 'toast-success' : type === 'error' ? 'toast-error' : 'toast-info'}`;
+  
+  const iconMap = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+  
+  toast.innerHTML = `
+    <span class="toast-icon">${iconMap[type] || 'ℹ️'}</span>
+    <div class="toast-message">${message}</div>
+    <button class="toast-close">&times;</button>
+  `;
+  
+  container.appendChild(toast);
+  
+  const closeBtn = toast.querySelector('.toast-close');
+  closeBtn.onclick = () => toast.remove();
+  
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.classList.add('animate-fade-out');
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 4000);
+}
+
+function createToastContainer() {
+  const container = document.createElement('div');
+  container.id = 'toast-container';
+  container.className = 'toast-container';
+  document.body.appendChild(container);
+  return container;
+}
+
+export function escapeHTML(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+export function renderHeader(title, subtitle = '') {
+    return `
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">${escapeHTML(title)}</h1>
+                ${subtitle ? `<p class="page-subtitle">${escapeHTML(subtitle)}</p>` : ''}
+            </div>
+        </div>
+    `;
 }

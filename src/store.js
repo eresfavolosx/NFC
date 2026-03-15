@@ -1,3 +1,5 @@
+import { auth, provider, signInWithPopup, signOut, onAuthStateChanged } from './firebase.js';
+
 /* ═══════════════════════════════════════════════════════════
    NFC Tag Manager — Data Store (localStorage-backed)
    ═══════════════════════════════════════════════════════════ */
@@ -15,19 +17,19 @@ const defaultData = {
   settings: {
     adminPin: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', // SHA-256 hash of '1234'
     brandName: 'NFC Tag Manager',
+    restaurantMode: false,
+    restaurantName: '',
     isAuthenticated: false,
+    user: null,
+    nfcCompat: { supported: false, platform: 'loading' },
+    useBiometrics: false,
+    dynamicRedirection: true,
   },
   links: [],
   tags: [],
   activity: [],
+  analytics: [], // [{ linkId, tagId, timestamp }]
 };
-
-async function hashPin(pin) {
-  const msgBuffer = new TextEncoder().encode(pin);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
 
 function loadData() {
   try {
@@ -42,7 +44,7 @@ function loadData() {
   return { ...defaultData };
 }
 
-function persistData(data) {
+function saveData(dataToSave) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
   } catch (e) {
@@ -50,29 +52,7 @@ function persistData(data) {
   }
 }
 
-// Optimization: Debounce saveData to avoid blocking main thread on frequent updates
-function debounce(func, wait) {
-  let timeout;
-  return function(...args) {
-    const context = this;
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(context, args), wait);
-  };
-}
-
-const debouncedSaveData = debounce(saveData, 500);
-
 let data = loadData();
-
-// Flush pending saves when the page becomes hidden or is about to unload
-if (typeof document !== 'undefined') {
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-      debouncedSaveData.flush(data);
-    }
-  });
-}
-
 const listeners = new Set();
 let debounceTimer;
 const DEBOUNCE_DELAY = 500;
@@ -89,14 +69,7 @@ if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     if (debounceTimer) {
       clearTimeout(debounceTimer);
-      saveData(data);
     }
-  });
-}
-
-// Flush pending save on page unload to prevent data loss
-if (typeof window !== 'undefined') {
-  window.addEventListener('beforeunload', () => {
     saveData(data);
   });
 }
@@ -141,32 +114,52 @@ export const store = {
   },
 
   logout() {
-    data.settings.isAuthenticated = false;
+    return signOut(auth).then(() => {
+        data.settings.isAuthenticated = false;
+        data.settings.user = null;
+        this._notify();
+    });
+  },
+
+  async loginWithGoogle() {
+    try {
+        const result = await signInWithPopup(auth, provider);
+        data.settings.isAuthenticated = true;
+        data.settings.user = {
+            id: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName,
+            photoURL: result.user.photoURL
+        };
+        this._notify();
+        return true;
+    } catch (error) {
+        console.error('Google Sign-In Error:', error);
+        throw error;
+    }
+  },
+
+  get user() { return data.settings.user; },
+  get nfcCompat() { return data.settings.nfcCompat; },
+
+  async refreshNfcCompat() {
+    data.settings.nfcCompat = await nfc.getCompatibilityInfo();
+    this._notify();
+  },
+
+  async init() {
+    await this.refreshNfcCompat();
     this._notify();
   },
 
   async changePin(oldPin, newPin) {
-    // Check for legacy plain text PIN
-    if (data.settings.adminPin.length < 64) {
-      if (oldPin === data.settings.adminPin) {
-        data.settings.adminPin = await hashPin(newPin);
-        this._notify();
-        return true;
-      }
-      return false;
-    }
-
     const hashedOld = await hashPin(oldPin);
     if (hashedOld === data.settings.adminPin) {
       data.settings.adminPin = await hashPin(newPin);
       this._notify();
       return true;
     }
-
-    const hashedNew = await sha256(newPin);
-    data.settings.adminPin = hashedNew;
-    this._notify();
-    return true;
+    return false;
   },
 
   // ── Settings ──
@@ -245,12 +238,34 @@ export const store = {
       serialNumber,
       assignedLinkId: null,
       lastWritten: null,
+      location: null,
+      isLocked: false,
       createdAt: new Date().toISOString(),
     };
     data.tags.unshift(tag);
     this._addActivity('tag_created', `Registered tag "${label}"`);
     this._notify();
     return tag;
+  },
+
+  createBulkTags(prefix, count, startNum = 1) {
+    const createdTags = [];
+    for (let i = 0; i < count; i++) {
+        const num = startNum + i;
+        const tag = {
+            id: crypto.randomUUID(),
+            label: `${prefix} ${num}`,
+            serialNumber: null,
+            assignedLinkId: null,
+            lastWritten: null,
+            createdAt: new Date().toISOString(),
+        };
+        data.tags.unshift(tag);
+        createdTags.push(tag);
+    }
+    this._addActivity('tag_created', `Registered ${count} bulk tags starting with "${prefix}"`);
+    this._notify();
+    return createdTags;
   },
 
   updateTag(id, updates) {
@@ -267,6 +282,31 @@ export const store = {
     if (!tag) return false;
     tag.assignedLinkId = linkId;
     tag.lastWritten = new Date().toISOString();
+    
+    // Generate the URL to be written
+    let urlToWrite = link?.url;
+    if (data.settings.dynamicRedirection) {
+        // Construct a redirection URL pointing back to our app
+        // Using window.location.origin as the base
+        const base = window.location.origin;
+        urlToWrite = `${base}/#/r/${tag.id}`;
+    }
+
+    // Capture location if on native
+    if (Capacitor.isNativePlatform()) {
+        try {
+            Geolocation.getCurrentPosition().then(pos => {
+                tag.location = {
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude
+                };
+                this._notify();
+            });
+        } catch (e) {
+            console.warn('Geolocation failed:', e);
+        }
+    }
+
     this._addActivity('tag_assigned', `Assigned "${link?.title || 'link'}" to tag "${tag.label}"`);
     this._notify();
     return true;
@@ -319,11 +359,19 @@ export const store = {
   },
 };
 
-export function escapeHTML(str) {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+// Listen for auth state changes to keep store in sync
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        data.settings.isAuthenticated = true;
+        data.settings.user = {
+            id: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL
+        };
+    } else {
+        data.settings.isAuthenticated = false;
+        data.settings.user = null;
+    }
+    store._notify();
+});

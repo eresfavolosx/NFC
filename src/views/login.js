@@ -39,6 +39,15 @@ export function renderLogin() {
         </div>
 
         <p class="login-hint">Default PIN: 1234</p>
+
+        <div class="login-divider">
+          <span>OR</span>
+        </div>
+
+        <button class="btn btn-secondary w-full" id="googleLoginBtn">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" width="18" height="18">
+          Sign in with Google
+        </button>
       </div>
     </div>
   `;
@@ -86,6 +95,18 @@ export function renderLogin() {
             if (pin.length === 4) {
                 setTimeout(tryLogin, 200);
             }
+        }
+    });
+
+    // Google Login
+    document.getElementById('googleLoginBtn')?.addEventListener('click', async () => {
+        try {
+            if (await store.loginWithGoogle()) {
+                showToast('Signed in with Google!', 'success');
+                navigate('/dashboard');
+            }
+        } catch (error) {
+            showToast('Google Sign-In failed', 'error');
         }
     });
 
