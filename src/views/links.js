@@ -60,9 +60,11 @@ export function renderLinks() {
       <div class="links-toolbar">
         <div class="search-bar">
           <span class="search-icon">🔍</span>
+          <label for="linkSearch" class="sr-only">Search links</label>
           <input class="form-input" type="text" id="linkSearch" placeholder="Search links...">
         </div>
         <div class="toolbar-actions">
+          <label for="categoryFilter" class="sr-only">Filter by category</label>
           <select class="form-select" id="categoryFilter" style="width: auto; min-width: 150px;">
             <option value="">All Categories</option>
             ${CATEGORIES.map(c => `<option value="${c.value}">${c.icon} ${c.label}</option>`).join('')}
@@ -99,9 +101,8 @@ function renderLinkCard(link, index) {
       <div class="link-card-header">
         <span class="link-icon">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon copy-link" data-url="${link.url}" title="Copy Link" aria-label="Copy Link">📋</button>
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit Link" aria-label="Edit Link">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete Link" aria-label="Delete Link">🗑️</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit link">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete link">🗑️</button>
         </div>
       </div>
       <h3 class="link-title">${escapeHTML(link.title)}</h3>
