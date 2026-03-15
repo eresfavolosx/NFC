@@ -50,21 +50,15 @@ function persistData(data) {
   }
 }
 
-function debounce(func, wait) {
-  let timeout;
-  const debounced = (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-  debounced.cancel = () => clearTimeout(timeout);
-  debounced.flush = (...args) => {
-    clearTimeout(timeout);
-    func(...args);
-  };
-  return debounced;
+export function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
-
-const debouncedSaveData = debounce(saveData, 500);
 
 let data = loadData();
 

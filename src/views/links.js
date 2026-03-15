@@ -103,10 +103,10 @@ function renderLinkCard(link, index) {
           <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete ${escapeHTML(link.title)}">🗑️</button>
         </div>
       </div>
-      <h3 class="link-title">${safeTitle}</h3>
-      <a class="link-url truncate" href="${safeUrl}" target="_blank" rel="noopener">${safeUrl}</a>
+      <h3 class="link-title">${escapeHTML(link.title)}</h3>
+      <a class="link-url truncate" href="${escapeHTML(link.url)}" target="_blank" rel="noopener">${escapeHTML(link.url)}</a>
       <div class="link-meta">
-        <span class="badge badge-primary">${cat.label}</span>
+        <span class="badge badge-primary">${escapeHTML(cat.label)}</span>
         ${assignedTags.length > 0 ? `<span class="badge badge-success">🏷️ ${assignedTags.length} tag${assignedTags.length > 1 ? 's' : ''}</span>` : ''}
         <span class="link-clicks">👆 ${link.clicks} tap${link.clicks !== 1 ? 's' : ''}</span>
       </div>
