@@ -53,11 +53,15 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
 
-    // ⚡ Bolt Optimization: Pre-calculate tag counts per link in O(N) instead of O(N*M)
-    const tagCounts = new Map();
+    // ⚡ Bolt Optimization: Pre-calculate tags by link to avoid O(N*M) rendering
+    // Replaces O(N) store.getTagsForLink() call inside the O(M) links.map() loop
+    const tagsByLink = new Map();
     store.tags.forEach(tag => {
         if (tag.assignedLinkId) {
-            tagCounts.set(tag.assignedLinkId, (tagCounts.get(tag.assignedLinkId) || 0) + 1);
+            if (!tagsByLink.has(tag.assignedLinkId)) {
+                tagsByLink.set(tag.assignedLinkId, []);
+            }
+            tagsByLink.get(tag.assignedLinkId).push(tag);
         }
     });
 
@@ -89,19 +93,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : (() => {
-            // ⚡ Bolt: Replace O(N*M) nested loop with O(N) lookup
-            // Pre-calculate assigned tags map outside the loop
-            const tagsByLink = new Map();
-            for (const t of store.tags) {
-                if (t.assignedLinkId) {
-                    const arr = tagsByLink.get(t.assignedLinkId) || [];
-                    arr.push(t);
-                    tagsByLink.set(t.assignedLinkId, arr);
-                }
-            }
-            return links.map((link, i) => renderLinkCard(link, i, tagsByLink.get(link.id) || [])).join('');
-        })()}
+        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLink)).join('')}
       </div>
     </div>
   `;
@@ -109,8 +101,9 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, index, assignedTags = []) {
+function renderLinkCard(link, index, tagsByLink) {
     const cat = getCategoryInfo(link.category);
+    const assignedTags = tagsByLink.get(link.id) || [];
 
     // Escape dynamic properties before injecting into template literals
     return `
