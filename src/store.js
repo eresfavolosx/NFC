@@ -4,11 +4,9 @@
 
 const STORAGE_KEY = 'nfc_tag_manager';
 
-// Helper to hash PIN (SHA-256)
 async function hashPin(pin) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(pin);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const msgBuffer = new TextEncoder().encode(pin);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
@@ -89,13 +87,26 @@ export const store = {
   get isAuthenticated() { return data.settings.isAuthenticated; },
 
   async login(pin) {
-    const hashedPin = await sha256(pin);
+    const storedPin = data.settings.adminPin;
 
-    // Check if the stored PIN matches the hash
-    if (hashedPin === data.settings.adminPin) {
-      data.settings.isAuthenticated = true;
-      this._notify();
-      return true;
+    // Migration check: legacy pins are short (e.g. 4 chars), hash is 64 chars
+    const isLegacy = storedPin.length < 64;
+
+    if (isLegacy) {
+      if (pin === storedPin) {
+        // Migrate to hash immediately
+        data.settings.adminPin = await hashPin(pin);
+        data.settings.isAuthenticated = true;
+        this._notify();
+        return true;
+      }
+    } else {
+      const inputHash = await hashPin(pin);
+      if (inputHash === storedPin) {
+        data.settings.isAuthenticated = true;
+        this._notify();
+        return true;
+      }
     }
 
     // Legacy migration: check if stored PIN is plaintext
@@ -117,11 +128,21 @@ export const store = {
   },
 
   async changePin(oldPin, newPin) {
-    const hashedOld = await sha256(oldPin);
+    const storedPin = data.settings.adminPin;
+    const isLegacy = storedPin.length < 64;
+    let oldPinValid = false;
 
-    // Validate old PIN (check hash OR legacy plaintext)
-    if (hashedOld !== data.settings.adminPin && oldPin !== data.settings.adminPin) {
-      return false;
+    if (isLegacy) {
+      if (oldPin === storedPin) oldPinValid = true;
+    } else {
+      const inputHash = await hashPin(oldPin);
+      if (inputHash === storedPin) oldPinValid = true;
+    }
+
+    if (oldPinValid) {
+      data.settings.adminPin = await hashPin(newPin);
+      this._notify();
+      return true;
     }
 
     const hashedNew = await sha256(newPin);

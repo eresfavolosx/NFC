@@ -1,4 +1,4 @@
-## 2025-02-18 - Client-Side Hashing & Migration
-**Vulnerability:** Admin PIN stored in plaintext within localStorage, accessible via XSS.
-**Learning:** Implemented a seamless migration strategy where legacy plaintext PINs are automatically hashed upon successful login, preventing user lockout while upgrading security.
-**Prevention:** Always hash secrets before storage, even in client-side apps. Use `crypto.subtle` for standard, secure hashing.
+## 2025-05-26 - Plaintext PIN Storage
+**Vulnerability:** The admin PIN was stored in plaintext in `localStorage`.
+**Learning:** `localStorage` is accessible via XSS, making plaintext secrets vulnerable. `defaultData` in `store.js` also exposed the default PIN.
+**Prevention:** Always hash secrets before storing them. Used `crypto.subtle.digest` (SHA-256) to hash the PIN. Implemented a migration path to hash legacy plaintext PINs on login.
