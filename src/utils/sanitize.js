@@ -1,36 +1,37 @@
-
 /* ═══════════════════════════════════════════════════════════
    NFC Tag Manager — Security Utilities
    ═══════════════════════════════════════════════════════════ */
 
 /**
- * Escapes HTML special characters to prevent XSS.
+ * Escapes HTML characters to prevent XSS.
  * @param {string} str - The string to escape.
  * @returns {string} The escaped string.
  */
 export function escapeHTML(str) {
   if (!str) return '';
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return String(str).replace(/[&<>"']/g, function(m) {
+    switch (m) {
+      case '&': return '&amp;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '"': return '&quot;';
+      case "'": return '&#039;';
+      default: return m;
+    }
+  });
 }
 
 /**
- * Sanitizes a URL to prevent javascript: execution and HTML injection.
- * @param {string} url - The URL to sanitize.
- * @returns {string} The sanitized URL.
+ * Validates a URL to ensure it uses http or https protocol.
+ * @param {string} str - The URL string.
+ * @returns {boolean} True if valid, false otherwise.
  */
-export function sanitizeUrl(url) {
-  if (!url) return '';
-  const trimmed = String(url).trim();
-
-  // Block javascript: protocol
-  if (trimmed.toLowerCase().startsWith('javascript:')) {
-    return 'about:blank';
+export function isValidUrl(str) {
+  if (!str) return false;
+  try {
+    const url = new URL(str);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch (e) {
+    return false;
   }
-
-  return escapeHTML(trimmed);
 }

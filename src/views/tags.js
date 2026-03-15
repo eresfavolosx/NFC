@@ -55,8 +55,11 @@ export function renderTags() {
     initTagsEvents(links);
 }
 
-function renderTagRow(tag, linkMap, index) {
-    const assignedLink = tag.assignedLinkId ? linkMap.get(tag.assignedLinkId) : null;
+function renderTagRow(tag, links, index) {
+    const assignedLink = tag.assignedLinkId ? links.find(l => l.id === tag.assignedLinkId) : null;
+    const safeLabel = escapeHTML(tag.label);
+    const safeSerial = tag.serialNumber ? escapeHTML(tag.serialNumber) : '';
+    const safeLinkTitle = assignedLink ? escapeHTML(assignedLink.title) : '';
 
     return `
     <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
@@ -65,11 +68,11 @@ function renderTagRow(tag, linkMap, index) {
           <span class="tag-icon-big" aria-hidden="true">🏷️</span>
         </div>
         <div class="tag-info">
-          <h3 class="tag-label">${escapeHTML(tag.label)}</h3>
+          <h3 class="tag-label">${safeLabel}</h3>
           <div class="tag-details">
-            ${tag.serialNumber ? `<span class="badge badge-info">SN: ${escapeHTML(tag.serialNumber)}</span>` : ''}
+            ${safeSerial ? `<span class="badge badge-info">SN: ${safeSerial}</span>` : ''}
             ${assignedLink
-            ? `<span class="badge badge-success">🔗 ${escapeHTML(assignedLink.title)}</span>`
+            ? `<span class="badge badge-success">🔗 ${safeLinkTitle}</span>`
             : `<span class="badge badge-warning">⚠️ No link assigned</span>`
         }
             <span class="tag-date">Last written: ${formatDate(tag.lastWritten)}</span>
