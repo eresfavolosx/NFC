@@ -39,45 +39,7 @@ function saveData(data) {
   }
 }
 
-function debounce(func, wait) {
-  let timeout;
-  let lastArgs;
-  let lastContext;
-
-  const debounced = function(...args) {
-    lastContext = this;
-    lastArgs = args;
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      func.apply(lastContext, lastArgs);
-      lastArgs = null;
-      lastContext = null;
-    }, wait);
-  };
-
-  debounced.flush = function() {
-    if (lastArgs) {
-      clearTimeout(timeout);
-      func.apply(lastContext, lastArgs);
-      lastArgs = null;
-      lastContext = null;
-    }
-  };
-
-  return debounced;
-}
-
-const debouncedSaveData = debounce(saveData, 500);
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('beforeunload', () => {
-    debouncedSaveData.flush();
-  });
-}
-
-let data = loadData();
-let saveTimeout = null;
-
+let saveTimeout;
 function scheduleSave(dataToSave) {
   if (saveTimeout) clearTimeout(saveTimeout);
   saveTimeout = setTimeout(() => {
@@ -86,15 +48,15 @@ function scheduleSave(dataToSave) {
   }, 500);
 }
 
-// Flush pending saves on visibility change
+let data = loadData();
+
+// Ensure data is saved when the page is hidden or closed
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-      if (saveTimeout) {
-        clearTimeout(saveTimeout);
-        saveTimeout = null;
-        saveData(data);
-      }
+    if (document.visibilityState === 'hidden' && saveTimeout) {
+      clearTimeout(saveTimeout);
+      saveData(data);
+      saveTimeout = null;
     }
   });
 }
@@ -116,7 +78,7 @@ export const store = {
   },
 
   _notify() {
-    debouncedSaveData(data);
+    scheduleSave(data);
     listeners.forEach(fn => fn(data));
   },
 
