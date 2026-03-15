@@ -69,7 +69,7 @@ export function renderLinks() {
       <div class="links-toolbar">
         <div class="search-bar">
           <span class="search-icon" aria-hidden="true">🔍</span>
-          <input class="form-input" type="text" id="linkSearch" aria-label="Search links" placeholder="Search links...">
+          <input class="form-input" type="text" id="linkSearch" placeholder="Search links...">
         </div>
         <div class="toolbar-actions">
           <select class="form-select" id="categoryFilter" aria-label="Filter by category" style="width: auto; min-width: 150px;">

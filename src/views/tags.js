@@ -30,7 +30,7 @@ export function renderTags() {
       <div class="links-toolbar">
         <div class="search-bar">
           <span class="search-icon" aria-hidden="true">🔍</span>
-          <input class="form-input" type="text" id="tagSearch" aria-label="Search tags" placeholder="Search tags...">
+          <input class="form-input" type="text" id="tagSearch" placeholder="Search tags...">
         </div>
         <button class="btn btn-primary" id="addTagBtn">
           <span>➕</span> Register Tag
@@ -62,7 +62,7 @@ function renderTagRow(tag, linkMap, index) {
     <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
       <div class="tag-row-main">
         <div class="tag-icon-wrap">
-          <span class="tag-icon-big">🏷️</span>
+          <span class="tag-icon-big" aria-hidden="true">🏷️</span>
         </div>
         <div class="tag-info">
           <h3 class="tag-label">${safeLabel}</h3>
