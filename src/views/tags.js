@@ -233,7 +233,9 @@ function initTagsEvents(links) {
     // Search
     document.getElementById('tagSearch')?.addEventListener('input', (e) => {
         const q = e.target.value.toLowerCase();
-        // ⚡ Bolt Optimization: O(1) tag lookup map for search
+
+        // ⚡ Bolt Optimization: Pre-calculate map for O(1) lookups instead of O(N) store.getTag inside loop
+        // Reduces algorithmic complexity from O(N^2) to O(N)
         const tagsMap = new Map(store.tags.map(t => [t.id, t]));
 
         document.querySelectorAll('.tag-row').forEach(row => {

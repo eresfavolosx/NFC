@@ -279,6 +279,10 @@ function filterLinks(search, category) {
     // ⚡ Bolt Optimization: O(1) link lookup Map
     const linksMap = new Map(links.map(l => [l.id, l]));
 
+    // ⚡ Bolt Optimization: Use Map for O(1) lookups instead of O(N) Array.find inside the loop
+    // Reduces algorithmic complexity from O(N^2) to O(N)
+    const linksMap = new Map(links.map(l => [l.id, l]));
+
     cards.forEach(card => {
         const link = linksMap.get(card.dataset.id);
         if (!link) return;
