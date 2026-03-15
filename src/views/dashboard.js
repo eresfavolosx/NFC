@@ -5,6 +5,7 @@
 import { store } from '../store.js';
 import { escapeHTML } from '../utils/security.js';
 import { renderHeader } from '../components/header.js';
+import { escapeHTML } from '../components/modal.js';
 import { navigate } from '../router.js';
 import { escapeHTML } from '../utils/sanitize.js';
 

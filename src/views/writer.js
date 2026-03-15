@@ -5,6 +5,7 @@
 import { store } from '../store.js';
 import { nfc } from '../nfc.js';
 import { renderHeader } from '../components/header.js';
+import { escapeHTML } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
 import { escapeHTML } from '../utils/sanitize.js';
 

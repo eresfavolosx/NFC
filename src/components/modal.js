@@ -24,7 +24,6 @@ function getContainer() {
     return modalContainer;
 }
 
-
 export function escapeHTML(str) {
     if (str == null) return '';
     return String(str)
@@ -32,7 +31,7 @@ export function escapeHTML(str) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+        .replace(/'/g, '&#039;');
 }
 
 export function openModal({ title, content, onSubmit, submitLabel = 'Save', showCancel = true }) {
@@ -77,6 +76,9 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
     container.querySelector('#modalTitle').textContent = title;
     container.style.display = 'block';
     document.body.style.overflow = 'hidden';
+
+    const titleEl = document.getElementById('modalTitle');
+    if (titleEl) titleEl.textContent = title;
 
     const close = () => closeModal();
 
