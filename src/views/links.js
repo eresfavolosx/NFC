@@ -60,12 +60,10 @@ export function renderLinks() {
       <div class="links-toolbar">
         <div class="search-bar">
           <span class="search-icon">🔍</span>
-          <label for="linkSearch" class="sr-only">Search links</label>
-          <input class="form-input" type="text" id="linkSearch" placeholder="Search links...">
+          <input class="form-input" type="text" id="linkSearch" placeholder="Search links..." aria-label="Search links">
         </div>
         <div class="toolbar-actions">
-          <label for="categoryFilter" class="sr-only">Filter by category</label>
-          <select class="form-select" id="categoryFilter" style="width: auto; min-width: 150px;">
+          <select class="form-select" id="categoryFilter" style="width: auto; min-width: 150px;" aria-label="Filter by category">
             <option value="">All Categories</option>
             ${CATEGORIES.map(c => `<option value="${c.value}">${c.icon} ${c.label}</option>`).join('')}
           </select>
@@ -94,19 +92,22 @@ export function renderLinks() {
 function renderLinkCard(link, index) {
     const cat = getCategoryInfo(link.category);
     const assignedTags = store.getTagsForLink(link.id);
-    const safeUrl = sanitizeURL(link.url);
+    const safeTitle = link.title.replace(/"/g, '&quot;');
 
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
       <div class="link-card-header">
         <span class="link-icon">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit link">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete link">🗑️</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit ${safeTitle}">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete ${safeTitle}">🗑️</button>
         </div>
       </div>
-      <h3 class="link-title">${escapeHTML(link.title)}</h3>
-      <a class="link-url truncate" href="${sanitizeURL(link.url)}" target="_blank" rel="noopener">${escapeHTML(link.url)}</a>
+      <h3 class="link-title">${link.title}</h3>
+      <a class="link-url truncate" href="${link.url}" target="_blank" rel="noopener">
+        ${link.url}
+        <span class="sr-only">(opens in new tab)</span>
+      </a>
       <div class="link-meta">
         <span class="badge badge-primary">${cat.label}</span>
         ${assignedTags.length > 0 ? `<span class="badge badge-success">🏷️ ${assignedTags.length} tag${assignedTags.length > 1 ? 's' : ''}</span>` : ''}
@@ -157,6 +158,9 @@ function initLinksEvents() {
             },
         });
     };
+
+    document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
+    document.getElementById('emptyAddLink')?.addEventListener('click', openAddLinkModal);
 
     document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
     document.getElementById('emptyAddLink')?.addEventListener('click', openAddLinkModal);
