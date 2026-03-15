@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 import { store } from '../store.js';
-import { nfc } from '../nfc.js';
+import { escapeHTML } from '../utils/security.js';
 import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';

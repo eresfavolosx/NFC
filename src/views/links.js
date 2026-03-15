@@ -3,6 +3,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 import { store } from '../store.js';
+import { escapeHTML, sanitizeURL } from '../utils/security.js';
 import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
@@ -102,11 +103,8 @@ function renderLinkCard(link, index) {
           <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete link">🗑️</button>
         </div>
       </div>
-      <h3 class="link-title">${link.title}</h3>
-      <div class="link-url-wrapper">
-        <a class="link-url truncate" href="${link.url}" target="_blank" rel="noopener">${link.url}</a>
-        <button class="btn btn-ghost btn-icon copy-link" data-url="${link.url}" title="Copy URL" aria-label="Copy URL to clipboard">📋</button>
-      </div>
+      <h3 class="link-title">${escapeHTML(link.title)}</h3>
+      <a class="link-url truncate" href="${sanitizeURL(link.url)}" target="_blank" rel="noopener">${escapeHTML(link.url)}</a>
       <div class="link-meta">
         <span class="badge badge-primary">${cat.label}</span>
         ${assignedTags.length > 0 ? `<span class="badge badge-success">🏷️ ${assignedTags.length} tag${assignedTags.length > 1 ? 's' : ''}</span>` : ''}

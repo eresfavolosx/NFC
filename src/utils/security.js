@@ -1,34 +1,36 @@
-/* ═══════════════════════════════════════════════════════════
-   NFC Tag Manager — Security Utilities
-   ═══════════════════════════════════════════════════════════ */
-
 /**
- * Escapes HTML special characters to prevent XSS.
+ * Escapes HTML characters to prevent XSS.
  * @param {string} str - The string to escape.
  * @returns {string} The escaped string.
  */
 export function escapeHTML(str) {
-  if (str === null || str === undefined) return '';
-  return String(str).replace(/[&<>'"]/g, tag => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    "'": '&#39;',
-    '"': '&quot;'
-  }[tag]));
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, (match) => {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    };
+    return map[match];
+  });
 }
 
 /**
- * Validates if a URL is safe to be used in href.
- * Currently checks if it starts with http:// or https://
- * @param {string} url - The URL to validate.
- * @returns {boolean} True if valid.
+ * Sanitizes a URL to ensure it uses a safe protocol.
+ * @param {string} url - The URL to sanitize.
+ * @returns {string} The sanitized URL or '#' if invalid.
  */
-export function isValidURL(url) {
+export function sanitizeURL(url) {
+  if (!url) return '#';
   try {
     const parsed = new URL(url);
-    return ['http:', 'https:'].includes(parsed.protocol);
-  } catch {
-    return false;
+    if (['http:', 'https:', 'mailto:'].includes(parsed.protocol)) {
+      return url;
+    }
+  } catch (e) {
+    // invalid URL
   }
+  return '#';
 }
