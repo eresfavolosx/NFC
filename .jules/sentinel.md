@@ -1,4 +1,4 @@
-## 2024-02-21 - Pervasive Stored XSS via innerHTML
-**Vulnerability:** The entire application rendered user input (links, tags, activity messages) directly into `innerHTML` using template literals, without any sanitization. The utility `src/utils/security.js` was missing entirely. Even auxiliary components like `toast.js` were vulnerable.
-**Learning:** In Vanilla JS apps using `innerHTML` for templating, every single variable interpolation is a potential XSS sink. Without a centralized sanitization mechanism or a framework that escapes by default (like React), developers must manually wrap every output.
-**Prevention:** Implement `escapeHTML` and `sanitizeURL` immediately. Mandate their usage in all template literals. Consider using a tagged template literal helper (e.g., `` html`<div>${unsafe}</div>` ``) that auto-escapes, to reduce human error.
+## 2025-02-18 - Client-Side Hashing & Migration
+**Vulnerability:** Admin PIN stored in plaintext within localStorage, accessible via XSS.
+**Learning:** Implemented a seamless migration strategy where legacy plaintext PINs are automatically hashed upon successful login, preventing user lockout while upgrading security.
+**Prevention:** Always hash secrets before storage, even in client-side apps. Use `crypto.subtle` for standard, secure hashing.

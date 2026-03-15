@@ -46,15 +46,12 @@ function persistData(data) {
   }
 }
 
-function debounce(fn, ms) {
-  let timeout;
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => fn(...args), ms);
-  };
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
-
-const saveData = debounce(persistData, 500);
 
 let data = loadData();
 
@@ -92,20 +89,22 @@ export const store = {
   get isAuthenticated() { return data.settings.isAuthenticated; },
 
   async login(pin) {
-    const hashedPin = await hashPin(pin);
+    const hashedPin = await sha256(pin);
 
-    // Standard check (hashed)
+    // Check if the stored PIN matches the hash
     if (hashedPin === data.settings.adminPin) {
       data.settings.isAuthenticated = true;
       this._notify();
       return true;
     }
 
-    // Legacy migration check (plaintext)
-    if (pin === data.settings.adminPin) {
+    // Legacy migration: check if stored PIN is plaintext
+    // If stored PIN length is not 64 (SHA-256 hex length), it might be legacy
+    if (data.settings.adminPin === pin) {
+      // Migrate to hash
       data.settings.adminPin = hashedPin;
       data.settings.isAuthenticated = true;
-      this._notify(); // Saves the new hash to storage
+      this._notify();
       return true;
     }
 
@@ -118,14 +117,17 @@ export const store = {
   },
 
   async changePin(oldPin, newPin) {
-    const oldHash = await hashPin(oldPin);
-    if (oldHash === data.settings.adminPin) {
-      const newHash = await hashPin(newPin);
-      data.settings.adminPin = newHash;
-      this._notify();
-      return true;
+    const hashedOld = await sha256(oldPin);
+
+    // Validate old PIN (check hash OR legacy plaintext)
+    if (hashedOld !== data.settings.adminPin && oldPin !== data.settings.adminPin) {
+      return false;
     }
-    return false;
+
+    const hashedNew = await sha256(newPin);
+    data.settings.adminPin = hashedNew;
+    this._notify();
+    return true;
   },
 
   // ── Settings ──
