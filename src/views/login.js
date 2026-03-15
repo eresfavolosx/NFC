@@ -21,8 +21,8 @@ export function renderLogin() {
         <h1 class="login-title">NFC Tag Manager</h1>
         <p class="login-subtitle">Enter your admin PIN to continue</p>
 
-        <div class="pin-display" id="pinDisplay">
-          <span class="sr-only" aria-live="polite" id="pinAriaStatus">Enter 4-digit PIN</span>
+        <div class="pin-display" id="pinDisplay" aria-live="polite" aria-atomic="true">
+          <span class="sr-only" id="pinSrText">Enter your 4-digit PIN</span>
           <span class="pin-dot" aria-hidden="true"></span>
           <span class="pin-dot" aria-hidden="true"></span>
           <span class="pin-dot" aria-hidden="true"></span>
@@ -33,9 +33,9 @@ export function renderLogin() {
 
         <div class="pin-pad" id="pinPad">
           ${[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '⌫'].map(n => {
-        if (n === '') return '<button class="pin-key empty" disabled aria-hidden="true"></button>';
+        if (n === '') return '<button class="pin-key empty" disabled></button>';
         if (n === '⌫') return `<button class="pin-key delete" data-action="delete" aria-label="Delete last digit">⌫</button>`;
-        return `<button class="pin-key" data-digit="${n}" aria-label="Digit ${n}">${n}</button>`;
+        return `<button class="pin-key" data-digit="${n}">${n}</button>`;
     }).join('')}
         </div>
 
@@ -52,10 +52,11 @@ export function renderLogin() {
         dots.forEach((dot, i) => {
             dot.classList.toggle('filled', i < pin.length);
         });
-        const statusEl = document.getElementById('pinAriaStatus');
-        if (statusEl) {
-            statusEl.textContent = pin.length === 0
-                ? 'Enter 4-digit PIN'
+
+        const srText = document.getElementById('pinSrText');
+        if (srText) {
+            srText.textContent = pin.length === 0
+                ? 'Enter your 4-digit PIN'
                 : `${pin.length} digit${pin.length === 1 ? '' : 's'} entered`;
         }
     }
