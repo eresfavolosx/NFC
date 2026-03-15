@@ -37,6 +37,29 @@ function saveData(data) {
 }
 
 let data = loadData();
+let saveTimeout = null;
+
+function scheduleSave(dataToSave) {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveData(dataToSave);
+    saveTimeout = null;
+  }, 500);
+}
+
+// Flush pending saves on visibility change
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+        saveTimeout = null;
+        saveData(data);
+      }
+    }
+  });
+}
+
 const listeners = new Set();
 
 export const store = {
@@ -47,7 +70,7 @@ export const store = {
   },
 
   _notify() {
-    saveData(data);
+    scheduleSave(data);
     listeners.forEach(fn => fn(data));
   },
 
