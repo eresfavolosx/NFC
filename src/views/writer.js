@@ -94,7 +94,7 @@ function renderIOSGuide(links) {
             <p class="empty-state-desc">No links available. Create a link first from the Links page.</p>
           </div>
         ` : `
-          <select class="form-select" id="iosCopySelect">
+          <select class="form-select" id="iosCopySelect" aria-label="Select a link to copy">
             <option value="">— Choose a link —</option>
             ${links.map(l => `<option value="${escapeHTML(l.url)}" data-title="${escapeHTML(l.title)}">${escapeHTML(l.title)} — ${escapeHTML(l.url)}</option>`).join('')}
           </select>
@@ -206,7 +206,7 @@ function renderWriterUI(links, tags, compatInfo) {
                 <p class="empty-state-desc">No links available. Create a link first from the Links page.</p>
               </div>
             ` : `
-              <select class="form-select" id="writerLinkSelect">
+              <select class="form-select" id="writerLinkSelect" aria-label="Choose a link to write">
                 <option value="">— Choose a link to write —</option>
                 ${links.map(l => `<option value="${l.id}">${escapeHTML(l.title)} — ${escapeHTML(l.url)}</option>`).join('')}
               </select>
@@ -224,7 +224,7 @@ function renderWriterUI(links, tags, compatInfo) {
             <h2>Assign to Tag (Optional)</h2>
           </div>
 
-          <select class="form-select" id="writerTagSelect">
+          <select class="form-select" id="writerTagSelect" aria-label="Assign to a tag">
             <option value="">— No specific tag —</option>
             ${tags.map(t => `<option value="${t.id}">${escapeHTML(t.label)}${t.serialNumber ? ` (${escapeHTML(t.serialNumber)})` : ''}</option>`).join('')}
           </select>
