@@ -99,9 +99,9 @@ function renderLinkCard(link, index) {
       <div class="link-card-header">
         <span class="link-icon">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon copy-link" data-url="${link.url}" title="Copy URL" aria-label="Copy URL for ${link.title.replace(/"/g, '&quot;')}">📋</button>
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit ${link.title.replace(/"/g, '&quot;')}">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete ${link.title.replace(/"/g, '&quot;')}">🗑️</button>
+          <button class="btn btn-ghost btn-icon copy-link" data-id="${link.id}" title="Copy Link" aria-label="Copy Link">📋</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete">🗑️</button>
         </div>
       </div>
       <h3 class="link-title">${escapeHTML(link.title)}</h3>
@@ -175,20 +175,21 @@ function initLinksEvents() {
         });
     });
 
-    document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
-    document.getElementById('emptyAddLink')?.addEventListener('click', openAddLinkModal);
+    // Copy link
+    document.querySelectorAll('.copy-link').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const link = store.getLink(btn.dataset.id);
+            if (!link) return;
+            navigator.clipboard.writeText(link.url)
+                .then(() => showToast('Link copied to clipboard!', 'success'))
+                .catch(() => showToast('Failed to copy link', 'error'));
+        });
+    });
 
-    document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
-    document.getElementById('emptyAddLink')?.addEventListener('click', openAddLinkModal);
-
-    // Add link (Toolbar)
-    document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
-
-    // Event Delegation for Grid (Edit, Delete, Empty State Add)
-    document.getElementById('linksGrid')?.addEventListener('click', (e) => {
-        // Edit Link
-        const editBtn = e.target.closest('.edit-link');
-        if (editBtn) {
+    // Edit link
+    document.querySelectorAll('.edit-link').forEach(btn => {
+        btn.addEventListener('click', (e) => {
             e.stopPropagation();
             const link = store.getLink(editBtn.dataset.id);
             if (!link) return;
