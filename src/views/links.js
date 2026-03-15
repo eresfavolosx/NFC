@@ -52,6 +52,18 @@ function linkFormContent(link = null) {
 export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
+    const tags = store.tags;
+
+    // ⚡ Bolt Performance Optimization: Pre-calculate map for O(1) lookups instead of O(N*M)
+    const tagsByLink = new Map();
+    for (const tag of tags) {
+        if (tag.assignedLinkId) {
+            if (!tagsByLink.has(tag.assignedLinkId)) {
+                tagsByLink.set(tag.assignedLinkId, []);
+            }
+            tagsByLink.get(tag.assignedLinkId).push(tag);
+        }
+    }
 
     // ⚡ Bolt: Optimize O(N^2) lookup to O(N) by grouping tags by assignedLinkId
     const tagsByLinkId = new Map();
@@ -92,7 +104,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLinkId.get(link.id) || [])).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLink.get(link.id) || [])).join('')}
       </div>
     </div>
   `;

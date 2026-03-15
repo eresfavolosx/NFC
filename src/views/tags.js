@@ -21,10 +21,10 @@ export function renderTags() {
     const tags = store.tags;
     const links = store.links;
 
-    // ⚡ Bolt: Optimize O(N^2) lookup to O(N) by creating a map of links by ID
-    const linksById = new Map();
+    // ⚡ Bolt Performance Optimization: Pre-calculate map for O(1) lookups instead of O(N*M)
+    const linksMap = new Map();
     for (const link of links) {
-        linksById.set(link.id, link);
+        linksMap.set(link.id, link);
     }
 
     container.innerHTML = `
@@ -50,7 +50,7 @@ export function renderTags() {
         </div>
       ` : `
         <div class="tags-list" id="tagsList">
-          ${tags.map((tag, i) => renderTagRow(tag, linksById, i)).join('')}
+          ${tags.map((tag, i) => renderTagRow(tag, linksMap.get(tag.assignedLinkId) || null, i)).join('')}
         </div>
       `}
     </div>
@@ -59,9 +59,7 @@ export function renderTags() {
     initTagsEvents(links);
 }
 
-function renderTagRow(tag, linksById, index) {
-    const assignedLink = tag.assignedLinkId ? linksById.get(tag.assignedLinkId) : null;
-
+function renderTagRow(tag, assignedLink, index) {
     return `
     <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
       <div class="tag-row-main">
