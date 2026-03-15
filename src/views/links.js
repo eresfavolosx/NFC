@@ -52,15 +52,19 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
 
-    const tagsByLinkId = new Map();
-    store.tags.forEach(tag => {
-        if (tag.assignedLinkId) {
-            if (!tagsByLinkId.has(tag.assignedLinkId)) {
-                tagsByLinkId.set(tag.assignedLinkId, []);
+    // Pre-calculate tags map to prevent O(N*M) lookup in render loop
+    const tags = store.tags;
+    const linkTagsMap = new Map();
+    for (const t of tags) {
+        if (t.assignedLinkId) {
+            const group = linkTagsMap.get(t.assignedLinkId);
+            if (group) {
+                group.push(t);
+            } else {
+                linkTagsMap.set(t.assignedLinkId, [t]);
             }
-            tagsByLinkId.get(tag.assignedLinkId).push(tag);
         }
-    });
+    }
 
     container.innerHTML = `
     ${renderHeader('Links', 'Manage your destination URLs')}
@@ -90,7 +94,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLinkId.get(link.id) || [])).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, linkTagsMap, i)).join('')}
       </div>
     </div>
   `;
@@ -98,12 +102,9 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, index, assignedTags) {
+function renderLinkCard(link, linkTagsMap, index) {
     const cat = getCategoryInfo(link.category);
-    const assignedTags = store.getTagsForLink(link.id);
-    const safeTitle = escapeHTML(link.title);
-    const safeUrlText = escapeHTML(link.url);
-    const safeHref = isValidUrl(link.url) ? escapeHTML(link.url) : '#';
+    const assignedTags = linkTagsMap.get(link.id) || [];
 
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
@@ -266,10 +267,11 @@ function filterLinks(search, category) {
     const cards = document.querySelectorAll('.link-card');
     const links = store.links;
 
-    const linkMap = new Map(links.map(l => [l.id, l]));
+    // Pre-calculate links map to prevent O(N^2) lookup inside querySelectorAll loop
+    const linksMap = new Map(links.map(l => [l.id, l]));
 
     cards.forEach(card => {
-        const link = linkMap.get(card.dataset.id);
+        const link = linksMap.get(card.dataset.id);
         if (!link) return;
 
         const matchSearch = !search ||
