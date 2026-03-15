@@ -24,9 +24,24 @@ function getContainer() {
     return modalContainer;
 }
 
+// 🛡️ Sentinel: Centralized utility for XSS prevention when building HTML strings
+export function escapeHTML(str) {
+    if (typeof str !== 'string') return str;
+    return str.replace(/[&<>'"]/g,
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag])
+    );
+}
+
 export function openModal({ title, content, onSubmit, submitLabel = 'Save', showCancel = true }) {
     const container = getContainer();
 
+    // 🛡️ Sentinel: Prevent XSS by using textContent for title and submitLabel
     container.innerHTML = `
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal animate-scale-in" role="dialog" aria-labelledby="modalTitle">
@@ -44,6 +59,10 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
       </div>
     </div>
   `;
+    container.querySelector('#modalTitle').textContent = title;
+    if (onSubmit) {
+        container.querySelector('#modalSubmit').textContent = submitLabel;
+    }
 
     document.getElementById('modalTitle').textContent = title;
     if (onSubmit) {

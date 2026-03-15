@@ -1,4 +1,4 @@
-## 2025-03-02 - XSS Vulnerability via DOM Injection
-**Vulnerability:** UI components (`toast.js` and `modal.js`) were susceptible to DOM-based Cross-Site Scripting (XSS). User-controlled text strings (`message`, `title`, `submitLabel`) were being concatenated directly into template literals and assigned via `element.innerHTML = ...`.
-**Learning:** This existed because of the convenience of template literals for constructing UI components without considering the origin and trustworthiness of the data being injected.
-**Prevention:** Always use `textContent` to safely assign dynamic text content to DOM elements. When innerHTML is absolutely necessary for structured content, ensure any dynamic strings within the content are sanitized using an `escapeHTML` utility prior to injection.
+## 2025-03-03 - Fix XSS Vulnerabilities in UI Components via innerHTML
+**Vulnerability:** XSS (Cross-Site Scripting) vulnerabilities existed in `toast.js` and `modal.js` because user-controlled strings (like messages, modal titles, button labels, link titles, URLs, and tag labels) were passed unescaped directly into the DOM using string interpolation within `innerHTML`.
+**Learning:** This issue was present because UI components were dynamically constructed via template literals relying on `innerHTML` without first sanitizing the injected dynamic data.
+**Prevention:** Always use `textContent` when injecting untrusted strings into the DOM or sanitize them using a centralized utility like `escapeHTML` (now implemented in `modal.js`) before interpolating them into a larger HTML string intended for `innerHTML`.

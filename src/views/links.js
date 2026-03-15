@@ -4,7 +4,7 @@
 
 import { store, escapeHTML } from '../store.js';
 import { renderHeader } from '../components/header.js';
-import { openModal, closeModal, getModalFormData } from '../components/modal.js';
+import { openModal, closeModal, getModalFormData, escapeHTML } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
 import { escapeHTML, sanitizeUrl } from '../utils/sanitize.js';
 
