@@ -470,10 +470,19 @@
     font-weight: var(--font-weight-semibold);
 }
 
+.link-url-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
 .link-url {
     font-size: var(--font-size-sm);
     color: var(--text-muted);
     display: block;
+    flex: 1;
+    min-width: 0;
 }
 
 .link-meta {

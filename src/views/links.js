@@ -98,12 +98,15 @@ function renderLinkCard(link, index) {
       <div class="link-card-header">
         <span class="link-icon">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete">🗑️</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit link">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete link">🗑️</button>
         </div>
       </div>
-      <h3 class="link-title">${escapeHTML(link.title)}</h3>
-      <a class="link-url truncate" href="${escapeHTML(link.url)}" target="_blank" rel="noopener">${escapeHTML(link.url)}</a>
+      <h3 class="link-title">${link.title}</h3>
+      <div class="link-url-wrapper">
+        <a class="link-url truncate" href="${link.url}" target="_blank" rel="noopener">${link.url}</a>
+        <button class="btn btn-ghost btn-icon copy-link" data-url="${link.url}" title="Copy URL" aria-label="Copy URL to clipboard">📋</button>
+      </div>
       <div class="link-meta">
         <span class="badge badge-primary">${cat.label}</span>
         ${assignedTags.length > 0 ? `<span class="badge badge-success">🏷️ ${assignedTags.length} tag${assignedTags.length > 1 ? 's' : ''}</span>` : ''}
@@ -114,9 +117,28 @@ function renderLinkCard(link, index) {
 }
 
 function initLinksEvents() {
+    // Copy link
+    document.querySelectorAll('.copy-link').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const url = btn.dataset.url;
+            try {
+                await navigator.clipboard.writeText(url);
+                showToast('Link copied to clipboard!', 'success');
+
+                btn.textContent = '✅';
+                setTimeout(() => {
+                    btn.textContent = '📋';
+                }, 1500);
+            } catch (err) {
+                showToast('Failed to copy link', 'error');
+                console.error('Copy failed', err);
+            }
+        });
+    });
+
     // Add link
-    const addBtn = document.getElementById('addLinkBtn') || document.getElementById('emptyAddLink');
-    addBtn?.addEventListener('click', () => {
+    function openAddLinkModal() {
         openModal({
             title: 'Create New Link',
             content: linkFormContent(),
@@ -139,7 +161,13 @@ function initLinksEvents() {
                 renderLinks();
             },
         });
-    });
+    }
+
+    const addBtn = document.getElementById('addLinkBtn');
+    addBtn?.addEventListener('click', openAddLinkModal);
+
+    const emptyAddBtn = document.getElementById('emptyAddLink');
+    emptyAddBtn?.addEventListener('click', openAddLinkModal);
 
     // Edit link
     document.querySelectorAll('.edit-link').forEach(btn => {
