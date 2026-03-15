@@ -69,6 +69,11 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
     container.querySelector('#modalTitle').textContent = title;
     if (onSubmit) { container.querySelector('#modalSubmit').textContent = submitLabel; }
 
+    container.querySelector('#modalTitle').textContent = title;
+    if (onSubmit) {
+        container.querySelector('#modalSubmit').textContent = submitLabel;
+    }
+
     container.style.display = 'block';
     document.body.style.overflow = 'hidden';
 
@@ -117,6 +122,19 @@ export function closeModal() {
         container.style.display = 'none';
         document.body.style.overflow = '';
     }
+}
+
+export function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g,
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag)
+    );
 }
 
 export function getModalFormData() {

@@ -110,8 +110,8 @@ function renderLinkCard(link, index, tagCounts) {
           <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete link">🗑️</button>
         </div>
       </div>
-      <h3 class="link-title">${safeTitle}</h3>
-      <a class="link-url truncate" href="${safeHref}" target="_blank" rel="noopener">${safeUrlText}</a>
+      <h3 class="link-title">${escapeHTML(link.title)}</h3>
+      <a class="link-url truncate" href="${escapeHTML(link.url)}" target="_blank" rel="noopener">${escapeHTML(link.url)}</a>
       <div class="link-meta">
         <span class="badge badge-primary">${cat.label}</span>
         ${assignedTagsCount > 0 ? `<span class="badge badge-success">🏷️ ${assignedTagsCount} tag${assignedTagsCount > 1 ? 's' : ''}</span>` : ''}

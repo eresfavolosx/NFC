@@ -1,5 +1,4 @@
-
-## 2024-05-24 - Fix DOM-based XSS in UI Components
-**Vulnerability:** DOM-based Cross-Site Scripting (XSS) in `showToast` and `openModal` components via string interpolation into `innerHTML`.
-**Learning:** `innerHTML` was used to construct entire UI elements, including injecting user-controlled text directly into the markup. This allowed malicious payloads (e.g., `<img src=x onerror=...>`) to be executed by the browser.
-**Prevention:** Avoid injecting dynamic data directly into `innerHTML`. Instead, create the structural HTML safely (without data), and then assign user-provided text using `.textContent` on the specific elements.
+## 2024-05-24 - [Fix DOM-based XSS via Template Literals in Modals and Toasts]
+**Vulnerability:** Core UI components (Toast, Modal) directly assigned unsanitized user inputs (e.g., error messages, modal titles) via `innerHTML` using template literals.
+**Learning:** This approach bypasses browser XSS protection by rendering user inputs as live DOM nodes, enabling script execution if user input contains unescaped HTML.
+**Prevention:** For elements rendering only text, assign inputs directly to `.textContent` *after* structure creation, rather than interpolating into an `innerHTML` string. For elements requiring markup (e.g., `<p>...</p>`), explicitly sanitize any interpolated dynamic variables using an `escapeHTML` utility function before injection.

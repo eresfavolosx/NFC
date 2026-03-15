@@ -35,9 +35,6 @@ export function showToast(message, type = 'info', duration = 3500) {
     <span class="toast-message"></span>
     <button class="toast-close" aria-label="Close">✕</button>
   `;
-    // Security: Use textContent to prevent DOM XSS when setting arbitrary messages
-    toast.querySelector('.toast-message').textContent = message;
-
     toast.querySelector('.toast-message').textContent = message;
 
     container.appendChild(toast);
