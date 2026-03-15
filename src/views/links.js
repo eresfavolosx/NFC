@@ -89,7 +89,19 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, i, tagCounts)).join('')}
+        ` : (() => {
+            // ⚡ Bolt: Replace O(N*M) nested loop with O(N) lookup
+            // Pre-calculate assigned tags map outside the loop
+            const tagsByLink = new Map();
+            for (const t of store.tags) {
+                if (t.assignedLinkId) {
+                    const arr = tagsByLink.get(t.assignedLinkId) || [];
+                    arr.push(t);
+                    tagsByLink.set(t.assignedLinkId, arr);
+                }
+            }
+            return links.map((link, i) => renderLinkCard(link, i, tagsByLink.get(link.id) || [])).join('');
+        })()}
       </div>
     </div>
   `;
@@ -97,10 +109,8 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, index, tagCounts) {
+function renderLinkCard(link, index, assignedTags = []) {
     const cat = getCategoryInfo(link.category);
-    // ⚡ Bolt Optimization: O(1) lookup
-    const assignedTagsCount = tagCounts ? (tagCounts.get(link.id) || 0) : store.getTagsForLink(link.id).length;
 
     // Escape dynamic properties before injecting into template literals
     return `
