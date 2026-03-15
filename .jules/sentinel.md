@@ -1,4 +1,4 @@
-## 2024-03-13 - XSS in Links and Tags UI
-**Vulnerability:** DOM-based Cross-Site Scripting (XSS) in UI views via unescaped string interpolation in HTML template literals for `title`, `url`, `label`, and `serialNumber`.
-**Learning:** Due to the lack of an HTML rendering framework that automatically escapes variables (like React or Vue), all user inputs were injected directly into the DOM using raw template literals.
-**Prevention:** Always use the dedicated `escapeHTML` utility function (now defined in `src/components/modal.js`) to wrap any user-supplied or externally-provided data before interpolating it into HTML template strings.
+## 2024-03-14 - Fix DOM XSS vulnerabilities in UI components via innerHTML
+**Vulnerability:** Found missing input sanitization when injecting user-provided strings (such as `title` in modals and `message` in toasts) into the DOM using template literals assigned to `innerHTML` in `src/components/modal.js` and `src/components/toast.js`. This allows DOM-based XSS if user data makes it into these parameters.
+**Learning:** Reusable UI components rendering via `innerHTML` template strings are prone to XSS if arguments are not explicitly sanitized. No standard string sanitization utility previously existed in this project.
+**Prevention:** Created a reusable `escapeHTML` utility function in `src/components/modal.js` (properly handling `null`/`undefined` without stripping falsy `0` values). This utility should be imported and used to wrap any untrusted strings interpolated into `innerHTML`.
