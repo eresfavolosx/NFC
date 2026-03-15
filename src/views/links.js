@@ -52,6 +52,17 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
 
+    // Pre-calculate tags per link to avoid O(N*M) lookups in renderLinkCard
+    const tagsByLinkId = new Map();
+    store.tags.forEach(tag => {
+        if (tag.assignedLinkId) {
+            if (!tagsByLinkId.has(tag.assignedLinkId)) {
+                tagsByLinkId.set(tag.assignedLinkId, []);
+            }
+            tagsByLinkId.get(tag.assignedLinkId).push(tag);
+        }
+    });
+
     container.innerHTML = `
     ${renderHeader('Links', 'Manage your destination URLs')}
 
@@ -80,7 +91,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, i)).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, i, tagsByLinkId)).join('')}
       </div>
     </div>
   `;
@@ -88,11 +99,9 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, index) {
+function renderLinkCard(link, index, tagsByLinkId) {
     const cat = getCategoryInfo(link.category);
-    const assignedTags = store.getTagsForLink(link.id);
-    const safeTitle = escapeHTML(link.title);
-    const safeUrl = escapeHTML(link.url);
+    const assignedTags = tagsByLinkId.get(link.id) || [];
 
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
@@ -255,8 +264,12 @@ function filterLinks(search, category) {
     const cards = document.querySelectorAll('.link-card');
     const links = store.links;
 
+    // Pre-calculate map to avoid O(N^2) lookups during filtering
+    const linksMap = new Map();
+    links.forEach(l => linksMap.set(l.id, l));
+
     cards.forEach(card => {
-        const link = links.find(l => l.id === card.dataset.id);
+        const link = linksMap.get(card.dataset.id);
         if (!link) return;
 
         const matchSearch = !search ||
