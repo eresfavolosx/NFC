@@ -1,3 +1,3 @@
-## 2024-05-18 - Keyboard accessibility for hidden list item actions
-**Learning:** When hiding elements (like list actions) using `opacity: 0` and revealing them on `:hover`, keyboard accessibility is broken because the elements cannot be seen when tabbing into them.
-**Action:** Always pair `:hover` with `:focus-within` on the parent container so that tabbing into the hidden actions reveals them.
+## 2024-05-14 - Keyboard navigation broken for action buttons hidden with opacity
+**Learning:** When using `opacity: 0` to hide action buttons (like in `.link-card`), they become inaccessible to keyboard users tabbing through the interface since `:hover` doesn't trigger.
+**Action:** Always use `:focus-within` on the parent container (e.g., `.link-card:focus-within .link-card-actions`) in addition to `:hover` to ensure keyboard users can reveal and access the controls.
