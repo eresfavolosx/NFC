@@ -232,17 +232,21 @@ function initTagsEvents(links) {
         }
     });
 
-    // Search
+    // Debounce search input to minimize expensive DOM manipulations on keystroke
+    let searchTimeout;
     document.getElementById('tagSearch')?.addEventListener('input', (e) => {
-        const q = e.target.value.toLowerCase();
-        const tagsMap = new Map(store.tags.map(t => [t.id, t]));
+        if (searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const q = e.target.value.toLowerCase();
+            const tagsMap = new Map(store.tags.map(t => [t.id, t]));
 
-        document.querySelectorAll('.tag-row').forEach(row => {
-            const tag = tagsMap.get(row.dataset.id);
-            if (!tag) return;
-            const match = tag.label.toLowerCase().includes(q) ||
-                (tag.serialNumber && tag.serialNumber.toLowerCase().includes(q));
-            row.style.display = match ? '' : 'none';
-        });
+            document.querySelectorAll('.tag-row').forEach(row => {
+                const tag = tagsMap.get(row.dataset.id);
+                if (!tag) return;
+                const match = tag.label.toLowerCase().includes(q) ||
+                    (tag.serialNumber && tag.serialNumber.toLowerCase().includes(q));
+                row.style.display = match ? '' : 'none';
+            });
+        }, 300);
     });
 }
