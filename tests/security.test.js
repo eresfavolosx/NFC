@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { escapeHTML, isValidURL } from '../src/utils/security.js';
+import { escapeHTML, isValidUrl as isValidURL } from '../src/utils/sanitize.js';
 
 test('escapeHTML', async (t) => {
   await t.test('should escape basic HTML characters', () => {
@@ -11,7 +11,7 @@ test('escapeHTML', async (t) => {
 
   await t.test('should escape single quotes', () => {
     const input = "It's cool";
-    const expected = "It&#39;s cool";
+    const expected = "It&#039;s cool";
     assert.strictEqual(escapeHTML(input), expected);
   });
 
