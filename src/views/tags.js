@@ -22,9 +22,6 @@ export function renderTags() {
     const tags = store.tags;
     const links = store.links;
 
-    // Map links by ID for O(1) lookup
-    const linksById = new Map(links.map(l => [l.id, l]));
-
     container.innerHTML = `
     ${renderHeader('Tags', 'Manage your NFC bracelet tags')}
 
@@ -48,7 +45,7 @@ export function renderTags() {
         </div>
       ` : `
         <div class="tags-list" id="tagsList">
-          ${tags.map((tag, i) => renderTagRow(tag, linksById, i)).join('')}
+          ${tags.map((tag, i) => renderTagRow(tag, store.linksById, i)).join('')}
         </div>
       `}
     </div>
@@ -235,10 +232,9 @@ function initTagsEvents(links) {
     // Search
     document.getElementById('tagSearch')?.addEventListener('input', (e) => {
         const q = e.target.value.toLowerCase();
-        const tagsMap = new Map(store.tags.map(t => [t.id, t]));
 
         document.querySelectorAll('.tag-row').forEach(row => {
-            const tag = tagsMap.get(row.dataset.id);
+            const tag = store.tagsById.get(row.dataset.id);
             if (!tag) return;
             const match = tag.label.toLowerCase().includes(q) ||
                 (tag.serialNumber && tag.serialNumber.toLowerCase().includes(q));
