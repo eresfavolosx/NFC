@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { escapeHTML, isValidURL } from '../src/utils/security.js';
+import { escapeHTML, isValidUrl as isValidURL } from '../src/utils/sanitize.js';
 
 test('escapeHTML', async (t) => {
   await t.test('should escape basic HTML characters', () => {
