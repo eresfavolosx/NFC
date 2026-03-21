@@ -2,6 +2,8 @@
    NFC Tag Manager — Modal Component
    ═══════════════════════════════════════════════════════════ */
 
+import { escapeHTML } from '../utils/sanitize.js';
+
 let modalContainer = null;
 
 function getContainer() {
@@ -20,7 +22,7 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal animate-scale-in" role="dialog" aria-labelledby="modalTitle">
         <div class="modal-header">
-          <h3 id="modalTitle">${title}</h3>
+          <h3 id="modalTitle">${escapeHTML(title)}</h3>
           <button class="btn-icon btn-ghost modal-close" id="modalClose" aria-label="Close">✕</button>
         </div>
         <form id="modalForm">
@@ -29,12 +31,21 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
           </div>
           <div class="modal-footer">
             ${showCancel ? '<button type="button" class="btn btn-secondary" id="modalCancel">Cancel</button>' : ''}
-            ${onSubmit ? `<button type="submit" class="btn btn-primary" id="modalSubmit">${submitLabel}</button>` : ''}
+            ${onSubmit ? `<button type="submit" class="btn btn-primary" id="modalSubmit"></button>` : ''}
           </div>
         </form>
       </div>
     </div>
   `;
+
+    // Security: Use textContent for user-provided strings
+    const titleEl = container.querySelector('#modalTitle');
+    if (titleEl) titleEl.textContent = title;
+
+    if (onSubmit) {
+        const submitBtn = container.querySelector('#modalSubmit');
+        if (submitBtn) submitBtn.textContent = submitLabel;
+    }
 
     container.style.display = 'block';
     document.body.style.overflow = 'hidden';

@@ -21,24 +21,33 @@ export function renderLogin() {
         <h1 class="login-title">NFC Tag Manager</h1>
         <p class="login-subtitle">Enter your admin PIN to continue</p>
 
-        <div class="pin-display" id="pinDisplay">
+        <div class="pin-display" id="pinDisplay" role="status" aria-label="0 digits entered">
           <span class="pin-dot"></span>
           <span class="pin-dot"></span>
           <span class="pin-dot"></span>
           <span class="pin-dot"></span>
         </div>
 
-        <div class="pin-error" id="pinError"></div>
+        <div class="pin-error" id="pinError" aria-live="assertive"></div>
 
         <div class="pin-pad" id="pinPad">
           ${[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '⌫'].map(n => {
         if (n === '') return '<button class="pin-key empty" disabled></button>';
         if (n === '⌫') return `<button class="pin-key delete" data-action="delete" aria-label="Delete">⌫</button>`;
-        return `<button class="pin-key" data-digit="${n}">${n}</button>`;
+        return `<button class="pin-key" data-digit="${n}" aria-label="${n}">${n}</button>`;
     }).join('')}
         </div>
 
         <p class="login-hint">Default PIN: 1234</p>
+
+        <div class="login-divider">
+          <span>OR</span>
+        </div>
+
+        <button class="btn btn-secondary w-full" id="googleLoginBtn">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" width="18" height="18">
+          Sign in with Google
+        </button>
       </div>
     </div>
   `;
@@ -51,10 +60,11 @@ export function renderLogin() {
         dots.forEach((dot, i) => {
             dot.classList.toggle('filled', i < pin.length);
         });
+        document.getElementById('pinDisplay').setAttribute('aria-label', `${pin.length} digits entered`);
     }
 
-    function tryLogin() {
-        if (store.login(pin)) {
+    async function tryLogin() {
+        if (await store.login(pin)) {
             showToast('Welcome back!', 'success');
             navigate('/dashboard');
         } else {
@@ -85,6 +95,18 @@ export function renderLogin() {
             if (pin.length === 4) {
                 setTimeout(tryLogin, 200);
             }
+        }
+    });
+
+    // Google Login
+    document.getElementById('googleLoginBtn')?.addEventListener('click', async () => {
+        try {
+            if (await store.loginWithGoogle()) {
+                showToast('Signed in with Google!', 'success');
+                navigate('/dashboard');
+            }
+        } catch (error) {
+            showToast('Google Sign-In failed', 'error');
         }
     });
 

@@ -7,6 +7,8 @@ import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
 import { navigate } from '../router.js';
+import { escapeHTML } from '../utils/sanitize.js';
+import { nfc } from '../nfc.js';
 
 function formatDate(dateStr) {
     if (!dateStr) return 'Never';
@@ -26,7 +28,7 @@ export function renderTags() {
     <div class="page-container">
       <div class="links-toolbar">
         <div class="search-bar">
-          <span class="search-icon">🔍</span>
+          <span class="search-icon" aria-hidden="true">🔍</span>
           <input class="form-input" type="text" id="tagSearch" placeholder="Search tags..." aria-label="Search tags">
         </div>
         <button class="btn btn-primary" id="addTagBtn">
@@ -43,7 +45,7 @@ export function renderTags() {
         </div>
       ` : `
         <div class="tags-list" id="tagsList">
-          ${tags.map((tag, i) => renderTagRow(tag, links, i)).join('')}
+          ${tags.map((tag, i) => renderTagRow(tag, i)).join('')}
         </div>
       `}
     </div>
@@ -52,24 +54,28 @@ export function renderTags() {
     initTagsEvents(links);
 }
 
-function renderTagRow(tag, links, index) {
-    const assignedLink = tag.assignedLinkId ? links.find(l => l.id === tag.assignedLinkId) : null;
+function renderTagRow(tag, index) {
+    const assignedLink = tag.assignedLinkId ? store.getLink(tag.assignedLinkId) : null;
 
     return `
     <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
       <div class="tag-row-main">
         <div class="tag-icon-wrap">
-          <span class="tag-icon-big">🏷️</span>
+          <span class="tag-icon-big" aria-hidden="true">🏷️</span>
         </div>
         <div class="tag-info">
-          <h3 class="tag-label">${tag.label}</h3>
+          <h3 class="tag-label">${escapeHTML(tag.label)}</h3>
           <div class="tag-details">
-            ${tag.serialNumber ? `<span class="badge badge-info">SN: ${tag.serialNumber}</span>` : ''}
+            ${tag.serialNumber ? `<span class="badge badge-info">SN: ${escapeHTML(tag.serialNumber)}</span>` : ''}
             ${assignedLink
-            ? `<span class="badge badge-success">🔗 ${assignedLink.title}</span>`
+            ? `<span class="badge badge-success">🔗 ${escapeHTML(assignedLink.title)}</span>`
             : `<span class="badge badge-warning">⚠️ No link assigned</span>`
         }
-            <span class="tag-date">Last written: ${formatDate(tag.lastWritten)}</span>
+            <div class="tag-meta">
+              ${tag.isLocked ? '<span class="tag-badge status-locked">🔒 Locked</span>' : ''}
+              ${tag.location ? `<span class="tag-badge location-badge" title="${tag.location.lat}, ${tag.location.lng}">📍 Geo-tagged</span>` : ''}
+              <span class="tag-date">Added ${new Date(tag.createdAt).toLocaleDateString()}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -77,10 +83,10 @@ function renderTagRow(tag, links, index) {
         <button class="btn btn-secondary assign-link-btn" data-id="${tag.id}">
           ${assignedLink ? '🔄 Reassign' : '🔗 Assign Link'}
         </button>
-        <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${tag.id}" title="Write to this tag">
+        <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${tag.id}" title="Write to this tag" aria-label="Write to tag">
           📡
         </button>
-        <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${tag.id}" title="Delete tag">
+        <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${tag.id}" title="Delete tag" aria-label="Delete tag">
           🗑️
         </button>
       </div>
@@ -89,9 +95,9 @@ function renderTagRow(tag, links, index) {
 }
 
 function initTagsEvents(links) {
-    // Add tag
-    const addBtn = document.getElementById('addTagBtn') || document.getElementById('emptyAddTag');
-    addBtn?.addEventListener('click', () => {
+    const openRegisterModal = () => {
+        const isSupported = nfc.isSupported();
+
         openModal({
             title: 'Register New Tag',
             content: `
@@ -102,8 +108,11 @@ function initTagsEvents(links) {
         </div>
         <div class="form-group">
           <label class="form-label" for="tagSerial">Serial Number (optional)</label>
-          <input class="form-input" type="text" id="tagSerial" name="serialNumber"
-            placeholder="Will auto-fill when scanned">
+          <div style="display: flex; gap: 8px;">
+            <input class="form-input" type="text" id="tagSerial" name="serialNumber"
+              placeholder="${isSupported ? "Tap 'Scan' to read tag" : "Enter serial number manually (optional)"}" style="flex: 1;">
+            ${isSupported ? '<button class="btn btn-secondary" id="scanTagBtn" type="button">Scan</button>' : ''}
+          </div>
         </div>
       `,
             submitLabel: 'Register',
@@ -119,12 +128,44 @@ function initTagsEvents(links) {
                 renderTags();
             },
         });
-    });
 
-    // Assign link
-    document.querySelectorAll('.assign-link-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tag = store.getTag(btn.dataset.id);
+        if (isSupported) {
+            document.getElementById('scanTagBtn')?.addEventListener('click', async (e) => {
+                const scanBtn = e.target;
+                const serialInput = document.getElementById('tagSerial');
+                if (!serialInput) return;
+
+                scanBtn.disabled = true;
+                const originalText = scanBtn.textContent;
+                scanBtn.innerHTML = '<span class="spinner"></span> Scanning...';
+
+                try {
+                    const result = await nfc.readTag();
+                    if (result.serialNumber) {
+                        serialInput.value = result.serialNumber;
+                        scanBtn.innerHTML = '✅ Scanned';
+                        showToast('Tag scanned successfully!', 'success');
+                    } else {
+                         throw new Error('No serial number found on tag');
+                    }
+                } catch (err) {
+                    scanBtn.innerHTML = originalText;
+                    showToast(err.message, 'error');
+                } finally {
+                    scanBtn.disabled = false;
+                }
+            });
+        }
+    };
+
+    document.getElementById('addTagBtn')?.addEventListener('click', openRegisterModal);
+    document.getElementById('emptyAddTag')?.addEventListener('click', openRegisterModal);
+
+    // event delegation for tag row actions
+    document.getElementById('tagsList')?.addEventListener('click', (e) => {
+        const assignBtn = e.target.closest('.assign-link-btn');
+        if (assignBtn) {
+            const tag = store.getTag(assignBtn.dataset.id);
             if (!tag) return;
 
             if (links.length === 0) {
@@ -141,7 +182,7 @@ function initTagsEvents(links) {
               <option value="">— Choose a link —</option>
               ${links.map(l => `
                 <option value="${l.id}" ${tag.assignedLinkId === l.id ? 'selected' : ''}>
-                  ${l.title} — ${l.url}
+                  ${escapeHTML(l.title)} — ${escapeHTML(l.url)}
                 </option>
               `).join('')}
             </select>
@@ -156,28 +197,26 @@ function initTagsEvents(links) {
                     }
                     store.assignLinkToTag(tag.id, data.linkId);
                     closeModal();
-                    showToast(`Link assigned to "${tag.label}"!`, 'success');
+                    showToast(`Link assigned to "${tag.label}"`, 'success');
                     renderTags();
                 },
             });
-        });
-    });
+            return;
+        }
 
-    // Write tag → navigate to writer
-    document.querySelectorAll('.write-tag-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        const writeBtn = e.target.closest('.write-tag-btn');
+        if (writeBtn) {
             navigate('/writer');
-        });
-    });
+            return;
+        }
 
-    // Delete tag
-    document.querySelectorAll('.delete-tag-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tag = store.getTag(btn.dataset.id);
+        const deleteBtn = e.target.closest('.delete-tag-btn');
+        if (deleteBtn) {
+            const tag = store.getTag(deleteBtn.dataset.id);
             if (!tag) return;
             openModal({
                 title: 'Delete Tag',
-                content: `<p>Are you sure you want to delete <strong>"${tag.label}"</strong>?</p>`,
+                content: `<p>Are you sure you want to delete <strong>"${escapeHTML(tag.label)}"</strong>?</p>`,
                 submitLabel: 'Delete',
                 onSubmit: () => {
                     store.deleteTag(tag.id);
@@ -186,18 +225,23 @@ function initTagsEvents(links) {
                     renderTags();
                 },
             });
-        });
+            return;
+        }
     });
 
-    // Search
+    // Debounce search input to minimize expensive DOM manipulations on keystroke
+    let searchTimeout;
     document.getElementById('tagSearch')?.addEventListener('input', (e) => {
-        const q = e.target.value.toLowerCase();
-        document.querySelectorAll('.tag-row').forEach(row => {
-            const tag = store.getTag(row.dataset.id);
-            if (!tag) return;
-            const match = tag.label.toLowerCase().includes(q) ||
-                (tag.serialNumber && tag.serialNumber.toLowerCase().includes(q));
-            row.style.display = match ? '' : 'none';
-        });
+        if (searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const q = e.target.value.toLowerCase();
+            document.querySelectorAll('.tag-row').forEach(row => {
+                const tag = store.getTag(row.dataset.id);
+                if (!tag) return;
+                const match = tag.label.toLowerCase().includes(q) ||
+                    (tag.serialNumber && tag.serialNumber.toLowerCase().includes(q));
+                row.style.display = match ? '' : 'none';
+            });
+        }, 300);
     });
 }
