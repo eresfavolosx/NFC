@@ -192,9 +192,16 @@ export const store = {
   },
 
   // ── Links CRUD ──
-  get links() { return [...data.links]; },
+  get links() { 
+    if (this.isSuperAdmin()) return [...data.links];
+    return data.links.filter(l => l.ownerEmail === this.user?.email);
+  },
 
-  getLink(id) { return this.linksById.get(id); },
+  getLink(id) { 
+    const link = data.links.find(l => l.id === id);
+    if (this.isSuperAdmin()) return link;
+    return (link && link.ownerEmail === this.user?.email) ? link : null;
+  },
 
   // ── Subscription Logic ──
   get subscription() { return data.subscription; },
@@ -240,6 +247,7 @@ export const store = {
       clicks: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      ownerEmail: this.user?.email,
     };
     data.links.unshift(link);
     this._addActivity('link_created', `Created link "${title}"`);
@@ -282,16 +290,23 @@ export const store = {
   },
 
   // ── Tags CRUD ──
-  get tags() { return [...data.tags]; },
+  get tags() { 
+    if (this.isSuperAdmin()) return [...data.tags];
+    return data.tags.filter(t => t.ownerEmail === this.user?.email);
+  },
 
-  getTag(id) { return this.tagsById.get(id); },
+  getTag(id) { 
+    const tag = data.tags.find(t => t.id === id);
+    if (this.isSuperAdmin()) return tag;
+    return (tag && tag.ownerEmail === this.user?.email) ? tag : null;
+  },
 
   createTag({ id = null, label, serialNumber = null, ownerEmail = null }) {
     if (!this.values.isSuperAdmin && !this.canCreateTag()) {
         throw new Error('Tag limit reached. Upgrade to Pro for unlimited tags.');
     }
     const tag = {
-      id: id || crypto.randomUUID(),
+      id: crypto.randomUUID(),
       label,
       serialNumber,
       assignedLinkId: null,
@@ -422,15 +437,16 @@ export const store = {
 
   // ── Stats ──
   get stats() {
-    if (!this._cache.stats) {
-      this._cache.stats = {
-        totalLinks: data.links.length,
-        totalTags: data.tags.length,
-        assignedTags: data.tags.filter(t => t.assignedLinkId).length,
-        totalClicks: data.links.reduce((sum, l) => sum + l.clicks, 0),
-      };
-    }
-    return this._cache.stats;
+    const userTags = this.tags;
+    const userLinks = this.links;
+    
+    return {
+      totalTags: userTags.length,
+      totalLinks: userLinks.length,
+      totalClicks: userLinks.reduce((sum, l) => sum + (l.clicks || 0), 0),
+      activeTags: userTags.filter(t => t.assignedLinkId).length,
+      recentActivity: [...data.activities].slice(0, 10)
+    };
   },
 
   // ── Reset ──
