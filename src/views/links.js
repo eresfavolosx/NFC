@@ -59,7 +59,11 @@ export function renderLinks() {
     <div class="page-container">
       <div class="links-toolbar">
         <div class="search-bar">
+<<<<<<< HEAD
+          <span class="search-icon">🔍</span>
+=======
           <span class="search-icon" aria-hidden="true">🔍</span>
+>>>>>>> main
           <input class="form-input" type="text" id="linkSearch" placeholder="Search links..." aria-label="Search links">
         </div>
         <div class="toolbar-actions">
@@ -97,9 +101,9 @@ function renderLinkCard(link, assignedTags, index) {
       <div class="link-card-header">
         <span class="link-icon" aria-hidden="true">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon copy-link" data-url="${escapeHTML(link.url)}" title="Copy Link" aria-label="Copy link">📋</button>
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit link">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete link">🗑️</button>
+          <button class="btn btn-ghost btn-icon copy-link" data-url="${escapeHTML(link.url)}" title="Copy Link" aria-label="Copy link to ${escapeHTML(link.title)}">📋</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit ${escapeHTML(link.title)}">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete ${escapeHTML(link.title)}">🗑️</button>
         </div>
       </div>
       <h3 class="link-title">${escapeHTML(link.title)}</h3>
