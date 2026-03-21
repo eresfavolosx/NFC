@@ -18,8 +18,12 @@ export function renderRedirect({ id }) {
             store.incrementClicks(link.id, tag.id);
             
             // Redirect
-            window.location.href = link.url;
-            return;
+            if (isValidUrl(link.url)) {
+                window.location.href = link.url;
+                return;
+            } else {
+                console.warn('Invalid or unsafe URL detected. Redirection aborted.');
+            }
         }
     }
 
