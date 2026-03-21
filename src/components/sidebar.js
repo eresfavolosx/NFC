@@ -5,33 +5,24 @@
 import { navigate, getCurrentRoute } from '../router.js';
 import { store } from '../store.js';
 
-const NAV_ITEMS = [
-    { path: '/dashboard', icon: '📊', label: 'Dashboard' },
-    { path: '/links', icon: '🔗', label: 'Links' },
-    { path: '/tags', icon: '💳', label: 'Tags' },
-    { path: '/analytics', icon: '📈', label: 'Analytics', premium: true },
-    { path: '/templates', icon: '📋', label: 'Templates', premium: true },
-    { path: '/settings', icon: '⚙️', label: 'Settings' },
-    { path: '/profile', icon: '👤', label: 'Profile' },
-];
-
-const BOTTOM_NAV_ITEMS = [
-    { path: '/dashboard', icon: '📊', label: 'Home' },
-    { path: '/links', icon: '🔗', label: 'Links' },
-    { path: '/tags', icon: '💳', label: 'Tags' },
-    { path: '/templates', icon: '📋', label: 'Templates' },
-    { path: '/profile', icon: '👤', label: 'Profile' },
-];
-
 export function renderBottomNav() {
     const currentPath = getCurrentRoute();
+    const t = (key) => store.t(key);
+    
     const nav = document.createElement('nav');
     nav.id = 'bottom-nav';
     nav.className = 'bottom-nav';
 
-    const items = [...BOTTOM_NAV_ITEMS];
+    const items = [
+        { path: '/dashboard', icon: '📊', label: t('dashboard') },
+        { path: '/links', icon: '🔗', label: t('links') },
+        { path: '/tags', icon: '💳', label: t('tags') },
+        { path: '/templates', icon: '📋', label: t('templates') },
+        { path: '/profile', icon: '👤', label: t('profile') },
+    ];
+    
     if (store.isSuperAdmin()) {
-        items.splice(3, 0, { path: '/admin', icon: '🛡️', label: 'Admin' });
+        items.splice(3, 0, { path: '/admin', icon: '🛡️', label: t('admin') });
     }
 
     nav.innerHTML = `
@@ -51,6 +42,7 @@ export function renderBottomNav() {
 
 export function renderSidebar() {
     const currentPath = getCurrentRoute();
+    const t = (key) => store.t(key);
 
     const sidebar = document.createElement('aside');
     sidebar.id = 'sidebar';
@@ -58,13 +50,24 @@ export function renderSidebar() {
 
     const settings = store.settings;
     const brandLabel = settings.brandName || 'Tocaito';
+    const lang = settings.language || 'es';
+
+    const navItems = [
+        { path: '/dashboard', icon: '📊', label: t('dashboard') },
+        { path: '/links', icon: '🔗', label: t('links') },
+        { path: '/tags', icon: '💳', label: t('tags') },
+        { path: '/analytics', icon: '📈', label: t('analytics'), premium: true },
+        { path: '/templates', icon: '📋', label: t('templates'), premium: true },
+        { path: '/settings', icon: '⚙️', label: t('settings') },
+        { path: '/profile', icon: '👤', label: t('profile') },
+    ];
 
     sidebar.innerHTML = `
     <div class="sidebar-brand">
       <div class="sidebar-brand-icon">🍊</div>
       <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px;">
         <span class="sidebar-brand-text">${brandLabel}</span>
-        <span class="beta-badge-label">🛡️ SUPER ADMIN</span>
+        ${store.isSuperAdmin() ? `<span class="beta-badge-label">🛡️ ${t('admin').toUpperCase()}</span>` : ''}
       </div>
       <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
         <span class="toggle-icon">◀</span>
@@ -72,7 +75,7 @@ export function renderSidebar() {
     </div>
 
     <nav class="sidebar-nav">
-      ${NAV_ITEMS.map(item => `
+      ${navItems.map(item => `
         <a href="#${item.path}"
            class="sidebar-nav-item ${currentPath === item.path ? 'active' : ''} ${item.premium && !store.isPremium() ? 'nav-locked' : ''}"
            data-path="${item.path}">
@@ -86,15 +89,19 @@ export function renderSidebar() {
            class="sidebar-nav-item ${currentPath === '/admin' ? 'active' : ''}"
            data-path="/admin">
           <span class="nav-icon">🛡️</span>
-          <span class="nav-label">Admin Console</span>
+          <span class="nav-label">${t('admin_console')}</span>
         </a>
       ` : ''}
     </nav>
 
     <div class="sidebar-footer">
+      <div style="padding: 0 1rem 1rem; display: flex; gap: 0.5rem;">
+        <button class="btn-lang ${lang === 'es' ? 'active' : ''}" id="lang-es">ES</button>
+        <button class="btn-lang ${lang === 'en' ? 'active' : ''}" id="lang-en">EN</button>
+      </div>
       <button class="sidebar-nav-item" id="logoutBtn">
         <span class="nav-icon">🚪</span>
-        <span class="nav-label">Logout</span>
+        <span class="nav-label">${t('logout')}</span>
       </button>
     </div>
   `;
@@ -109,6 +116,8 @@ export function initSidebarEvents() {
     const toggle = document.getElementById('sidebarToggle');
     const logoutBtn = document.getElementById('logoutBtn');
     const mainContent = document.querySelector('.main-content');
+    const langEs = document.getElementById('lang-es');
+    const langEn = document.getElementById('lang-en');
 
     if (toggle) {
         toggle.addEventListener('click', () => {
@@ -123,15 +132,25 @@ export function initSidebarEvents() {
             navigate('/login');
         });
     }
+
+    if (langEs) {
+        langEs.addEventListener('click', () => {
+            store.setLanguage('es');
+            location.reload(); // Refresh to apply translations
+        });
+    }
+    if (langEn) {
+        langEn.addEventListener('click', () => {
+            store.setLanguage('en');
+            location.reload(); // Refresh to apply translations
+        });
+    }
 }
 
-// Update active state on route change
 export function updateSidebarActive(path) {
-    // Sidebar items
     document.querySelectorAll('.sidebar-nav-item[data-path]').forEach(item => {
         item.classList.toggle('active', item.dataset.path === path);
     });
-    // Bottom nav items
     document.querySelectorAll('.bottom-nav-item[data-path]').forEach(item => {
         item.classList.toggle('active', item.dataset.path === path);
     });

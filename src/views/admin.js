@@ -13,29 +13,29 @@ export function renderAdmin() {
     // Stats for the admin
     const stats = store.stats;
     const allTags = store.tags;
+    const t = (key) => store.t(key);
     
     main.innerHTML = `
-      ${renderHeader('Super Admin Console', 'Manage global system state and all client tags.')}
+      ${renderHeader(t('admin_console'), t('manage_global'))}
       
       <div class="stats-grid">
         <div class="stat-card card-glass">
           <div class="stat-value">${stats.totalTags}</div>
-          <div class="stat-label">Global Tags</div>
+          <div class="stat-label">${t('global_tags')}</div>
         </div>
         <div class="stat-card card-glass">
           <div class="stat-value">${stats.totalLinks}</div>
-          <div class="stat-label">Global Links</div>
+          <div class="stat-label">${t('global_links')}</div>
         </div>
         <div class="stat-card card-glass">
           <div class="stat-value">${stats.totalClicks}</div>
-          <div class="stat-label">Total Interactions</div>
+          <div class="stat-label">${t('total_taps')}</div>
         </div>
       </div>
 
       <div class="section-card card-glass animate-fade-in" style="margin-top: 2rem;">
         <div class="card-header">
-          <h2 class="card-title">🛡️ Global Tag Management</h2>
-          <p class="card-subtitle">Showing all tags registered across the platform.</p>
+          <h2 class="card-title">🛡️ ${t('global_tags')}</h2>
         </div>
 
         <div class="table-container animate-fade-up" style="animation-delay: 0.1s">
@@ -67,7 +67,7 @@ export function renderAdmin() {
                   <td data-label="Owner / Client">
                     ${tag.ownerEmail 
                       ? `<div style="font-size: 0.85rem; color: var(--color-primary); font-weight: 500;">${tag.ownerEmail}</div>`
-                      : '<span class="text-muted" style="font-size: 0.8rem; font-style: italic;">Unassigned</span>'}
+                      : `<span class="text-muted" style="font-size: 0.8rem; font-style: italic;">Unassigned</span>`}
                   </td>
                   <td data-label="Status">
                     ${tag.assignedLinkId 
@@ -77,24 +77,13 @@ export function renderAdmin() {
                   <td data-label="Created">${new Date(tag.createdAt).toLocaleDateString()}</td>
                   <td data-label="Actions">
                     <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                      <button class="btn btn-sm btn-outline assign-btn" data-tag-id="${tag.id}">Assign</button>
-                      <button class="btn btn-sm" onclick="alert('Admin: View client logic coming soon')">View</button>
+                      <button class="btn btn-sm btn-outline assign-btn" data-tag-id="${tag.id}">${t('assign_to_client')}</button>
                     </div>
                   </td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      <div class="section-card card-glass animate-fade-in" style="margin-top: 2rem;">
-        <div class="card-header">
-          <h2 class="card-title">👥 Client Overview</h2>
-          <p class="card-subtitle">System users and their active tiers.</p>
-        </div>
-        <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
-          <p>Multi-client database sync is active. Client details are aggregated in the cloud link management system.</p>
         </div>
       </div>
     `;
@@ -106,10 +95,10 @@ export function renderAdmin() {
             const emails = store.allClientEmails;
             
             openModal({
-                title: '👥 Assign Tag to Client',
+                title: `👥 ${t('assign_to_client')}`,
                 content: `
                     <div class="form-group">
-                        <label class="form-label">Select Registered Client</label>
+                        <label class="form-label">${t('select_client')}</label>
                         <select class="form-select" id="assign-email-select">
                             <option value="">— Select an existing client —</option>
                             ${emails.map(e => `<option value="${e}">${e}</option>`).join('')}
@@ -117,14 +106,14 @@ export function renderAdmin() {
                     </div>
                     <div style="text-align: center; margin: 1.5rem 0; position: relative;">
                         <hr style="border: none; border-top: 1px solid var(--border-color);">
-                        <span style="position: absolute; top:50%; left:50%; transform: translate(-50%, -50%); background: var(--bg-surface-elevated); padding: 0 10px; font-size: 0.75rem; color: var(--text-muted);">OR ASSIGN TO NEW</span>
+                        <span style="position: absolute; top:50%; left:50%; transform: translate(-50%, -50%); background: var(--bg-surface-elevated); padding: 0 10px; font-size: 0.75rem; color: var(--text-muted);">OR</span>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Enter New Client Email</label>
+                        <label class="form-label">${t('new_client_email')}</label>
                         <input class="form-input" id="assign-email-custom" type="email" placeholder="client@example.com">
                     </div>
                 `,
-                submitLabel: 'Assign & Provision',
+                submitLabel: t('assign_and_provision'),
                 onSubmit: () => {
                     const selectedEmail = document.getElementById('assign-email-select').value;
                     const customEmail = document.getElementById('assign-email-custom').value.trim();
@@ -133,11 +122,11 @@ export function renderAdmin() {
                     if (email && email.includes('@')) {
                         const success = store.assignTagToUser(tagId, email);
                         if (success) {
-                            showToast(`Success: Tag provisioned to ${email}`, 'success');
+                            showToast(`${t('success')}: Tag provisioned to ${email}`, 'success');
                             renderAdmin(); // Refresh view
                         }
                     } else {
-                        showToast('Please provide a valid client email', 'error');
+                        showToast(t('error'), 'error');
                     }
                 }
             });

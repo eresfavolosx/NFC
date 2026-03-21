@@ -13,7 +13,8 @@ export function renderRedirect({ id }) {
     
     // Tag lookup
     const tag = store.getTag(id);
-    
+    const t = (key) => store.t(key);
+
     if (tag && tag.assignedLinkId) {
         const link = store.getLink(tag.assignedLinkId);
         if (link && isValidUrl(link.url)) {
@@ -28,20 +29,21 @@ export function renderRedirect({ id }) {
 
     // New Tag / Activation State / Provisioning
     const isAuth = store.isAuthenticated;
-    const currentUserEmail = store.user?.email;
-    const isOwner = tag?.ownerEmail === currentUserEmail;
-    const isProvisionedToSomeoneElse = tag?.ownerEmail && tag.ownerEmail !== currentUserEmail && !store.isSuperAdmin();
+    const currentUserEmail = store.user?.email?.toLowerCase().trim();
+    const tagOwnerEmail = tag?.ownerEmail?.toLowerCase().trim();
+    const isOwner = tagOwnerEmail && tagOwnerEmail === currentUserEmail;
+    const isProvisionedToSomeoneElse = tagOwnerEmail && tagOwnerEmail !== currentUserEmail && !store.isSuperAdmin();
 
     if (isProvisionedToSomeoneElse) {
         container.innerHTML = `
             <div class="login-page">
                 <div class="card-glass animate-fade-up" style="text-align:center; padding: 2.5rem; max-width: 450px">
                     <div class="stat-icon red" style="margin: 0 auto var(--space-md);">🔒</div>
-                    <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Access Denied</h1>
+                    <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem;">${t('access_denied')}</h1>
                     <p style="color: var(--text-secondary); margin-bottom: 2rem;">
-                        This tag is already provisioned to another client.
+                        ${t('already_provisioned')}
                     </p>
-                    <a href="#/dashboard" class="btn btn-primary w-full">Go to Dashboard</a>
+                    <a href="#/dashboard" class="btn btn-primary w-full">${t('dashboard')}</a>
                 </div>
             </div>
         `;
@@ -54,29 +56,29 @@ export function renderRedirect({ id }) {
                 <div class="stat-icon ${isOwner ? 'green' : 'orange'}" style="margin: 0 auto var(--space-md); font-size: 2.5rem; background: ${isOwner ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 126, 68, 0.1)'}; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">${isOwner ? '🎁' : '📡'}</div>
                 
                 <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem;" class="text-gradient">
-                    ${isOwner ? 'Your new tag is ready!' : 'New Tag Detected!'}
+                    ${isOwner ? t('provisioned_welcome') : t('new_tag_detected')}
                 </h1>
                 <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.95rem;">
                     ${isOwner 
-                        ? 'The administrator has provisioned this tag for you. Activate it now to start using it!' 
-                        : (isAuth ? 'This Tocaito NFC tag is ready to be activated. Claim it now to start tracking your links!' : 'Login to your account to register this tag.')}
+                        ? t('provisioned_desc') 
+                        : (isAuth ? t('unclaimed_desc') : t('login_to_activate'))}
                 </p>
 
                 ${isAuth ? `
                     <div style="display: flex; flex-direction: column; gap: var(--space-md);">
                         <button id="activate-tag-btn" class="btn btn-primary w-full" style="height: 52px; font-weight: 600; background: ${isOwner ? 'var(--color-success)' : 'var(--color-primary)'};">
-                            ${isOwner ? '✨ Activate My Tag' : '✨ Claim & Activate Tag'}
+                            ${isOwner ? t('activate_tag') : t('claim_tag')}
                         </button>
-                        <a href="#/dashboard" style="font-size: 0.85rem; color: var(--text-muted);">Decide later</a>
+                        <a href="#/dashboard" style="font-size: 0.85rem; color: var(--text-muted);">${t('cancel')}</a>
                     </div>
                 ` : `
                     <button id="login-to-claim-btn" class="btn btn-primary w-full" style="height: 52px; font-weight: 600;">
-                        🔑 Login to Activate
+                        🔑 ${t('login_to_activate')}
                     </button>
                 `}
                 
                 <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); font-size: 0.75rem; color: var(--text-muted);">
-                    Tag ID: <span style="font-family: monospace; opacity: 0.8;">${id}</span>
+                    ${t('tag_id')}: <span style="font-family: monospace; opacity: 0.8;">${id}</span>
                 </div>
             </div>
         </div>
@@ -85,8 +87,8 @@ export function renderRedirect({ id }) {
     // Events
     document.getElementById('activate-tag-btn')?.addEventListener('click', () => {
         try {
-            const newTag = store.createTag({ id, label: 'New Tocaito Tag' });
-            showToast('Tag registered to your account!', 'success');
+            const newTag = store.createTag({ id, label: isOwner ? 'Provisioned Tag' : 'New Tocaito Tag' });
+            showToast(t('tag_registered'), 'success');
             
             // Immediately offer to link it
             openLinkPickerForTag(newTag.id);
@@ -96,7 +98,6 @@ export function renderRedirect({ id }) {
     });
 
     document.getElementById('login-to-claim-btn')?.addEventListener('click', () => {
-        // Store the target tag ID in session so we can return here after login if needed
         sessionStorage.setItem('pending_tag_activation', id);
         navigate('/login');
     });
@@ -104,32 +105,29 @@ export function renderRedirect({ id }) {
 
 function openLinkPickerForTag(tagId) {
     const links = store.links;
+    const t = (key) => store.t(key);
     
     openModal({
-        title: '🔗 Assign a Link',
+        title: `🔗 ${t('link_assigned')}`,
         content: `
             <p style="margin-bottom: var(--space-md); color: var(--text-secondary); font-size: 0.9rem;">What should happen when someone taps this tag?</p>
             <div class="form-group">
-                <label class="form-label">Choose Link</label>
+                <label class="form-label">${t('links')}</label>
                 <select class="form-select" id="claim-link-select">
                     <option value="">— Select a saved link —</option>
                     ${links.map(l => `<option value="${l.id}">${l.icon} ${l.title}</option>`).join('')}
                 </select>
             </div>
-            <p style="font-size: 0.75rem; margin-top: var(--space-sm); color: var(--text-muted);">
-                You can create more links in the "Links" section later.
-            </p>
         `,
-        submitLabel: '🚀 Finish Activation',
+        submitLabel: `🚀 ${t('confirm')}`,
         onSubmit: () => {
             const linkId = document.getElementById('claim-link-select').value;
             if (linkId) {
                 store.assignLinkToTag(tagId, linkId);
-                showToast('Link assigned successfully!', 'success');
+                showToast(t('link_assigned'), 'success');
                 closeModal();
                 navigate('/tags');
             } else {
-                showToast('Tag claimed! You can assign a link later in the Tags tab.', 'info');
                 closeModal();
                 navigate('/tags');
             }

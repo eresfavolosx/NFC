@@ -1,5 +1,6 @@
 import { auth, provider, signInWithPopup, signOut, onAuthStateChanged } from './firebase.js';
 import { nfc } from './nfc.js';
+import { translations } from './i18n.js';
 
 /* ═══════════════════════════════════════════════════════════
    NFC Tag Manager — Data Store (localStorage-backed)
@@ -19,6 +20,7 @@ const defaultData = {
     useBiometrics: false,
     dynamicRedirection: true,
     theme: 'system',
+    language: 'es', // Default to Spanish
   },
   subscription: {
     tier: 'free', // 'free' or 'pro'
@@ -139,7 +141,19 @@ export const store = {
   },
 
   isSuperAdmin() {
-    return data.settings.user?.email === SUPER_ADMIN_EMAIL;
+    return data.settings.user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+  },
+
+  setLanguage(lang) {
+    if (['es', 'en'].includes(lang)) {
+        data.settings.language = lang;
+        this._notify();
+    }
+  },
+
+  t(key) {
+    const lang = data.settings.language || 'es';
+    return translations[lang][key] || key;
   },
 
   async init() {
@@ -293,7 +307,8 @@ export const store = {
   // ── Tags CRUD ──
   get tags() { 
     if (this.isSuperAdmin()) return [...data.tags];
-    return data.tags.filter(t => t.ownerEmail === this.user?.email);
+    const userEmail = this.user?.email?.toLowerCase();
+    return data.tags.filter(t => t.ownerEmail?.toLowerCase() === userEmail);
   },
 
   getTag(id) { 
@@ -402,7 +417,7 @@ export const store = {
     
     // Add to explicit client registry for future quick-assignment
     const normalizedEmail = email.toLowerCase().trim();
-    if (!data.clients.includes(normalizedEmail)) {
+    if (normalizedEmail && !data.clients.includes(normalizedEmail)) {
         data.clients.push(normalizedEmail);
     }
     
