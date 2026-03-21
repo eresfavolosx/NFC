@@ -13,7 +13,7 @@ export function renderRedirect({ id }) {
     
     if (tag && tag.assignedLinkId) {
         const link = store.getLink(tag.assignedLinkId);
-        if (link) {
+        if (link && isValidUrl(link.url)) {
             // Log interaction
             store.incrementClicks(link.id, tag.id);
             
