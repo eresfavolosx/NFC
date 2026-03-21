@@ -1,4 +1,5 @@
 import { auth, provider, signInWithPopup, signOut, onAuthStateChanged } from './firebase.js';
+import { nfc } from './nfc.js';
 
 /* ═══════════════════════════════════════════════════════════
    NFC Tag Manager — Data Store (localStorage-backed)
@@ -90,24 +91,28 @@ export const store = {
   // Measurement: Time complexity for getters dropped from O(N) to O(1).
   _cache: null,
 
-  _buildCache() {
-    if (this._cache) return this._cache;
-    const linksById = new Map();
-    for (const l of data.links) linksById.set(l.id, l);
+  _getCache() {
+    if (!this._cache) {
+      this._cache = {
+        linksById: new Map(),
+        tagsById: new Map(),
+        tagsByLinkId: new Map()
+      };
 
-    const tagsById = new Map();
-    const tagsByLinkId = new Map();
-    for (const t of data.tags) {
-      tagsById.set(t.id, t);
-      if (t.assignedLinkId) {
-        if (!tagsByLinkId.has(t.assignedLinkId)) {
-          tagsByLinkId.set(t.assignedLinkId, []);
+      for (const link of data.links) {
+        this._cache.linksById.set(link.id, link);
+      }
+
+      for (const tag of data.tags) {
+        this._cache.tagsById.set(tag.id, tag);
+        if (tag.assignedLinkId) {
+          if (!this._cache.tagsByLinkId.has(tag.assignedLinkId)) {
+            this._cache.tagsByLinkId.set(tag.assignedLinkId, []);
+          }
+          this._cache.tagsByLinkId.get(tag.assignedLinkId).push(tag);
         }
-        tagsByLinkId.get(t.assignedLinkId).push(t);
       }
     }
-
-    this._cache = { linksById, tagsById, tagsByLinkId };
     return this._cache;
   },
 
@@ -185,7 +190,13 @@ export const store = {
   },
 
   async init() {
-    await this.refreshNfcCompat();
+    try {
+        await this.refreshNfcCompat();
+    } catch (e) {
+        console.error('Store init: failed to refresh nfcCompat', e);
+        // Set a safe fallback so boot continues
+        data.settings.nfcCompat = { supported: false, platform: 'error', message: 'NFC support check failed' };
+    }
     this._notify();
   },
 
@@ -210,7 +221,7 @@ export const store = {
   // ── Links CRUD ──
   get links() { return [...data.links]; },
 
-  getLink(id) { return this._buildCache().linksById.get(id); },
+  getLink(id) { return this._getCache().linksById.get(id); },
 
   // ── Subscription Logic ──
   get subscription() { return data.subscription; },
@@ -299,7 +310,7 @@ export const store = {
   // ── Tags CRUD ──
   get tags() { return [...data.tags]; },
 
-  getTag(id) { return this._buildCache().tagsById.get(id); },
+  getTag(id) { return this._getCache().tagsById.get(id); },
 
   createTag({ label, serialNumber = null }) {
     if (!this.canCreateTag()) {
@@ -399,7 +410,7 @@ export const store = {
 
   // ── Tags assigned to link ──
   getTagsForLink(linkId) {
-    return this._buildCache().tagsByLinkId.get(linkId) || [];
+    return this._getCache().tagsByLinkId.get(linkId) || [];
   },
 
   // ── Activity Log ──

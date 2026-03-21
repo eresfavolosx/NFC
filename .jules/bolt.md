@@ -4,4 +4,4 @@
 
 ## 2024-05-18 - Replacing O(N) Arrays with O(1) Maps in Centralized Store Getters
 **Learning:** Frequent UI rerenders or logic that accesses relations mapping tags to links trigger O(N) lookups via `find()` or `filter()` inside `getLink`, `getTag`, and `getTagsForLink` whenever data is queried. This causes massive redundant O(N) queries during high-frequency tasks.
-**Action:** When creating getter functions in centralized stores (e.g. `src/store.js`), always use lazy-loaded relation caches like `Map` built by an internal private method (e.g., `_buildCache()`). The lazy-evaluated hash map improves data lookup from O(N) to O(1), minimizing rendering and recalculation bottlenecks, and should be invalidated whenever state changes (e.g., `_notify()`).
+**Action:** Centralize relational lookup Maps (`linksById`, `tagsById`, etc.) within the global state management (e.g. `store.js`) using a lazy-loaded cache that invalidates only when data mutates. Then, allow UI components to query the store in O(1) time without rebuilding the structures locally.
