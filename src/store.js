@@ -81,6 +81,33 @@ if (typeof window !== 'undefined') {
 }
 
 export const store = {
+  _cache: null,
+
+  _getCache() {
+    if (!this._cache) {
+      this._cache = {
+        linksById: new Map(),
+        tagsById: new Map(),
+        tagsByLinkId: new Map()
+      };
+
+      for (const link of data.links) {
+        this._cache.linksById.set(link.id, link);
+      }
+
+      for (const tag of data.tags) {
+        this._cache.tagsById.set(tag.id, tag);
+        if (tag.assignedLinkId) {
+          if (!this._cache.tagsByLinkId.has(tag.assignedLinkId)) {
+            this._cache.tagsByLinkId.set(tag.assignedLinkId, []);
+          }
+          this._cache.tagsByLinkId.get(tag.assignedLinkId).push(tag);
+        }
+      }
+    }
+    return this._cache;
+  },
+
   // ── Subscriptions ──
   subscribe(fn) {
     listeners.add(fn);
@@ -88,6 +115,7 @@ export const store = {
   },
 
   _notify() {
+    this._cache = null; // Invalidate cache
     saveDataDebounced(data);
     listeners.forEach(fn => fn(data));
   },
@@ -179,7 +207,7 @@ export const store = {
   // ── Links CRUD ──
   get links() { return [...data.links]; },
 
-  getLink(id) { return data.links.find(l => l.id === id); },
+  getLink(id) { return this._getCache().linksById.get(id); },
 
   // ── Subscription Logic ──
   get subscription() { return data.subscription; },
@@ -268,7 +296,7 @@ export const store = {
   // ── Tags CRUD ──
   get tags() { return [...data.tags]; },
 
-  getTag(id) { return data.tags.find(t => t.id === id); },
+  getTag(id) { return this._getCache().tagsById.get(id); },
 
   createTag({ label, serialNumber = null }) {
     if (!this.canCreateTag()) {
@@ -368,7 +396,7 @@ export const store = {
 
   // ── Tags assigned to link ──
   getTagsForLink(linkId) {
-    return data.tags.filter(t => t.assignedLinkId === linkId);
+    return this._getCache().tagsByLinkId.get(linkId) || [];
   },
 
   // ── Activity Log ──
