@@ -6,6 +6,7 @@ import { store } from '../store.js';
 import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
+import { escapeHTML, isValidUrl } from '../utils/sanitize.js';
 
 const CATEGORIES = [
     { value: 'general', label: 'General', icon: '🔗' },
@@ -27,12 +28,12 @@ function linkFormContent(link = null) {
     <div class="form-group">
       <label class="form-label" for="linkTitle">Title</label>
       <input class="form-input" type="text" id="linkTitle" name="title"
-        placeholder="e.g. My Instagram" value="${link?.title || ''}" required>
+        placeholder="e.g. My Instagram" value="${escapeHTML(link?.title || '')}" required>
     </div>
     <div class="form-group">
       <label class="form-label" for="linkUrl">URL</label>
       <input class="form-input" type="url" id="linkUrl" name="url"
-        placeholder="https://..." value="${link?.url || ''}" required>
+        placeholder="https://..." value="${escapeHTML(link?.url || '')}" required>
     </div>
     <div class="form-group">
       <label class="form-label" for="linkCategory">Category</label>
@@ -50,6 +51,7 @@ function linkFormContent(link = null) {
 export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
+    const tags = store.tags;
 
     container.innerHTML = `
     ${renderHeader('Links', 'Manage your destination URLs')}
@@ -57,14 +59,17 @@ export function renderLinks() {
     <div class="page-container">
       <div class="links-toolbar">
         <div class="search-bar">
+<<<<<<< HEAD
           <span class="search-icon">🔍</span>
+=======
+          <span class="search-icon" aria-hidden="true">🔍</span>
+>>>>>>> main
           <input class="form-input" type="text" id="linkSearch" placeholder="Search links..." aria-label="Search links">
         </div>
         <div class="toolbar-actions">
-          <select class="form-select" id="categoryFilter" style="width: auto; min-width: 150px;">
-            <option value="">All Categories</option>
-            ${CATEGORIES.map(c => `<option value="${c.value}">${c.icon} ${c.label}</option>`).join('')}
-          </select>
+          <button class="btn btn-secondary" id="templateBtn">
+            <span>📋</span> Templates
+          </button>
           <button class="btn btn-primary" id="addLinkBtn">
             <span>➕</span> New Link
           </button>
@@ -79,7 +84,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, i)).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, store.getTagsForLink(link.id), i)).join('')}
       </div>
     </div>
   `;
@@ -87,24 +92,25 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, index) {
+function renderLinkCard(link, assignedTags, index) {
     const cat = getCategoryInfo(link.category);
-    const assignedTags = store.getTagsForLink(link.id);
+    const assignedTagsCount = assignedTags.length;
 
     return `
     <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
       <div class="link-card-header">
-        <span class="link-icon">${cat.icon}</span>
+        <span class="link-icon" aria-hidden="true">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit ${link.title.replace(/"/g, '&quot;')}">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete ${link.title.replace(/"/g, '&quot;')}">🗑️</button>
+          <button class="btn btn-ghost btn-icon copy-link" data-url="${escapeHTML(link.url)}" title="Copy Link" aria-label="Copy link to ${escapeHTML(link.title)}">📋</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit ${escapeHTML(link.title)}">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete ${escapeHTML(link.title)}">🗑️</button>
         </div>
       </div>
-      <h3 class="link-title">${link.title}</h3>
-      <a class="link-url truncate" href="${link.url}" target="_blank" rel="noopener">${link.url}</a>
+      <h3 class="link-title">${escapeHTML(link.title)}</h3>
+      <a class="link-url truncate" href="${escapeHTML(link.url)}" target="_blank" rel="noopener">${escapeHTML(link.url)}</a>
       <div class="link-meta">
         <span class="badge badge-primary">${cat.label}</span>
-        ${assignedTags.length > 0 ? `<span class="badge badge-success">🏷️ ${assignedTags.length} tag${assignedTags.length > 1 ? 's' : ''}</span>` : ''}
+        ${assignedTagsCount > 0 ? `<span class="badge badge-success">🏷️ ${assignedTagsCount} tag${assignedTagsCount > 1 ? 's' : ''}</span>` : ''}
         <span class="link-clicks">👆 ${link.clicks} tap${link.clicks !== 1 ? 's' : ''}</span>
       </div>
     </div>
@@ -112,9 +118,7 @@ function renderLinkCard(link, index) {
 }
 
 function initLinksEvents() {
-    // Add link
-    const addBtn = document.getElementById('addLinkBtn') || document.getElementById('emptyAddLink');
-    addBtn?.addEventListener('click', () => {
+    const openAddLinkModal = () => {
         openModal({
             title: 'Create New Link',
             content: linkFormContent(),
@@ -125,9 +129,7 @@ function initLinksEvents() {
                     showToast('Please fill in all fields', 'warning');
                     return;
                 }
-                try {
-                    new URL(data.url);
-                } catch {
+                if (!isValidUrl(data.url)) {
                     showToast('Please enter a valid URL', 'error');
                     return;
                 }
@@ -137,13 +139,30 @@ function initLinksEvents() {
                 renderLinks();
             },
         });
-    });
+    };
 
-    // Edit link
-    document.querySelectorAll('.edit-link').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+    document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
+    document.getElementById('emptyAddLink')?.addEventListener('click', openAddLinkModal);
+
+    // Event delegation for card actions
+    document.getElementById('linksGrid')?.addEventListener('click', async (e) => {
+        const copyBtn = e.target.closest('.copy-link');
+        if (copyBtn) {
             e.stopPropagation();
-            const link = store.getLink(btn.dataset.id);
+            const url = copyBtn.dataset.url;
+            try {
+                await navigator.clipboard.writeText(url);
+                showToast('Link copied to clipboard!', 'success');
+            } catch (err) {
+                showToast('Failed to copy link', 'error');
+            }
+            return;
+        }
+
+        const editBtn = e.target.closest('.edit-link');
+        if (editBtn) {
+            e.stopPropagation();
+            const link = store.getLink(editBtn.dataset.id);
             if (!link) return;
             openModal({
                 title: 'Edit Link',
@@ -161,18 +180,17 @@ function initLinksEvents() {
                     renderLinks();
                 },
             });
-        });
-    });
+            return;
+        }
 
-    // Delete link
-    document.querySelectorAll('.delete-link').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        const deleteBtn = e.target.closest('.delete-link');
+        if (deleteBtn) {
             e.stopPropagation();
-            const link = store.getLink(btn.dataset.id);
+            const link = store.getLink(deleteBtn.dataset.id);
             if (!link) return;
             openModal({
                 title: 'Delete Link',
-                content: `<p>Are you sure you want to delete <strong>"${link.title}"</strong>? This will also unassign it from any tags.</p>`,
+                content: `<p>Are you sure you want to delete <strong>"${escapeHTML(link.title)}"</strong>? This will also unassign it from any tags.</p>`,
                 submitLabel: 'Delete',
                 onSubmit: () => {
                     store.deleteLink(link.id);
@@ -181,28 +199,31 @@ function initLinksEvents() {
                     renderLinks();
                 },
             });
-        });
+            return;
+        }
     });
 
+    // Debounce search input to minimize expensive DOM manipulations on keystroke
+    let filterTimeout;
+    const runFilter = () => {
+        filterLinks(document.getElementById('linkSearch')?.value.toLowerCase() || '', document.getElementById('categoryFilter')?.value);
+    };
+
     // Search
-    document.getElementById('linkSearch')?.addEventListener('input', (e) => {
-        const q = e.target.value.toLowerCase();
-        filterLinks(q, document.getElementById('categoryFilter')?.value);
+    document.getElementById('linkSearch')?.addEventListener('input', () => {
+        if (filterTimeout) clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(runFilter, 300);
     });
 
     // Category filter
-    document.getElementById('categoryFilter')?.addEventListener('change', (e) => {
-        const q = document.getElementById('linkSearch')?.value.toLowerCase() || '';
-        filterLinks(q, e.target.value);
-    });
+    document.getElementById('categoryFilter')?.addEventListener('change', runFilter);
 }
 
 function filterLinks(search, category) {
     const cards = document.querySelectorAll('.link-card');
-    const links = store.links;
 
     cards.forEach(card => {
-        const link = links.find(l => l.id === card.dataset.id);
+        const link = store.getLink(card.dataset.id);
         if (!link) return;
 
         const matchSearch = !search ||
