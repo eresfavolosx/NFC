@@ -19,29 +19,46 @@ export function getCurrentRoute() {
 
 export function startRouter() {
     const handleRoute = async () => {
-        const hash = getCurrentRoute();
+        let hash = getCurrentRoute();
+        
+        // Normalize hash: ensure leading slash, remove trailing slash
+        if (!hash.startsWith('/')) hash = '/' + hash;
+        if (hash.length > 1 && hash.endsWith('/')) hash = hash.slice(0, -1);
+        if (hash === '') hash = '/';
+
+        console.log(`[Router] Navigating to: ${hash}`);
         
         let handler = null;
         let params = {};
 
-        // Find matching route
-        for (const path in routes) {
-            if (path.includes(':')) {
-                const regexPath = path.replace(/:[^\s/]+/g, '([^/]+)');
-                const match = hash.match(new RegExp(`^${regexPath}$`));
-                if (match) {
-                    handler = routes[path];
-                    const paramNames = (path.match(/:[^\s/]+/g) || []).map(p => p.slice(1));
-                    params = paramNames.reduce((acc, name, i) => ({ ...acc, [name]: match[i + 1] }), {});
-                    break;
+        // 1. Try Exact Match first (highest priority)
+        if (routes[hash]) {
+            handler = routes[hash];
+        } 
+        // 2. Try Parameterzed Match
+        else {
+            for (const path in routes) {
+                if (path.includes(':')) {
+                    const regexPath = path.replace(/:[^\s/]+/g, '([^/]+)');
+                    const match = hash.match(new RegExp(`^${regexPath}$`));
+                    if (match) {
+                        handler = routes[path];
+                        const paramNames = (path.match(/:[^\s/]+/g) || []).map(p => p.slice(1));
+                        params = paramNames.reduce((acc, name, i) => ({ ...acc, [name]: match[i + 1] }), {});
+                        break;
+                    }
                 }
-            } else if (path === hash) {
-                handler = routes[path];
-                break;
             }
         }
 
-        if (!handler) handler = routes['/404'];
+        if (!handler && hash === '/') {
+            handler = routes[''];
+        }
+
+        if (!handler) {
+            console.warn(`[Router] 404 - No match for: ${hash}`);
+            handler = routes['/404'];
+        }
 
         if (currentCleanup && typeof currentCleanup === 'function') {
             currentCleanup();
