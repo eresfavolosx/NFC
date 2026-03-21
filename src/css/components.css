@@ -8,7 +8,7 @@
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-sm) var(--space-lg);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-full);
     font-weight: var(--font-weight-semibold);
     font-size: var(--font-size-sm);
     transition: all var(--transition-normal);
@@ -179,13 +179,14 @@
 }
 
 .card-glass {
-    background: var(--bg-glass);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--border-color);
+    background: var(--bg-glass-gradient);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--border-glass);
     border-radius: var(--radius-lg);
     padding: var(--space-lg);
     margin-bottom: var(--space-lg);
+    box-shadow: var(--shadow-md);
 }
 
 @media (max-width: 768px) {
