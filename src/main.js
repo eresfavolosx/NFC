@@ -77,11 +77,11 @@ function adminGuard(renderFn) {
 function ensureAppLayout() {
   const app = document.getElementById('app');
   if (!document.getElementById('sidebar')) {
-    const { sidebar, hamburger } = renderSidebar();
+    const { sidebar, bottomNav } = renderSidebar();
     app.innerHTML = '';
     app.classList.add('app-layout');
     app.appendChild(sidebar);
-    app.appendChild(hamburger);
+    app.appendChild(bottomNav);
 
     const main = document.createElement('main');
     main.className = 'main-content';

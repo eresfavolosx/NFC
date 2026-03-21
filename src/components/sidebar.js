@@ -15,6 +15,35 @@ const NAV_ITEMS = [
     { path: '/profile', icon: '👤', label: 'Profile' },
 ];
 
+const BOTTOM_NAV_ITEMS = [
+    { path: '/dashboard', icon: '📊', label: 'Home' },
+    { path: '/links', icon: '🔗', label: 'Links' },
+    { path: '/tags', icon: '💳', label: 'Tags' },
+    { path: '/templates', icon: '📋', label: 'Templates' },
+    { path: '/profile', icon: '👤', label: 'Profile' },
+];
+
+export function renderBottomNav() {
+    const currentPath = getCurrentRoute();
+    const nav = document.createElement('nav');
+    nav.id = 'bottom-nav';
+    nav.className = 'bottom-nav';
+
+    nav.innerHTML = `
+        <div class="bottom-nav-container">
+            ${BOTTOM_NAV_ITEMS.map(item => `
+                <a href="#${item.path}" 
+                   class="bottom-nav-item ${currentPath === item.path ? 'active' : ''}" 
+                   data-path="${item.path}">
+                    <span class="bottom-nav-icon">${item.icon}</span>
+                    <span class="bottom-nav-label">${item.label}</span>
+                </a>
+            `).join('')}
+        </div>
+    `;
+    return nav;
+}
+
 export function renderSidebar() {
     const currentPath = getCurrentRoute();
 
@@ -23,16 +52,14 @@ export function renderSidebar() {
     sidebar.className = 'sidebar';
 
     const settings = store.settings;
-    const brandLabel = settings.restaurantMode && settings.restaurantName 
-        ? settings.restaurantName 
-        : (settings.brandName || 'Tocaito');
+    const brandLabel = settings.brandName || 'Tocaito';
 
     sidebar.innerHTML = `
     <div class="sidebar-brand">
-      <div class="sidebar-brand-icon">${settings.restaurantMode ? '🍴' : '📱'}</div>
+      <div class="sidebar-brand-icon">🍊</div>
       <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px;">
         <span class="sidebar-brand-text">${brandLabel}</span>
-        <span class="beta-badge-label">🛡️ BETA TESTER</span>
+        <span class="beta-badge-label">🛡️ SUPER ADMIN</span>
       </div>
       <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
         <span class="toggle-icon">◀</span>
@@ -46,8 +73,6 @@ export function renderSidebar() {
            data-path="${item.path}">
           <span class="nav-icon">${item.icon}</span>
           <span class="nav-label">${item.label}</span>
-          ${item.premium && !store.isPremium() ? '<span class="lock-icon">🔒</span>' : ''}
-          ${item.path === '/profile' && store.isPremium() ? '<span class="pro-tag">PRO</span>' : ''}
         </a>
       `).join('')}
       ${store.isSuperAdmin() ? `
@@ -66,23 +91,16 @@ export function renderSidebar() {
         <span class="nav-icon">🚪</span>
         <span class="nav-label">Logout</span>
       </button>
-      <div class="beta-badge-text" style="padding-left: var(--space-md); opacity: 0.6; margin-top: var(--space-sm);">Premium Access Active</div>
     </div>
   `;
 
-    // Hamburger for mobile
-    const hamburger = document.createElement('button');
-    hamburger.className = 'hamburger-btn';
-    hamburger.id = 'hamburgerBtn';
-    hamburger.innerHTML = '<span></span><span></span><span></span>';
-    hamburger.setAttribute('aria-label', 'Open menu');
+    const bottomNav = renderBottomNav();
 
-    return { sidebar, hamburger };
+    return { sidebar, bottomNav };
 }
 
 export function initSidebarEvents() {
     const sidebar = document.getElementById('sidebar');
-    const hamburger = document.getElementById('hamburgerBtn');
     const toggle = document.getElementById('sidebarToggle');
     const logoutBtn = document.getElementById('logoutBtn');
     const mainContent = document.querySelector('.main-content');
@@ -94,22 +112,9 @@ export function initSidebarEvents() {
         });
     }
 
-    if (hamburger) {
-        hamburger.addEventListener('click', () => {
-            sidebar.classList.toggle('mobile-open');
-        });
-    }
-
-    // Close mobile sidebar on nav click
-    sidebar?.querySelectorAll('.sidebar-nav-item[data-path]').forEach(item => {
-        item.addEventListener('click', () => {
-            sidebar.classList.remove('mobile-open');
-        });
-    });
-
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            store.logout();
+        logoutBtn.addEventListener('click', async () => {
+            await store.logout();
             navigate('/login');
         });
     }
@@ -117,7 +122,12 @@ export function initSidebarEvents() {
 
 // Update active state on route change
 export function updateSidebarActive(path) {
+    // Sidebar items
     document.querySelectorAll('.sidebar-nav-item[data-path]').forEach(item => {
+        item.classList.toggle('active', item.dataset.path === path);
+    });
+    // Bottom nav items
+    document.querySelectorAll('.bottom-nav-item[data-path]').forEach(item => {
         item.classList.toggle('active', item.dataset.path === path);
     });
 }

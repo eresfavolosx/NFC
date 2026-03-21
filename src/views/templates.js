@@ -39,8 +39,10 @@ const TEMPLATES = [
 ];
 
 export function renderTemplates() {
-    const container = document.getElementById('app');
-
+    const container = document.getElementById('page-content');
+    if (!container) return;
+    
+    container.innerHTML = '';
     container.innerHTML = `
         <div class="page-header">
             <div>

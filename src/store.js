@@ -118,6 +118,17 @@ export const store = {
     }
   },
 
+  async logout() {
+    try {
+      await signOut(auth);
+      data.settings.isAuthenticated = false;
+      data.settings.user = null;
+      this._notify();
+    } catch (error) {
+      console.error('Logout Error:', error);
+    }
+  },
+
   get user() { return data.settings.user; },
   get nfcCompat() { return data.settings.nfcCompat; },
 
@@ -418,6 +429,7 @@ export const store = {
 // Listen for auth state changes to keep store in sync
 onAuthStateChanged(auth, (user) => {
     if (user) {
+        data.settings.isAuthenticated = true;
         data.settings.user = {
             id: user.uid,
             email: user.email,
@@ -425,6 +437,7 @@ onAuthStateChanged(auth, (user) => {
             photoURL: user.photoURL
         };
     } else {
+        data.settings.isAuthenticated = false;
         data.settings.user = null;
     }
     store._notify();

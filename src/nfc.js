@@ -27,7 +27,8 @@ export const nfc = {
     },
 
     isIOS() {
-        return Capacitor.getPlatform() === 'ios';
+        if (this.isNative()) return Capacitor.getPlatform() === 'ios';
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     },
 
     async writeTag(url, options = {}) {
