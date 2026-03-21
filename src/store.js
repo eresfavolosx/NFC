@@ -1,4 +1,5 @@
 import { auth, provider, signInWithPopup, signOut, onAuthStateChanged } from './firebase.js';
+import { nfc } from './nfc.js';
 
 /* ═══════════════════════════════════════════════════════════
    NFC Tag Manager — Data Store (localStorage-backed)
@@ -81,6 +82,7 @@ if (typeof window !== 'undefined') {
 }
 
 export const store = {
+  get data() { return data; },
   // ── Subscriptions ──
   subscribe(fn) {
     listeners.add(fn);
@@ -154,7 +156,13 @@ export const store = {
   },
 
   async init() {
-    await this.refreshNfcCompat();
+    try {
+        await this.refreshNfcCompat();
+    } catch (e) {
+        console.error('Store init: failed to refresh nfcCompat', e);
+        // Set a safe fallback so boot continues
+        data.settings.nfcCompat = { supported: false, platform: 'error', message: 'NFC support check failed' };
+    }
     this._notify();
   },
 

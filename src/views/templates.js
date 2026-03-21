@@ -3,8 +3,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 import { store } from '../store.js';
-import { navigate } from '../router.js';
-import { showToast } from '../main.js';
+import { navigate, renderHeader, escapeHTML, showToast } from '../utils.js';
 
 const TEMPLATES = [
     {
