@@ -42,6 +42,7 @@ export function renderAdmin() {
               <tr>
                 <th>Tag Label</th>
                 <th>Serial / ID</th>
+                <th>Owner / Client</th>
                 <th>Status</th>
                 <th>Created</th>
                 <th>Actions</th>
@@ -50,7 +51,7 @@ export function renderAdmin() {
             <tbody>
               ${allTags.length === 0 ? `
                 <tr>
-                  <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                  <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
                     No tags registered in the system yet.
                   </td>
                 </tr>
@@ -61,16 +62,21 @@ export function renderAdmin() {
                     <div class="text-xs text-muted" style="font-size: 0.7rem;">ID: ${tag.id.slice(0, 8)}...</div>
                   </td>
                   <td data-label="Serial / ID"><code style="background: var(--bg-surface); padding: 2px 6px; border-radius: 4px;">${tag.serialNumber || '—'}</code></td>
+                  <td data-label="Owner / Client">
+                    ${tag.ownerEmail 
+                      ? `<div style="font-size: 0.85rem; color: var(--color-primary); font-weight: 500;">${tag.ownerEmail}</div>`
+                      : '<span class="text-muted" style="font-size: 0.8rem italic;">Unassigned</span>'}
+                  </td>
                   <td data-label="Status">
                     ${tag.assignedLinkId 
                       ? '<span class="badge badge-success">Active</span>' 
-                      : '<span class="badge">Unassigned</span>'}
+                      : (tag.ownerEmail ? '<span class="badge badge-warning">Provisioned</span>' : '<span class="badge">Unassigned</span>')}
                   </td>
                   <td data-label="Created">${new Date(tag.createdAt).toLocaleDateString()}</td>
                   <td data-label="Actions">
                     <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                      <button class="btn btn-sm btn-outline" onclick="window.assignTag('${tag.id}')">Assign</button>
                       <button class="btn btn-sm" onclick="alert('Admin: View client logic coming soon')">View</button>
-                      <button class="btn btn-sm btn-danger" onclick="alert('Admin: Safety lock active')">Reset</button>
                     </div>
                   </td>
                 </tr>
@@ -79,6 +85,18 @@ export function renderAdmin() {
           </table>
         </div>
       </div>
+
+    <script>
+        window.assignTag = (id) => {
+            const email = prompt('Enter Client Email to assign this tag:');
+            if (email && email.includes('@')) {
+                import('../store.js').then(({ store }) => {
+                    store.assignTagToUser(id, email);
+                    window.location.reload(); // Quick refresh for admin
+                });
+            }
+        };
+    </script>
 
       <div class="section-card card-glass animate-fade-in" style="margin-top: 2rem;">
         <div class="card-header">

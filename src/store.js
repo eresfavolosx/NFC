@@ -286,8 +286,8 @@ export const store = {
 
   getTag(id) { return this.tagsById.get(id); },
 
-  createTag({ id = null, label, serialNumber = null }) {
-    if (!this.canCreateTag()) {
+  createTag({ id = null, label, serialNumber = null, ownerEmail = null }) {
+    if (!this.values.isSuperAdmin && !this.canCreateTag()) {
         throw new Error('Tag limit reached. Upgrade to Pro for unlimited tags.');
     }
     const tag = {
@@ -295,15 +295,29 @@ export const store = {
       label,
       serialNumber,
       assignedLinkId: null,
-      lastWritten: new Date().toISOString(), // Mark as written since it came from a pre-written link
+      lastWritten: new Date().toISOString(),
       location: null,
       isLocked: false,
       createdAt: new Date().toISOString(),
+      ownerEmail: ownerEmail || (this.isSuperAdmin() ? null : this.user?.email), // Admin can leave it unassigned
+      status: ownerEmail ? 'provisioned' : 'active'
     };
     data.tags.unshift(tag);
     this._addActivity('tag_created', `Registered tag "${label}"`);
     this._notify();
     return tag;
+  },
+
+  assignTagToUser(tagId, email) {
+      if (!this.isSuperAdmin()) throw new Error('Unauthorized');
+      const tag = this.getTag(tagId);
+      if (tag) {
+          tag.ownerEmail = email;
+          tag.status = 'provisioned';
+          this._notify();
+          return true;
+      }
+      return false;
   },
 
   createBulkTags(prefix, count, startNum = 1) {

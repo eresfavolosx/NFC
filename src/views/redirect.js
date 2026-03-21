@@ -26,23 +26,46 @@ export function renderRedirect({ id }) {
         }
     }
 
-    // New Tag / Activation State
+    // New Tag / Activation State / Provisioning
     const isAuth = store.isAuthenticated;
+    const currentUserEmail = store.user?.email;
+    const isOwner = tag?.ownerEmail === currentUserEmail;
+    const isProvisionedToSomeoneElse = tag?.ownerEmail && tag.ownerEmail !== currentUserEmail && !store.isSuperAdmin();
+
+    if (isProvisionedToSomeoneElse) {
+        container.innerHTML = `
+            <div class="login-page">
+                <div class="card-glass animate-fade-up" style="text-align:center; padding: 2.5rem; max-width: 450px">
+                    <div class="stat-icon red" style="margin: 0 auto var(--space-md);">🔒</div>
+                    <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Access Denied</h1>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                        This tag is already provisioned to another client.
+                    </p>
+                    <a href="#/dashboard" class="btn btn-primary w-full">Go to Dashboard</a>
+                </div>
+            </div>
+        `;
+        return;
+    }
 
     container.innerHTML = `
         <div class="login-page">
             <div class="card-glass animate-fade-up" style="text-align:center; padding: 2.5rem; max-width: 450px">
-                <div class="stat-icon orange" style="margin: 0 auto var(--space-md); font-size: 2.5rem; background: rgba(255, 126, 68, 0.1); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">📡</div>
+                <div class="stat-icon ${isOwner ? 'green' : 'orange'}" style="margin: 0 auto var(--space-md); font-size: 2.5rem; background: ${isOwner ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 126, 68, 0.1)'}; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">${isOwner ? '🎁' : '📡'}</div>
                 
-                <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem;" class="text-gradient">New Tag Detected!</h1>
+                <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem;" class="text-gradient">
+                    ${isOwner ? 'Your new tag is ready!' : 'New Tag Detected!'}
+                </h1>
                 <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.95rem;">
-                    This Tocaito NFC tag is ready to be activated. ${isAuth ? 'Claim it now to start tracking your links!' : 'Login to your account to register this tag.'}
+                    ${isOwner 
+                        ? 'The administrator has provisioned this tag for you. Activate it now to start using it!' 
+                        : (isAuth ? 'This Tocaito NFC tag is ready to be activated. Claim it now to start tracking your links!' : 'Login to your account to register this tag.')}
                 </p>
 
                 ${isAuth ? `
                     <div style="display: flex; flex-direction: column; gap: var(--space-md);">
-                        <button id="activate-tag-btn" class="btn btn-primary w-full" style="height: 52px; font-weight: 600;">
-                            ✨ Claim & Activate Tag
+                        <button id="activate-tag-btn" class="btn btn-primary w-full" style="height: 52px; font-weight: 600; background: ${isOwner ? 'var(--color-success)' : 'var(--color-primary)'};">
+                            ${isOwner ? '✨ Activate My Tag' : '✨ Claim & Activate Tag'}
                         </button>
                         <a href="#/dashboard" style="font-size: 0.85rem; color: var(--text-muted);">Decide later</a>
                     </div>
