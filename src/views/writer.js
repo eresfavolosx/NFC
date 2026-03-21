@@ -15,7 +15,7 @@ export function renderWriter() {
   const compatInfo = store.nfcCompat;
 
   container.innerHTML = `
-    ${renderHeader('NFC Writer', 'Program your NFC bracelets')}
+    ${renderHeader('NFC Writer', 'Program your tags with digital menu links')}
 
     <div class="page-container">
       ${compatInfo.platform === 'ios-web' ? renderIOSGuide(links) : renderWriterUI(links, tags, compatInfo)}
@@ -36,9 +36,9 @@ function renderIOSGuide(links) {
     <!-- iOS Reading Info -->
     <div class="ios-hero card animate-fade-up">
       <div class="ios-hero-icon">📱</div>
-      <h2>Your iPhone Reads NFC Tags Natively</h2>
+      <h2>Your iPhone Reads Tags Natively</h2>
       <p class="ios-hero-desc">
-        Just tap any programmed NFC tag on the top of your iPhone — it will automatically open the link in Safari. No app needed!
+        Just tap any programmed NFC tag on the top of your iPhone — it will automatically open the link in Safari. Using Cloud Links, you can update the destination URL instantly from the app without ever needing to rewrite the physical tag!
       </p>
       <div class="ios-how-it-works">
         <div class="ios-step">
@@ -62,7 +62,7 @@ function renderIOSGuide(links) {
         <h2 class="card-title">✍️ Writing Tags</h2>
       </div>
       <div class="ios-write-info">
-        <p>To <strong>write</strong> a new URL to an NFC tag, you'll need <strong>Chrome on an Android device</strong>. Apple doesn't allow web apps to write to NFC tags.</p>
+        <p>To <strong>write</strong> a new URL to an NFC card, you'll need <strong>Chrome on an Android device</strong>. Apple doesn't allow web apps to write to NFC tags.</p>
 
         <div class="ios-write-options">
           <div class="ios-option">
@@ -76,7 +76,7 @@ function renderIOSGuide(links) {
             <span class="ios-option-icon">📋</span>
             <div>
               <strong>Option 2: Copy the link & use an NFC app</strong>
-              <p>Copy the URL below and use a third-party NFC writer app (like NFC Tools) on your iPhone.</p>
+              <p>Copy the URL below and use a third-party NFC writer app (like NFC Tools) on your iPhone. (Because of Dynamic Redirection, you only have to do this once per tag!)</p>
             </div>
           </div>
         </div>
@@ -197,7 +197,7 @@ function renderWriterUI(links, tags, compatInfo) {
         <div class="writer-step card animate-fade-up" style="animation-delay: 0.1s">
           <div class="writer-step-header">
             <span class="writer-step-num">1</span>
-            <h2>Select a Link</h2>
+            <h2>Select Link & Tag</h2>
           </div>
 
           <div class="writer-link-selector">
@@ -268,7 +268,7 @@ function renderWriterUI(links, tags, compatInfo) {
         <div class="writer-step card animate-fade-up" style="animation-delay: 0.2s">
           <div class="writer-step-header">
             <span class="writer-step-num">3</span>
-            <h2>Write to NFC Tag</h2>
+            <h2>Write to Tag</h2>
           </div>
 
           <div class="writer-action-area" id="writerActionArea">
@@ -330,7 +330,7 @@ function initWriterEvents() {
     tapTarget.classList.add('active');
     statusEl.style.display = 'block';
     statusEl.className = 'writer-status status-writing';
-    statusEl.innerHTML = '<span class="spinner"></span> Waiting for NFC tag... Hold the bracelet near your device.';
+    statusEl.innerHTML = '<span class="spinner"></span> Waiting for NFC tag... Hold the tag near your device.';
 
     try {
       const tagId = tagSelect?.value;

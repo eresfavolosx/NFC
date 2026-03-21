@@ -6,25 +6,19 @@ import { nfc } from './nfc.js';
    ═══════════════════════════════════════════════════════════ */
 
 const STORAGE_KEY = 'nfc_tag_manager';
-
-async function hashPin(pin) {
-  const msgBuffer = new TextEncoder().encode(pin);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
+const SUPER_ADMIN_EMAIL = 'fabian.velez1996@gmail.com';
 
 const defaultData = {
   settings: {
-    adminPin: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', // SHA-256 hash of '1234'
-    brandName: 'NFC Tag Manager',
-    restaurantMode: false,
+    brandName: 'Tocaito',
+    restaurantMode: true,
     restaurantName: '',
     isAuthenticated: false,
     user: null,
     nfcCompat: { supported: false, platform: 'loading' },
     useBiometrics: false,
     dynamicRedirection: true,
+    theme: 'system',
   },
   subscription: {
     tier: 'free', // 'free' or 'pro'
@@ -104,39 +98,7 @@ export const store = {
   },
 
   // ── Auth ──
-  get isAuthenticated() { return data.settings.isAuthenticated; },
-
-  async login(pin) {
-    // Check for legacy plain text PIN (length < 64)
-    if (data.settings.adminPin.length < 64) {
-      if (pin === data.settings.adminPin) {
-        // Migrate to hash immediately
-        data.settings.adminPin = await hashPin(pin);
-        data.settings.isAuthenticated = true;
-        this._notify();
-        return true;
-      }
-      return false;
-    }
-
-    // Verify hashed PIN
-    const hashedInput = await hashPin(pin);
-    if (hashedInput === data.settings.adminPin) {
-      data.settings.isAuthenticated = true;
-      this._notify();
-      return true;
-    }
-
-    return false;
-  },
-
-  logout() {
-    return signOut(auth).then(() => {
-        data.settings.isAuthenticated = false;
-        data.settings.user = null;
-        this._notify();
-    });
-  },
+  get isAuthenticated() { return !!data.settings.user; },
 
   async loginWithGoogle() {
     try {
@@ -164,25 +126,23 @@ export const store = {
     this._notify();
   },
 
+  isSuperAdmin() {
+    return data.settings.user?.email === SUPER_ADMIN_EMAIL;
+  },
+
   async init() {
+    // Legacy cleanup: remove PIN-related settings
+    if (data.settings.adminPin) {
+      delete data.settings.adminPin;
+    }
+    
     try {
         await this.refreshNfcCompat();
     } catch (e) {
         console.error('Store init: failed to refresh nfcCompat', e);
-        // Set a safe fallback so boot continues
         data.settings.nfcCompat = { supported: false, platform: 'error', message: 'NFC support check failed' };
     }
     this._notify();
-  },
-
-  async changePin(oldPin, newPin) {
-    const hashedOld = await hashPin(oldPin);
-    if (hashedOld === data.settings.adminPin) {
-      data.settings.adminPin = await hashPin(newPin);
-      this._notify();
-      return true;
-    }
-    return false;
   },
 
   // ── Settings ──
@@ -229,11 +189,12 @@ export const store = {
   get subscription() { return data.subscription; },
 
   isPremium() {
-    if (data.subscription.tier === 'pro') return true;
-    if (data.subscription.trialEndsAt) {
-      return new Date(data.subscription.trialEndsAt) > new Date();
-    }
-    return false;
+    return true; // User requested to unlock premium for everyone for now
+    // if (data.subscription.tier === 'pro') return true;
+    // if (data.subscription.trialEndsAt) {
+    //   return new Date(data.subscription.trialEndsAt) > new Date();
+    // }
+    // return false;
   },
 
   startTrial() {
@@ -415,6 +376,9 @@ export const store = {
     return this.tagsByLinkId.get(linkId) || [];
   },
 
+  // ── Analytics ──
+  get analytics() { return [...data.analytics]; },
+
   // ── Activity Log ──
   get activity() { return [...data.activity].slice(0, 50); },
 
@@ -454,7 +418,6 @@ export const store = {
 // Listen for auth state changes to keep store in sync
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        data.settings.isAuthenticated = true;
         data.settings.user = {
             id: user.uid,
             email: user.email,
@@ -462,7 +425,6 @@ onAuthStateChanged(auth, (user) => {
             photoURL: user.photoURL
         };
     } else {
-        data.settings.isAuthenticated = false;
         data.settings.user = null;
     }
     store._notify();

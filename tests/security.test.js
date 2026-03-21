@@ -11,7 +11,7 @@ test('escapeHTML', async (t) => {
 
   await t.test('should escape single quotes', () => {
     const input = "It's cool";
-    const expected = "It&#039;s cool";
+    const expected = "It&#39;s cool";
     assert.strictEqual(escapeHTML(input), expected);
   });
 

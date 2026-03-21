@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nfc-tag-manager-v1';
+const CACHE_NAME = 'nfc-tag-manager-v2';
 const STATIC_ASSETS = [
     '/',
     '/index.html',

@@ -59,11 +59,7 @@ export function renderLinks() {
     <div class="page-container">
       <div class="links-toolbar">
         <div class="search-bar">
-<<<<<<< HEAD
-          <span class="search-icon">🔍</span>
-=======
           <span class="search-icon" aria-hidden="true">🔍</span>
->>>>>>> main
           <input class="form-input" type="text" id="linkSearch" placeholder="Search links..." aria-label="Search links">
         </div>
         <div class="toolbar-actions">
@@ -190,7 +186,7 @@ function initLinksEvents() {
             if (!link) return;
             openModal({
                 title: 'Delete Link',
-                content: `<p>Are you sure you want to delete <strong>"${escapeHTML(link.title)}"</strong>? This will also unassign it from any tags.</p>`,
+                content: `<p>Are you sure you want to delete <strong>"${escapeHTML(link.title)}"</strong>? This will also unassign it from any cards.</p>`,
                 submitLabel: 'Delete',
                 onSubmit: () => {
                     store.deleteLink(link.id);

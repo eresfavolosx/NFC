@@ -1,7 +1,7 @@
 {
-    "name": "NFC Tag Manager",
-    "short_name": "NFC Tags",
-    "description": "Program and manage NFC bracelets with custom links",
+    "name": "Tocaito",
+    "short_name": "Tocaito",
+    "description": "Seamlessly manage and program restaurant NFC tags.",
     "id": "/",
     "start_url": "/",
     "scope": "/",

@@ -32,6 +32,7 @@ body {
     /* iOS PWA: prevent overscroll bounce */
     overscroll-behavior: none;
     -webkit-touch-callout: none;
+    transition: background-color var(--transition-slow), color var(--transition-slow);
 }
 
 /* ── Background Pattern ── */
@@ -40,9 +41,9 @@ body::before {
     position: fixed;
     inset: 0;
     background:
-        radial-gradient(ellipse at 20% 50%, rgba(108, 92, 231, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(0, 206, 201, 0.06) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 80%, rgba(253, 121, 168, 0.04) 0%, transparent 50%);
+        radial-gradient(ellipse at 20% 50%, rgba(255, 140, 0, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(255, 215, 0, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(255, 107, 107, 0.04) 0%, transparent 50%);
     pointer-events: none;
     z-index: 0;
 }

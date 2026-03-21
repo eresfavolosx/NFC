@@ -1,13 +1,16 @@
+const fs = require('fs');
+let css = fs.readFileSync('src/css/variables.css', 'utf8');
 
+const newTheme = `
 :root, [data-theme="light"] {
   /* ── Brand Palette ── */
-  --color-primary: #FF8c00;
-  --color-primary-light: #FFA500;
-  --color-primary-dark: #FF4500;
-  --color-secondary: #FFD700;
-  --color-secondary-light: #FFFACD;
-  --color-accent: #FF6B6B;
-  --color-accent-light: #FFE66D;
+  --color-primary: #6C5CE7;
+  --color-primary-light: #A29BFE;
+  --color-primary-dark: #4A3DB8;
+  --color-secondary: #00CEC9;
+  --color-secondary-light: #55EFC4;
+  --color-accent: #FD79A8;
+  --color-accent-light: #FDCB6E;
 
   /* ── Surfaces (Light Theme) ── */
   --bg-base: #F8F9FA;
@@ -71,8 +74,8 @@
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --shadow-glow: 0 0 20px rgba(255, 140, 0, 0.2);
-  --shadow-glow-secondary: 0 0 20px rgba(255, 215, 0, 0.2);
+  --shadow-glow: 0 0 20px rgba(108, 92, 231, 0.2);
+  --shadow-glow-secondary: 0 0 20px rgba(0, 206, 201, 0.2);
 
   /* ── Transitions ── */
   --transition-fast: 150ms ease;
@@ -114,8 +117,8 @@
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
-    --shadow-glow: 0 0 20px rgba(255, 140, 0, 0.3);
-    --shadow-glow-secondary: 0 0 20px rgba(255, 215, 0, 0.3);
+    --shadow-glow: 0 0 20px rgba(108, 92, 231, 0.3);
+    --shadow-glow-secondary: 0 0 20px rgba(0, 206, 201, 0.3);
   }
 }
 
@@ -138,6 +141,10 @@
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 20px rgba(255, 140, 0, 0.3);
-  --shadow-glow-secondary: 0 0 20px rgba(255, 215, 0, 0.3);
+  --shadow-glow: 0 0 20px rgba(108, 92, 231, 0.3);
+  --shadow-glow-secondary: 0 0 20px rgba(0, 206, 201, 0.3);
 }
+`;
+
+fs.writeFileSync('src/css/variables.css', newTheme, 'utf8');
+console.log('Variables CSS updated.');

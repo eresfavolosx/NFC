@@ -24,20 +24,18 @@ export function renderSettings() {
             <input class="form-input" type="text" id="brandName" value="${settings.brandName || ''}" placeholder="e.g. My Awesome Brand">
           </div>
           
+          <div class="form-group">
+            <label class="form-label" for="themeSelect">Theme</label>
+            <select class="form-select" id="themeSelect">
+              <option value="system" ${settings.theme === 'system' ? 'selected' : ''}>System Default</option>
+              <option value="light" ${settings.theme === 'light' ? 'selected' : ''}>Light Mode</option>
+              <option value="dark" ${settings.theme === 'dark' ? 'selected' : ''}>Dark Mode</option>
+            </select>
+          </div>
+          
           <div class="settings-divider"></div>
 
-          <div class="form-group-row">
-            <div class="form-info">
-              <label class="form-label">Restaurant Mode</label>
-              <p class="form-desc">Optimize the interface for restaurant menu management and bulk table programming.</p>
-            </div>
-            <label class="switch">
-              <input type="checkbox" id="restaurantMode" ${settings.restaurantMode ? 'checked' : ''}>
-              <span class="slider round"></span>
-            </label>
-          </div>
-
-          <div id="restaurantSettings" style="display: ${settings.restaurantMode ? 'block' : 'none'}; margin-top: var(--space-md);">
+          <div>
             <div class="form-group">
               <label class="form-label" for="restaurantName">Restaurant Name</label>
               <input class="form-input" type="text" id="restaurantName" value="${settings.restaurantName || ''}" placeholder="e.g. La Trattoria">
@@ -57,16 +55,7 @@ export function renderSettings() {
             </label>
           </div>
 
-          <div class="form-group-row">
-            <div class="form-info">
-              <label class="form-label">Dynamic Redirection</label>
-              <p class="form-desc">Program tags with a cloud link so you can update the destination remotely.</p>
-            </div>
-            <label class="switch">
-              <input type="checkbox" id="dynamicRedirection" ${settings.dynamicRedirection ? 'checked' : ''}>
-              <span class="slider round"></span>
-            </label>
-          </div>
+
 
           <div class="settings-actions">
             <button class="btn btn-primary" id="saveSettingsBtn">Save Changes</button>
@@ -80,27 +69,20 @@ export function renderSettings() {
 }
 
 function initSettingsEvents() {
-    const modeToggle = document.getElementById('restaurantMode');
     const restaurantSettings = document.getElementById('restaurantSettings');
     const saveBtn = document.getElementById('saveSettingsBtn');
 
-    modeToggle?.addEventListener('change', (e) => {
-        restaurantSettings.style.display = e.target.checked ? 'block' : 'none';
-    });
-
     saveBtn?.addEventListener('click', () => {
         const brandName = document.getElementById('brandName').value;
-        const restaurantMode = document.getElementById('restaurantMode').checked;
         const restaurantName = document.getElementById('restaurantName').value;
         const useBiometrics = document.getElementById('useBiometrics').checked;
-        const dynamicRedirection = document.getElementById('dynamicRedirection').checked;
+        const theme = document.getElementById('themeSelect').value;
 
         store.updateSettings({
             brandName,
-            restaurantMode,
             restaurantName,
             useBiometrics,
-            dynamicRedirection
+            theme
         });
 
         showToast('Settings saved successfully!', 'success');

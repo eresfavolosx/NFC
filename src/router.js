@@ -13,7 +13,7 @@ import { navigate } from './utils.js';
 export { navigate };
 
 export function getCurrentRoute() {
-    const hash = window.location.hash.slice(1) || '/login';
+    const hash = window.location.hash.slice(1);
     return hash;
 }
 

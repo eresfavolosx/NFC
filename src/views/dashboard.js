@@ -32,13 +32,14 @@ const ACTIVITY_ICONS = {
 export function renderDashboard() {
     const container = document.getElementById('page-content');
     const stats = store.stats;
+    const settings = store.settings;
     const activity = store.activity;
-    const totalLinks = store.data.links.length;
-    const totalTags = store.data.tags.length;
-    const totalScans = (store.getAnalytics() || []).length;
+    const totalLinks = store.links.length;
+    const totalTags = store.tags.length;
+    const totalScans = (store.analytics || []).length;
 
     container.innerHTML = `
-        ${renderHeader('Control Center', `Welcome back, ${store.data.user?.displayName || 'Admin'}`)}
+        ${renderHeader('Control Center', `Welcome back, ${store.user?.displayName || 'Admin'}`)}
 
         <div class="page-container">
             <div class="stats-grid">
@@ -91,38 +92,50 @@ export function renderDashboard() {
       </div>
 
       <div class="dashboard-grid">
+        <!-- Magic Setup (If empty) -->
+        ${settings.restaurantMode && totalLinks === 0 && totalTags === 0 ? `
+          <div class="card animate-fade-up restaurant-magic-setup" style="grid-column: 1 / -1; padding: 3rem; text-align: center; border: 2px dashed var(--color-primary); background: rgba(108, 92, 231, 0.05); margin-bottom: var(--space-xl);">
+            <div style="font-size: 3.5rem; margin-bottom: 1rem;">🪄</div>
+            <h2 class="card-title" style="font-size: 1.75rem; margin-bottom: 0.75rem;">Magic Restaurant Setup</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 2rem; max-width: 500px; margin-inline: auto; font-size: 1.1rem;">
+              Set up your entire restaurant with digital menu tags in one go. Just provide your menu link and table count!
+            </p>
+            <button class="btn btn-primary btn-lg" id="startMagicSetup">
+              Start Building Now
+            </button>
+          </div>
+        ` : ''}
+
         <!-- Restaurant Onboarding (Conditional) -->
-        ${stats.restaurantMode ? `
+        ${settings.restaurantMode && (totalLinks > 0 || totalTags > 0) ? `
           <div class="card animate-fade-up restaurant-onboarding-card" style="animation-delay: 0.22s">
             <div class="card-header">
-              <h2 class="card-title">🍴 Restaurant Onboarding</h2>
+              <h2 class="card-title">🍴 Restaurant Progress</h2>
             </div>
             <div class="restaurant-onboarding">
-              <p class="onboarding-text">Get your restaurant ready for NFC-powered menus in 3 steps:</p>
               <div class="onboarding-steps">
                 <div class="onboarding-step ${stats.totalLinks > 0 ? 'done' : ''}">
                   <span class="step-icon">${stats.totalLinks > 0 ? '✅' : '1️⃣'}</span>
-                  <span>Create your menu link</span>
+                  <span>Menu Link Created</span>
                 </div>
                 <div class="onboarding-step ${stats.totalTags > 0 ? 'done' : ''}">
                   <span class="step-icon">${stats.totalTags > 0 ? '✅' : '2️⃣'}</span>
-                  <span>Register your tables</span>
+                  <span>Tables Registered</span>
                 </div>
-                <div class="onboarding-step">
-                  <span class="step-icon">3️⃣</span>
-                  <span>Program NFC tags for tables</span>
+                <div class="onboarding-step ${stats.assignedTags > 0 ? 'done' : ''}">
+                  <span class="step-icon">${stats.assignedTags > 0 ? '✅' : '3️⃣'}</span>
+                  <span>Links Assigned to Tags</span>
                 </div>
               </div>
               <div class="onboarding-actions">
                 <button class="btn btn-secondary w-full" id="bulkRegisterTables">
-                  <span>🪑</span> Bulk Register Tables
+                  <span>🪑</span> Add More Tables
                 </button>
               </div>
             </div>
           </div>
         ` : ''}
 
-        <!-- Quick Actions -->
         <div class="card animate-fade-up" style="animation-delay: 0.25s">
           <div class="card-header">
             <h2 class="card-title">Quick Actions</h2>
@@ -135,10 +148,6 @@ export function renderDashboard() {
             <button class="quick-action-btn" id="qaNewTag">
               <span class="qa-icon">🏷️</span>
               <span class="qa-label">Add Tag</span>
-            </button>
-            <button class="quick-action-btn" id="qaWriter">
-              <span class="qa-icon">📡</span>
-              <span class="qa-label">Write Tag</span>
             </button>
           </div>
         </div>
@@ -172,7 +181,57 @@ export function renderDashboard() {
     // Quick action handlers
     document.getElementById('qaNewLink')?.addEventListener('click', () => navigate('/links'));
     document.getElementById('qaNewTag')?.addEventListener('click', () => navigate('/tags'));
-    document.getElementById('qaWriter')?.addEventListener('click', () => navigate('/writer'));
+
+    // Magic Setup
+    document.getElementById('startMagicSetup')?.addEventListener('click', () => {
+        openModal({
+            title: '🪄 Magic Restaurant Setup',
+            content: `
+                <p style="margin-bottom: var(--space-md); color: var(--text-secondary);">Enter your restaurant details to automatically create your menu link and table tags.</p>
+                <div class="form-group">
+                    <label class="form-label">Restaurant Name</label>
+                    <input class="form-input" type="text" name="name" value="${settings.restaurantName || ''}" placeholder="e.g. The Italian Bistro">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Digital Menu URL</label>
+                    <input class="form-input" type="url" name="menuUrl" placeholder="https://yourmenu.com or instagram.com/menu">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Total Number of Tables</label>
+                    <input class="form-input" type="number" name="tableCount" value="10" min="1" max="50">
+                </div>
+            `,
+            submitLabel: 'Setup Restaurant',
+            onSubmit: () => {
+                const data = getModalFormData();
+                const tableCount = parseInt(data.tableCount);
+                if (!data.menuUrl || isNaN(tableCount)) {
+                    showToast('Please provide a menu URL and table count', 'warning');
+                    return;
+                }
+
+                // 1. Update restaurant name
+                if (data.name) {
+                    store.updateSettings({ restaurantName: data.name });
+                }
+
+                // 2. Create the menu link
+                const link = store.createLink({
+                    title: 'Digital Menu',
+                    url: data.menuUrl,
+                    category: 'business'
+                });
+
+                // 3. Create bulk tags and assign them
+                const tags = store.createBulkTags('Table', tableCount);
+                tags.forEach(t => store.assignLinkToTag(t.id, link.id));
+
+                closeModal();
+                showToast(`Magic setup complete! Created menu and ${tableCount} tables.`, 'success');
+                renderDashboard();
+            }
+        });
+    });
 
     // Bulk Register Tables
     document.getElementById('bulkRegisterTables')?.addEventListener('click', () => {

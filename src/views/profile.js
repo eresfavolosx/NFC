@@ -25,7 +25,7 @@ export function renderProfile() {
                             ${user?.photoURL ? `<img src="${user.photoURL}" alt="Avatar">` : `<div class="avatar-placeholder">${user?.displayName?.[0] || 'U'}</div>`}
                         </div>
                         <div class="profile-details">
-                            <div class="profile-name">${escapeHTML(user?.displayName || 'NFC Manager User')}</div>
+                            <div class="profile-name">${escapeHTML(user?.displayName || 'Tocaito User')}</div>
                             <div class="profile-email">${escapeHTML(user?.email || 'authenticated via device')}</div>
                         </div>
                     </div>
@@ -73,6 +73,22 @@ export function renderProfile() {
                                 <button class="btn btn-secondary w-full" id="manage-sub-btn">Manage Subscription (Stripe)</button>
                             </div>
                         `}
+                    </div>
+                </div>
+
+                <!-- Refer a Friend Card -->
+                <div class="card-glass" style="grid-column: 1 / -1;">
+                    <div class="card-header">
+                        <h3 class="card-title">🎁 Refer a Friend</h3>
+                    </div>
+                    <div class="subscription-card-body">
+                        <p class="text-secondary" style="margin-bottom: 1rem;">
+                            Share NFC Manager with your network! When they sign up using your link, we'll extend your premium trial by <strong>1 month</strong>.
+                        </p>
+                        <div class="form-group" style="display: flex; gap: var(--space-sm);">
+                            <input class="form-input" style="flex:1;" type="text" readonly id="referralLink" value="https://nfc-manager-fv96.web.app/?ref=${user?.id || 'early-tester'}">
+                            <button class="btn btn-primary" id="copyReferralBtn">Copy Link</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -148,5 +164,19 @@ export function renderProfile() {
             showToast('Welcome to Pro! Plan activated.', 'success');
             renderProfile();
         }, 1500);
+    });
+
+    container.querySelector('#copyReferralBtn')?.addEventListener('click', async () => {
+        const input = document.getElementById('referralLink');
+        if (input) {
+            try {
+                await navigator.clipboard.writeText(input.value);
+                showToast('Referral link copied to clipboard!', 'success');
+            } catch (err) {
+                input.select();
+                document.execCommand('copy');
+                showToast('Referral link copied to clipboard!', 'success');
+            }
+        }
     });
 }

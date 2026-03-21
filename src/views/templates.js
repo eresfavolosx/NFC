@@ -63,9 +63,11 @@ export function renderTemplates() {
                             </div>
                         `).join('')}
                     </div>
-                    <button class="btn btn-primary template-apply-btn" data-id="${t.id}">
-                        Use Template
-                    </button>
+                    <div class="template-footer" style="margin-top: auto;">
+                        <button class="btn btn-primary template-apply-btn w-full" data-id="${t.id}">
+                            Use Template
+                        </button>
+                    </div>
                 </div>
             `).join('')}
         </div>
@@ -80,7 +82,12 @@ export function renderTemplates() {
             if (template) {
                 if (confirm(`Apply "${template.name}" template? This will add 3 pre-configured links.`)) {
                     template.links.forEach(l => {
-                        store.createLink(l.title, l.url, l.icon);
+                        store.createLink({
+                            title: l.title,
+                            url: l.url,
+                            icon: l.icon,
+                            category: template.id
+                        });
                     });
                     showToast(`${template.name} links added!`, 'success');
                     navigate('/links');

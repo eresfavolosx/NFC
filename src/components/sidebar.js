@@ -8,8 +8,7 @@ import { store } from '../store.js';
 const NAV_ITEMS = [
     { path: '/dashboard', icon: '📊', label: 'Dashboard' },
     { path: '/links', icon: '🔗', label: 'Links' },
-    { path: '/tags', icon: '🏷️', label: 'Tags' },
-    { path: '/writer', icon: '📡', label: 'NFC Writer' },
+    { path: '/tags', icon: '💳', label: 'Tags' },
     { path: '/analytics', icon: '📈', label: 'Analytics', premium: true },
     { path: '/templates', icon: '📋', label: 'Templates', premium: true },
     { path: '/settings', icon: '⚙️', label: 'Settings' },
@@ -26,12 +25,15 @@ export function renderSidebar() {
     const settings = store.settings;
     const brandLabel = settings.restaurantMode && settings.restaurantName 
         ? settings.restaurantName 
-        : (settings.brandName || 'NFC Manager');
+        : (settings.brandName || 'Tocaito');
 
     sidebar.innerHTML = `
     <div class="sidebar-brand">
       <div class="sidebar-brand-icon">${settings.restaurantMode ? '🍴' : '📱'}</div>
-      <span class="sidebar-brand-text">${brandLabel}</span>
+      <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px;">
+        <span class="sidebar-brand-text">${brandLabel}</span>
+        <span class="beta-badge-label">🛡️ BETA TESTER</span>
+      </div>
       <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
         <span class="toggle-icon">◀</span>
       </button>
@@ -48,6 +50,15 @@ export function renderSidebar() {
           ${item.path === '/profile' && store.isPremium() ? '<span class="pro-tag">PRO</span>' : ''}
         </a>
       `).join('')}
+      ${store.isSuperAdmin() ? `
+        <div class="sidebar-divider" style="height: 1px; background: var(--border-color); margin: 0.5rem 1rem; opacity: 0.3;"></div>
+        <a href="#/admin"
+           class="sidebar-nav-item ${currentPath === '/admin' ? 'active' : ''}"
+           data-path="/admin">
+          <span class="nav-icon">🛡️</span>
+          <span class="nav-label">Admin Console</span>
+        </a>
+      ` : ''}
     </nav>
 
     <div class="sidebar-footer">
@@ -55,6 +66,7 @@ export function renderSidebar() {
         <span class="nav-icon">🚪</span>
         <span class="nav-label">Logout</span>
       </button>
+      <div class="beta-badge-text" style="padding-left: var(--space-md); opacity: 0.6; margin-top: var(--space-sm);">Premium Access Active</div>
     </div>
   `;
 
