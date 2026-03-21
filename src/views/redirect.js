@@ -35,10 +35,49 @@ export function renderRedirect({ id }) {
     const link = hasDestination ? store.getLink(tag.assignedLinkId) : null;
 
     // ── SCENARIO 1: Tag is fully claimed and owned ──
-    // If it's already their tag and it's active, just go.
+    // If it's already their tag and it's active, show interstitial with auto-redirect
     if (isOwner && hasDestination && link && isValidUrl(link.url)) {
         store.incrementClicks(link.id);
-        window.location.href = link.url;
+        
+        container.innerHTML = `
+            <div class="login-page">
+                <div class="card-glass animate-fade-up" style="text-align:center; padding: 2.5rem; max-width: 450px">
+                    <div class="stat-icon green" style="margin: 0 auto var(--space-md); font-size: 2.5rem; background: rgba(76, 175, 80, 0.1); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">🔗</div>
+                    <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem;" class="text-gradient">${t('redirecting')}</h1>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                        ${t('returning_in')} <span id="redirect-countdown" style="font-weight: 600; color: var(--text-primary);">3</span>s.
+                    </p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+                        <a href="${link.url}" class="btn btn-primary w-full" style="height: 52px; font-weight: 600;">
+                            ${t('go_now')}
+                        </a>
+                        <button id="edit-destination-btn" class="btn btn-outline w-full" style="border-color: var(--border-color); color: var(--text-secondary);">
+                            ${t('edit_destination')}
+                        </button>
+                        <a href="#/dashboard" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">${t('cancel')} & ${t('dashboard')}</a>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        let timeLeft = 3;
+        const countdownEl = document.getElementById('redirect-countdown');
+        
+        const autoRedirect = setInterval(() => {
+            timeLeft--;
+            if (countdownEl) countdownEl.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(autoRedirect);
+                window.location.href = link.url;
+            }
+        }, 1000);
+
+        document.getElementById('edit-destination-btn')?.addEventListener('click', () => {
+            clearInterval(autoRedirect); // Stop the countdown
+            openLinkPickerForTag(tag.id);
+        });
+
         return;
     }
 

@@ -39,6 +39,10 @@ export const translations = {
         tag_id: 'ID de Etiqueta',
         access_denied: 'Acceso Denegado',
         already_provisioned: 'Esta etiqueta ya está asignada a otro cliente.',
+        redirecting: 'Redirigiendo...',
+        returning_in: 'Redirigiendo a tu destino en',
+        go_now: '🚀 Ir Ahora',
+        edit_destination: '✏️ Editar Destino',
         
         // Admin
         admin_console: 'Consola de Administrador',
@@ -99,6 +103,10 @@ export const translations = {
         tag_id: 'Tag ID',
         access_denied: 'Access Denied',
         already_provisioned: 'This tag is already provisioned to another client.',
+        redirecting: 'Redirecting...',
+        returning_in: 'Returning to your destination in',
+        go_now: '🚀 Go Now',
+        edit_destination: '✏️ Edit Destination',
         
         // Admin
         admin_console: 'Super Admin Console',
