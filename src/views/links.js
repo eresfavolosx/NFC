@@ -199,15 +199,20 @@ function initLinksEvents() {
         }
     });
 
+    // Debounce search input to minimize expensive DOM manipulations on keystroke
+    let filterTimeout;
+    const runFilter = () => {
+        filterLinks(document.getElementById('linkSearch')?.value.toLowerCase() || '', document.getElementById('categoryFilter')?.value);
+    };
+
     // Search
-    document.getElementById('linkSearch')?.addEventListener('input', (e) => {
-        filterLinks(e.target.value.toLowerCase(), document.getElementById('categoryFilter')?.value);
+    document.getElementById('linkSearch')?.addEventListener('input', () => {
+        if (filterTimeout) clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(runFilter, 300);
     });
 
     // Category filter
-    document.getElementById('categoryFilter')?.addEventListener('change', (e) => {
-        filterLinks(document.getElementById('linkSearch')?.value.toLowerCase() || '', e.target.value);
-    });
+    document.getElementById('categoryFilter')?.addEventListener('change', runFilter);
 }
 
 function filterLinks(search, category) {

@@ -9,3 +9,7 @@
 ## 2024-05-18 - Replacing O(N) Arrays with O(1) Maps in Centralized Store Getters
 **Learning:** Frequent UI rerenders or logic that accesses relations mapping tags to links trigger O(N) lookups via `find()` or `filter()` inside `getLink`, `getTag`, and `getTagsForLink` whenever data is queried. This causes massive redundant O(N) queries during high-frequency tasks.
 **Action:** Centralize relational lookup Maps (`linksById`, `tagsById`, etc.) within the global state management (e.g. `store.js`) using a lazy-loaded cache that invalidates only when data mutates. Then, allow UI components to query the store in O(1) time without rebuilding the structures locally.
+
+## 2024-05-18 - Replacing O(N) array methods with imperative loops
+**Learning:** Re-writing O(N) declarative array methods like `.filter()` and `.reduce()` into imperative `for` loops is a micro-optimization that degrades code readability without providing measurable performance gains in typical frontend Javascript scenarios. The actual bottleneck is usually DOM manipulation.
+**Action:** Avoid replacing standard array iteration methods with `for` loops unless dealing with millions of records in a tight loop where a profiler has explicitly flagged it. Instead, focus on debouncing events that trigger DOM updates.
