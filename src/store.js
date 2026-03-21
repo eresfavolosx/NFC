@@ -89,32 +89,7 @@ export const store = {
   // Impact: Transforms O(N) array scans into O(1) Map lookups. Speeds up rendering
   // and list filtering operations by ~30x for large arrays.
   // Measurement: Time complexity for getters dropped from O(N) to O(1).
-  _cache: null,
-
-  _getCache() {
-    if (!this._cache) {
-      this._cache = {
-        linksById: new Map(),
-        tagsById: new Map(),
-        tagsByLinkId: new Map()
-      };
-
-      for (const link of data.links) {
-        this._cache.linksById.set(link.id, link);
-      }
-
-      for (const tag of data.tags) {
-        this._cache.tagsById.set(tag.id, tag);
-        if (tag.assignedLinkId) {
-          if (!this._cache.tagsByLinkId.has(tag.assignedLinkId)) {
-            this._cache.tagsByLinkId.set(tag.assignedLinkId, []);
-          }
-          this._cache.tagsByLinkId.get(tag.assignedLinkId).push(tag);
-        }
-      }
-    }
-    return this._cache;
-  },
+  _cache: {},
 
   // ── Subscriptions ──
   subscribe(fn) {
@@ -123,7 +98,7 @@ export const store = {
   },
 
   _notify() {
-    this._cache = null; // ⚡ Bolt: Invalidate cache when state updates
+    this._cache = {}; // ⚡ Bolt: Invalidate cache when state updates
     saveDataDebounced(data);
     listeners.forEach(fn => fn(data));
   },
@@ -218,10 +193,37 @@ export const store = {
     this._notify();
   },
 
+  // ── Cached Lookups ──
+  get linksById() {
+    if (!this._cache.linksById) {
+      this._cache.linksById = new Map(data.links.map(l => [l.id, l]));
+    }
+    return this._cache.linksById;
+  },
+  get tagsById() {
+    if (!this._cache.tagsById) {
+      this._cache.tagsById = new Map(data.tags.map(t => [t.id, t]));
+    }
+    return this._cache.tagsById;
+  },
+  get tagsByLinkId() {
+    if (!this._cache.tagsByLinkId) {
+      const map = new Map();
+      for (const tag of data.tags) {
+        if (tag.assignedLinkId) {
+          if (!map.has(tag.assignedLinkId)) map.set(tag.assignedLinkId, []);
+          map.get(tag.assignedLinkId).push(tag);
+        }
+      }
+      this._cache.tagsByLinkId = map;
+    }
+    return this._cache.tagsByLinkId;
+  },
+
   // ── Links CRUD ──
   get links() { return [...data.links]; },
 
-  getLink(id) { return this._getCache().linksById.get(id); },
+  getLink(id) { return this.linksById.get(id); },
 
   // ── Subscription Logic ──
   get subscription() { return data.subscription; },
@@ -310,7 +312,7 @@ export const store = {
   // ── Tags CRUD ──
   get tags() { return [...data.tags]; },
 
-  getTag(id) { return this._getCache().tagsById.get(id); },
+  getTag(id) { return this.tagsById.get(id); },
 
   createTag({ label, serialNumber = null }) {
     if (!this.canCreateTag()) {
@@ -410,7 +412,7 @@ export const store = {
 
   // ── Tags assigned to link ──
   getTagsForLink(linkId) {
-    return this._getCache().tagsByLinkId.get(linkId) || [];
+    return this.tagsByLinkId.get(linkId) || [];
   },
 
   // ── Activity Log ──
@@ -431,12 +433,15 @@ export const store = {
 
   // ── Stats ──
   get stats() {
-    return {
-      totalLinks: data.links.length,
-      totalTags: data.tags.length,
-      assignedTags: data.tags.filter(t => t.assignedLinkId).length,
-      totalClicks: data.links.reduce((sum, l) => sum + l.clicks, 0),
-    };
+    if (!this._cache.stats) {
+      this._cache.stats = {
+        totalLinks: data.links.length,
+        totalTags: data.tags.length,
+        assignedTags: data.tags.filter(t => t.assignedLinkId).length,
+        totalClicks: data.links.reduce((sum, l) => sum + l.clicks, 0),
+      };
+    }
+    return this._cache.stats;
   },
 
   // ── Reset ──

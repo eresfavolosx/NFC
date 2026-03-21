@@ -51,6 +51,7 @@ function linkFormContent(link = null) {
 export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
+    const tags = store.tags;
 
     container.innerHTML = `
     ${renderHeader('Links', 'Manage your destination URLs')}
