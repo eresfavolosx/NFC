@@ -29,9 +29,14 @@ export function renderBottomNav() {
     nav.id = 'bottom-nav';
     nav.className = 'bottom-nav';
 
+    const items = [...BOTTOM_NAV_ITEMS];
+    if (store.isSuperAdmin()) {
+        items.splice(3, 0, { path: '/admin', icon: '🛡️', label: 'Admin' });
+    }
+
     nav.innerHTML = `
         <div class="bottom-nav-container">
-            ${BOTTOM_NAV_ITEMS.map(item => `
+            ${items.map(item => `
                 <a href="#${item.path}" 
                    class="bottom-nav-item ${currentPath === item.path ? 'active' : ''}" 
                    data-path="${item.path}">
