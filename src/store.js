@@ -445,7 +445,7 @@ export const store = {
       totalLinks: userLinks.length,
       totalClicks: userLinks.reduce((sum, l) => sum + (l.clicks || 0), 0),
       activeTags: userTags.filter(t => t.assignedLinkId).length,
-      recentActivity: [...data.activities].slice(0, 10)
+      recentActivity: [...data.activity].slice(0, 10)
     };
   },
 
