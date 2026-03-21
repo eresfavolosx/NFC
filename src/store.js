@@ -435,6 +435,22 @@ export const store = {
     }
   },
 
+  // ── Client Discovery ──
+  get allClientEmails() {
+    const emails = new Set();
+    // From tags
+    data.tags.forEach(t => {
+      if (t.ownerEmail) emails.add(t.ownerEmail.toLowerCase().trim());
+    });
+    // From current user
+    if (data.settings.user?.email) {
+      emails.add(data.settings.user.email.toLowerCase().trim());
+    }
+    // Filter out the super admin from the client list to avoid self-assignment confusion (optional)
+    // Actually, keep it just in case.
+    return Array.from(emails).sort();
+  },
+
   // ── Stats ──
   get stats() {
     const userTags = this.tags;

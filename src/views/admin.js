@@ -4,6 +4,7 @@
 
 import { store } from '../store.js';
 import { renderHeader, escapeHTML, showToast } from '../utils.js';
+import { openModal } from '../components/modal.js';
 
 export function renderAdmin() {
     const main = document.getElementById('page-content');
@@ -102,16 +103,44 @@ export function renderAdmin() {
     main.querySelectorAll('.assign-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tagId = btn.dataset.tagId;
-            const email = prompt('Enter Client Email to assign this tag:');
-            if (email && email.includes('@')) {
-                const success = store.assignTagToUser(tagId, email);
-                if (success) {
-                    showToast(`Provisioned tag to ${email}`, 'success');
-                    renderAdmin(); // Refresh view
+            const emails = store.allClientEmails;
+            
+            openModal({
+                title: '👥 Assign Tag to Client',
+                content: `
+                    <div class="form-group">
+                        <label class="form-label">Select Registered Client</label>
+                        <select class="form-select" id="assign-email-select">
+                            <option value="">— Select an existing client —</option>
+                            ${emails.map(e => `<option value="${e}">${e}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div style="text-align: center; margin: 1.5rem 0; position: relative;">
+                        <hr style="border: none; border-top: 1px solid var(--border-color);">
+                        <span style="position: absolute; top:50%; left:50%; transform: translate(-50%, -50%); background: var(--bg-surface-elevated); padding: 0 10px; font-size: 0.75rem; color: var(--text-muted);">OR ASSIGN TO NEW</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Enter New Client Email</label>
+                        <input class="form-input" id="assign-email-custom" type="email" placeholder="client@example.com">
+                    </div>
+                `,
+                submitLabel: 'Assign & Provision',
+                onSubmit: () => {
+                    const selectedEmail = document.getElementById('assign-email-select').value;
+                    const customEmail = document.getElementById('assign-email-custom').value.trim();
+                    const email = customEmail || selectedEmail;
+
+                    if (email && email.includes('@')) {
+                        const success = store.assignTagToUser(tagId, email);
+                        if (success) {
+                            showToast(`Success: Tag provisioned to ${email}`, 'success');
+                            renderAdmin(); // Refresh view
+                        }
+                    } else {
+                        showToast('Please provide a valid client email', 'error');
+                    }
                 }
-            } else if (email) {
-                showToast('Invalid email format', 'error');
-            }
+            });
         });
     });
 }
