@@ -30,6 +30,7 @@ const defaultData = {
   tags: [],
   activity: [],
   analytics: [], // [{ linkId, tagId, timestamp }]
+  clients: [],   // [email1, email2, ...] (Explicit client registry)
 };
 
 function loadData() {
@@ -398,6 +399,13 @@ export const store = {
     }
 
     this._addActivity('tag_assigned', `Assigned "${link?.title || 'link'}" to tag "${tag.label}"`);
+    
+    // Add to explicit client registry for future quick-assignment
+    const normalizedEmail = email.toLowerCase().trim();
+    if (!data.clients.includes(normalizedEmail)) {
+        data.clients.push(normalizedEmail);
+    }
+    
     this._notify();
     return true;
   },
@@ -438,17 +446,26 @@ export const store = {
   // ── Client Discovery ──
   get allClientEmails() {
     const emails = new Set();
-    // From tags
+    
+    // 1. From explicit registry
+    data.clients.forEach(e => emails.add(e.toLowerCase().trim()));
+    
+    // 2. From tags (Provisioned or Active)
     data.tags.forEach(t => {
       if (t.ownerEmail) emails.add(t.ownerEmail.toLowerCase().trim());
     });
-    // From current user
+    
+    // 3. From links (Owner filtering)
+    data.links.forEach(l => {
+      if (l.ownerEmail) emails.add(l.ownerEmail.toLowerCase().trim());
+    });
+
+    // 4. From current user session
     if (data.settings.user?.email) {
       emails.add(data.settings.user.email.toLowerCase().trim());
     }
-    // Filter out the super admin from the client list to avoid self-assignment confusion (optional)
-    // Actually, keep it just in case.
-    return Array.from(emails).sort();
+
+    return Array.from(emails).filter(Boolean).sort();
   },
 
   // ── Stats ──
