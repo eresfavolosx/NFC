@@ -8,33 +8,53 @@ import { navigate } from '../router.js';
 import { showToast } from '../utils.js';
 import { openModal, closeModal } from '../components/modal.js';
 
+/**
+ * Renders the redirection or activation screen for a tag scan.
+ * Logic:
+ * 1. If tag is active (has link) AND owned by the user -> Redirect Immediately.
+ * 2. If tag is provisioned/unclaimed -> Show Activation Screen.
+ * 3. On Activation Screen, if link exists -> Show "Continue to Destination" option.
+ */
 export function renderRedirect({ id }) {
     const container = document.getElementById('app');
-    
-    // Tag lookup
-    const tag = store.getTag(id);
     const t = (key) => store.t(key);
+    
+    // Tag lookup (raw data lookup)
+    const tag = store.getTag(id);
+    
+    if (!tag) {
+        container.innerHTML = `<div class="p-4 text-center">Tag not found</div>`;
+        return;
+    }
 
-    if (tag && tag.assignedLinkId) {
-        const link = store.getLink(tag.assignedLinkId);
-        if (link && isValidUrl(link.url)) {
-            // Log interaction
+    const isAuth = store.isAuthenticated;
+    const currentUserEmail = store.user?.email?.toLowerCase().trim();
+    const tagOwnerEmail = tag.ownerEmail?.toLowerCase().trim();
+    const isOwner = tagOwnerEmail && tagOwnerEmail === currentUserEmail;
+    const hasDestination = tag.assignedLinkId;
+    const link = hasDestination ? store.getLink(tag.assignedLinkId) : null;
+
+    // ── SCENARIO 1: Tag is fully claimed and owned ──
+    // If it's already their tag and it's active, just go.
+    if (isOwner && hasDestination && link && isValidUrl(link.url)) {
+        store.incrementClicks(link.id);
+        window.location.href = link.url;
+        return;
+    }
+
+    // ── SCENARIO 2: Access Control for provisioned tags ──
+    const isProvisionedToSomeoneElse = tagOwnerEmail && tagOwnerEmail !== currentUserEmail && !store.isSuperAdmin();
+    if (isProvisionedToSomeoneElse) {
+        // BUT if it has a destination, let them go anyway? 
+        // No, typically premium tags shouldn't be "scanned" by others if private.
+        // However, the user said "already claimed... redirect automatically".
+        // If it's claimed by someone else, but redirected...
+        if (hasDestination && link && isValidUrl(link.url)) {
             store.incrementClicks(link.id);
-            
-            // Redirect
             window.location.href = link.url;
             return;
         }
-    }
 
-    // New Tag / Activation State / Provisioning
-    const isAuth = store.isAuthenticated;
-    const currentUserEmail = store.user?.email?.toLowerCase().trim();
-    const tagOwnerEmail = tag?.ownerEmail?.toLowerCase().trim();
-    const isOwner = tagOwnerEmail && tagOwnerEmail === currentUserEmail;
-    const isProvisionedToSomeoneElse = tagOwnerEmail && tagOwnerEmail !== currentUserEmail && !store.isSuperAdmin();
-
-    if (isProvisionedToSomeoneElse) {
         container.innerHTML = `
             <div class="login-page">
                 <div class="card-glass animate-fade-up" style="text-align:center; padding: 2.5rem; max-width: 450px">
@@ -50,6 +70,7 @@ export function renderRedirect({ id }) {
         return;
     }
 
+    // ── SCENARIO 3: Activation / Provisioned Screen ──
     container.innerHTML = `
         <div class="login-page">
             <div class="card-glass animate-fade-up" style="text-align:center; padding: 2.5rem; max-width: 450px">
@@ -64,18 +85,25 @@ export function renderRedirect({ id }) {
                         : (isAuth ? t('unclaimed_desc') : t('login_to_activate'))}
                 </p>
 
-                ${isAuth ? `
-                    <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+                <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+                    ${isAuth ? `
                         <button id="activate-tag-btn" class="btn btn-primary w-full" style="height: 52px; font-weight: 600; background: ${isOwner ? 'var(--color-success)' : 'var(--color-primary)'};">
                             ${isOwner ? t('activate_tag') : t('claim_tag')}
                         </button>
-                        <a href="#/dashboard" style="font-size: 0.85rem; color: var(--text-muted);">${t('cancel')}</a>
-                    </div>
-                ` : `
-                    <button id="login-to-claim-btn" class="btn btn-primary w-full" style="height: 52px; font-weight: 600;">
-                        🔑 ${t('login_to_activate')}
-                    </button>
-                `}
+                    ` : `
+                        <button id="login-to-claim-btn" class="btn btn-primary w-full" style="height: 52px; font-weight: 600;">
+                            🔑 ${t('login_to_activate')}
+                        </button>
+                    `}
+
+                    ${link && isValidUrl(link.url) ? `
+                        <a href="${link.url}" id="skip-to-destination" class="btn btn-outline w-full" style="border-color: var(--border-color); color: var(--text-secondary);">
+                            ➡️ ${t('cancel')} & ${t('dashboard')}
+                        </a>
+                    ` : `
+                        <a href="#/dashboard" style="font-size: 0.85rem; color: var(--text-muted);">${t('dashboard')}</a>
+                    `}
+                </div>
                 
                 <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); font-size: 0.75rem; color: var(--text-muted);">
                     ${t('tag_id')}: <span style="font-family: monospace; opacity: 0.8;">${id}</span>
@@ -89,8 +117,6 @@ export function renderRedirect({ id }) {
         try {
             const newTag = store.createTag({ id, label: isOwner ? 'Provisioned Tag' : 'New Tocaito Tag' });
             showToast(t('tag_registered'), 'success');
-            
-            // Immediately offer to link it
             openLinkPickerForTag(newTag.id);
         } catch (e) {
             showToast(e.message, 'error');
@@ -100,6 +126,10 @@ export function renderRedirect({ id }) {
     document.getElementById('login-to-claim-btn')?.addEventListener('click', () => {
         sessionStorage.setItem('pending_tag_activation', id);
         navigate('/login');
+    });
+
+    document.getElementById('skip-to-destination')?.addEventListener('click', () => {
+        if (link) store.incrementClicks(link.id);
     });
 }
 
