@@ -45,7 +45,7 @@ export function renderTags() {
         </div>
       ` : `
         <div class="tags-list" id="tagsList">
-          ${tags.map((tag, i) => renderTagRow(tag, store.linksById, i)).join('')}
+          ${tags.map((tag, i) => renderTagRow(tag, i)).join('')}
         </div>
       `}
     </div>
@@ -54,8 +54,8 @@ export function renderTags() {
     initTagsEvents(links);
 }
 
-function renderTagRow(tag, linksById, index) {
-    const assignedLink = tag.assignedLinkId ? linksById.get(tag.assignedLinkId) : null;
+function renderTagRow(tag, index) {
+    const assignedLink = tag.assignedLinkId ? store.getLink(tag.assignedLinkId) : null;
 
     return `
     <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
@@ -234,7 +234,7 @@ function initTagsEvents(links) {
         const q = e.target.value.toLowerCase();
 
         document.querySelectorAll('.tag-row').forEach(row => {
-            const tag = store.tagsById.get(row.dataset.id);
+            const tag = store.getTag(row.dataset.id);
             if (!tag) return;
             const match = tag.label.toLowerCase().includes(q) ||
                 (tag.serialNumber && tag.serialNumber.toLowerCase().includes(q));

@@ -80,7 +80,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, store.tagsByLinkId.get(link.id) || [], i)).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, store.getTagsForLink(link.id), i)).join('')}
       </div>
     </div>
   `;
@@ -214,7 +214,7 @@ function filterLinks(search, category) {
     const cards = document.querySelectorAll('.link-card');
 
     cards.forEach(card => {
-        const link = store.linksById.get(card.dataset.id);
+        const link = store.getLink(card.dataset.id);
         if (!link) return;
 
         const matchSearch = !search ||
