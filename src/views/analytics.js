@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 import { store } from '../store.js';
-import { escapeHTML } from '../main.js';
+import { escapeHTML } from '../utils.js';
 
 export function renderAnalytics() {
     const container = document.getElementById('app');

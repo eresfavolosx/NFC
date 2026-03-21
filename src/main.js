@@ -20,6 +20,9 @@ import { renderTemplates } from './views/templates.js';
 import { renderProfile } from './views/profile.js';
 import { renderRedirect } from './views/redirect.js';
 import { nfc } from './nfc.js';
+import { showToast, renderHeader, escapeHTML } from './utils.js';
+
+console.log('Main.js loading...');
 
 // ── Guard: redirect to login if not authenticated ──
 function authGuard(renderFn) {
@@ -106,21 +109,40 @@ registerRoute('/404', () => {
 });
 
 // ── Boot ──
+console.log('App initialization started...');
 store.init().then(async () => {
+  console.log('Store initialized. Checking nfcCompat...');
+  // Ensure nfcCompat is updated on boot if not already done in store.init
+  if (!store.nfcCompat || store.nfcCompat.platform === 'loading') {
+      try {
+          store.data.settings.nfcCompat = await nfc.getCompatibilityInfo();
+          store._notify();
+      } catch (e) {
+          console.error('Failed to get compatibility info:', e);
+      }
+  }
+  
+  console.log('Checking biometrics...');
   // Biometric Auth check
   const settings = store.settings;
   if (settings.useBiometrics && nfc.isNative()) {
-      const available = await nfc.isBiometricAvailable();
-      if (available) {
-          const success = await nfc.authenticateWithBiometrics();
-          if (!success) {
-              // If biometric fails, force login or stay on current guard/login page
-              // For now, we just log it and let Pin/Google be fallbacks
-              console.warn('Biometric authentication failed or canceled.');
+      try {
+          const available = await nfc.isBiometricAvailable();
+          if (available) {
+              const success = await nfc.authenticateWithBiometrics();
+              if (!success) {
+                  console.warn('Biometric authentication failed or canceled.');
+              }
           }
+      } catch (e) {
+          console.error('Biometric check error:', e);
       }
   }
+  console.log('Starting router...');
   startRouter();
+}).catch(err => {
+    console.error('App boot failure:', err);
+    document.getElementById('app').innerHTML = `<div style="padding: 2rem; color: white;">Critical Error: ${err.message}</div>`;
 });
 
 // ── PWA: Register Service Worker ──
@@ -131,56 +153,4 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
-// ── Utilities ──
-
-export function showToast(message, type = 'info') {
-  const container = document.getElementById('toast-container') || createToastContainer();
-  const toast = document.createElement('div');
-  toast.className = `toast animate-fade-in ${type === 'success' ? 'toast-success' : type === 'error' ? 'toast-error' : 'toast-info'}`;
-  
-  const iconMap = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
-  
-  toast.innerHTML = `
-    <span class="toast-icon">${iconMap[type] || 'ℹ️'}</span>
-    <div class="toast-message">${message}</div>
-    <button class="toast-close">&times;</button>
-  `;
-  
-  container.appendChild(toast);
-  
-  const closeBtn = toast.querySelector('.toast-close');
-  closeBtn.onclick = () => toast.remove();
-  
-  setTimeout(() => {
-    if (toast.parentElement) {
-      toast.classList.add('animate-fade-out');
-      setTimeout(() => toast.remove(), 300);
-    }
-  }, 4000);
-}
-
-function createToastContainer() {
-  const container = document.createElement('div');
-  container.id = 'toast-container';
-  container.className = 'toast-container';
-  document.body.appendChild(container);
-  return container;
-}
-
-export function escapeHTML(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
-
-export function renderHeader(title, subtitle = '') {
-    return `
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">${escapeHTML(title)}</h1>
-                ${subtitle ? `<p class="page-subtitle">${escapeHTML(subtitle)}</p>` : ''}
-            </div>
-        </div>
-    `;
-}
+// Utilities moved to ./utils.js

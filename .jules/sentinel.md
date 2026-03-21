@@ -6,3 +6,8 @@
 **Vulnerability:** Found unescaped template string interpolations of user-controlled inputs (`title`, `subtitle`) within common UI components like `renderHeader()`. Specifically, `store.data.user?.displayName` was injected unescaped into `dashboard.js` via the `header.js` component, creating a stored DOM XSS vector.
 **Learning:** Shared UI utility components often assume inputs are "safe" or already escaped, but they are frequently called directly with raw data from the store or user profile.
 **Prevention:** All UI rendering functions that construct HTML strings via template literals MUST explicitly call `escapeHTML()` on all string parameters they accept, even if they seem like internal constants.
+
+## 2025-03-18 - Fix XSS Vulnerability in Tag Redirection
+**Vulnerability:** Found missing input validation before executing `window.location.href = link.url;` in `src/views/redirect.js`. While `link.url` validation exists in the UI during creation, it can be bypassed through other means (e.g. direct API calls or direct localStorage manipulation), making it possible to store `javascript:...` payloads. When a user is redirected, this payload is executed leading to a Cross-Site Scripting (XSS) vulnerability.
+**Learning:** Defense in depth dictates that validation should occur at the time of execution. Stored data cannot always be trusted, especially when the redirection logic takes place on the client side without strict backend validation.
+**Prevention:** Always validate URLs using `isValidUrl` (ensuring `http:` or `https:`) right before modifying `window.location.href`.

@@ -1,5 +1,5 @@
 import { store } from '../store.js';
-import { renderHeader, escapeHTML, showToast } from '../main.js';
+import { renderHeader, escapeHTML, showToast } from '../utils.js';
 
 export function renderProfile() {
     const container = document.getElementById('page-content');

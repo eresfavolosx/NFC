@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { escapeHTML, isValidUrl as isValidURL } from '../src/utils/sanitize.js';
+import { escapeHTML, isValidUrl } from '../src/utils/sanitize.js';
 
 test('escapeHTML', async (t) => {
   await t.test('should escape basic HTML characters', () => {
@@ -31,17 +31,17 @@ test('escapeHTML', async (t) => {
   });
 });
 
-test('isValidURL', async (t) => {
+test('isValidUrl', async (t) => {
   await t.test('should return true for valid http/https URLs', () => {
-    assert.strictEqual(isValidURL('https://example.com'), true);
-    assert.strictEqual(isValidURL('http://example.com'), true);
+    assert.strictEqual(isValidUrl('https://example.com'), true);
+    assert.strictEqual(isValidUrl('http://example.com'), true);
   });
 
   await t.test('should return false for javascript protocol', () => {
-    assert.strictEqual(isValidURL('javascript:alert(1)'), false);
+    assert.strictEqual(isValidUrl('javascript:alert(1)'), false);
   });
 
   await t.test('should return false for invalid URLs', () => {
-    assert.strictEqual(isValidURL('not a url'), false);
+    assert.strictEqual(isValidUrl('not a url'), false);
   });
 });

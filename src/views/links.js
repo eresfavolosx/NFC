@@ -53,17 +53,6 @@ export function renderLinks() {
     const links = store.links;
     const tags = store.tags;
 
-    // Group tags by link ID
-    const tagsByLinkId = new Map();
-    for (const tag of tags) {
-        if (tag.assignedLinkId) {
-            if (!tagsByLinkId.has(tag.assignedLinkId)) {
-                tagsByLinkId.set(tag.assignedLinkId, []);
-            }
-            tagsByLinkId.get(tag.assignedLinkId).push(tag);
-        }
-    }
-
     container.innerHTML = `
     ${renderHeader('Links', 'Manage your destination URLs')}
 
@@ -91,7 +80,7 @@ export function renderLinks() {
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
             <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, tagsByLinkId.get(link.id) || [], i)).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, store.getTagsForLink(link.id), i)).join('')}
       </div>
     </div>
   `;
@@ -210,23 +199,27 @@ function initLinksEvents() {
         }
     });
 
+    // Debounce search input to minimize expensive DOM manipulations on keystroke
+    let filterTimeout;
+    const runFilter = () => {
+        filterLinks(document.getElementById('linkSearch')?.value.toLowerCase() || '', document.getElementById('categoryFilter')?.value);
+    };
+
     // Search
-    document.getElementById('linkSearch')?.addEventListener('input', (e) => {
-        filterLinks(e.target.value.toLowerCase(), document.getElementById('categoryFilter')?.value);
+    document.getElementById('linkSearch')?.addEventListener('input', () => {
+        if (filterTimeout) clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(runFilter, 300);
     });
 
     // Category filter
-    document.getElementById('categoryFilter')?.addEventListener('change', (e) => {
-        filterLinks(document.getElementById('linkSearch')?.value.toLowerCase() || '', e.target.value);
-    });
+    document.getElementById('categoryFilter')?.addEventListener('change', runFilter);
 }
 
 function filterLinks(search, category) {
     const cards = document.querySelectorAll('.link-card');
-    const linksMap = new Map(store.links.map(l => [l.id, l]));
 
     cards.forEach(card => {
-        const link = linksMap.get(card.dataset.id);
+        const link = store.getLink(card.dataset.id);
         if (!link) return;
 
         const matchSearch = !search ||
