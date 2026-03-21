@@ -286,16 +286,16 @@ export const store = {
 
   getTag(id) { return this.tagsById.get(id); },
 
-  createTag({ label, serialNumber = null }) {
+  createTag({ id = null, label, serialNumber = null }) {
     if (!this.canCreateTag()) {
         throw new Error('Tag limit reached. Upgrade to Pro for unlimited tags.');
     }
     const tag = {
-      id: crypto.randomUUID(),
+      id: id || crypto.randomUUID(),
       label,
       serialNumber,
       assignedLinkId: null,
-      lastWritten: null,
+      lastWritten: new Date().toISOString(), // Mark as written since it came from a pre-written link
       location: null,
       isLocked: false,
       createdAt: new Date().toISOString(),
