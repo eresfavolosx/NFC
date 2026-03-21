@@ -3,11 +3,9 @@
    ═══════════════════════════════════════════════════════════ */
 
 import { store } from '../store.js';
-import { renderHeader } from '../components/header.js';
 import { navigate } from '../router.js';
-import { escapeHTML } from '../utils/sanitize.js';
+import { renderHeader, escapeHTML, showToast } from '../utils.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
-import { showToast } from '../components/toast.js';
 
 function formatTimeAgo(dateStr) {
     const now = new Date();
@@ -54,42 +52,12 @@ export function renderDashboard() {
                     <div class="stat-trend">Assets in field</div>
                 </div>
                 <div class="stat-card animate-fade-up" style="animation-delay: 0.2s">
-                    <div class="stat-label">Total Scans</div>
-                    <div class="stat-value">${totalScans}</div>
+                    <div class="stat-icon yellow" style="font-size: 1.5rem; margin-bottom: 0.5rem;">👆</div>
+                    <div class="stat-label">Total Taps</div>
+                    <div class="stat-value">${stats.totalClicks}</div>
                     <div class="stat-trend trend-up">Engagement data</div>
                 </div>
             </div>
-      <!-- Stats Grid -->
-      <div class="grid grid-4 dashboard-stats">
-        <div class="stat-card animate-fade-up" style="animation-delay: 0.05s">
-          <div class="stat-icon purple">🔗</div>
-          <div>
-            <div class="stat-value" data-count="${stats.totalLinks}">${stats.totalLinks}</div>
-            <div class="stat-label">Total Links</div>
-          </div>
-        </div>
-        <div class="stat-card animate-fade-up" style="animation-delay: 0.1s">
-          <div class="stat-icon teal">🏷️</div>
-          <div>
-            <div class="stat-value" data-count="${stats.totalTags}">${stats.totalTags}</div>
-            <div class="stat-label">Registered Tags</div>
-          </div>
-        </div>
-        <div class="stat-card animate-fade-up" style="animation-delay: 0.15s">
-          <div class="stat-icon pink">📡</div>
-          <div>
-            <div class="stat-value" data-count="${stats.assignedTags}">${stats.assignedTags}</div>
-            <div class="stat-label">Assigned Tags</div>
-          </div>
-        </div>
-        <div class="stat-card animate-fade-up" style="animation-delay: 0.2s">
-          <div class="stat-icon yellow">👆</div>
-          <div>
-            <div class="stat-value" data-count="${stats.totalClicks}">${stats.totalClicks}</div>
-            <div class="stat-label">Total Taps</div>
-          </div>
-        </div>
-      </div>
 
       <div class="dashboard-grid">
         <!-- Magic Setup (If empty) -->
@@ -122,8 +90,8 @@ export function renderDashboard() {
                   <span class="step-icon">${stats.totalTags > 0 ? '✅' : '2️⃣'}</span>
                   <span>Tables Registered</span>
                 </div>
-                <div class="onboarding-step ${stats.assignedTags > 0 ? 'done' : ''}">
-                  <span class="step-icon">${stats.assignedTags > 0 ? '✅' : '3️⃣'}</span>
+                <div class="onboarding-step ${stats.activeTags > 0 ? 'done' : ''}">
+                  <span class="step-icon">${stats.activeTags > 0 ? '✅' : '3️⃣'}</span>
                   <span>Links Assigned to Tags</span>
                 </div>
               </div>

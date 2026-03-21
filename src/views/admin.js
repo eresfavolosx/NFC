@@ -3,10 +3,11 @@
    ═══════════════════════════════════════════════════════════ */
 
 import { store } from '../store.js';
-import { renderHeader, escapeHTML } from '../utils.js';
+import { renderHeader, escapeHTML, showToast } from '../utils.js';
 
 export function renderAdmin() {
     const main = document.getElementById('page-content');
+    if (!main) return;
     
     // Stats for the admin
     const stats = store.stats;
@@ -36,7 +37,7 @@ export function renderAdmin() {
           <p class="card-subtitle">Showing all tags registered across the platform.</p>
         </div>
 
-        <div class="table-container animate-fade-up" style="animation-delay: 0.3s">
+        <div class="table-container animate-fade-up" style="animation-delay: 0.1s">
           <table class="data-table">
             <thead>
               <tr>
@@ -65,7 +66,7 @@ export function renderAdmin() {
                   <td data-label="Owner / Client">
                     ${tag.ownerEmail 
                       ? `<div style="font-size: 0.85rem; color: var(--color-primary); font-weight: 500;">${tag.ownerEmail}</div>`
-                      : '<span class="text-muted" style="font-size: 0.8rem italic;">Unassigned</span>'}
+                      : '<span class="text-muted" style="font-size: 0.8rem; font-style: italic;">Unassigned</span>'}
                   </td>
                   <td data-label="Status">
                     ${tag.assignedLinkId 
@@ -75,7 +76,7 @@ export function renderAdmin() {
                   <td data-label="Created">${new Date(tag.createdAt).toLocaleDateString()}</td>
                   <td data-label="Actions">
                     <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                      <button class="btn btn-sm btn-outline" onclick="window.assignTag('${tag.id}')">Assign</button>
+                      <button class="btn btn-sm btn-outline assign-btn" data-tag-id="${tag.id}">Assign</button>
                       <button class="btn btn-sm" onclick="alert('Admin: View client logic coming soon')">View</button>
                     </div>
                   </td>
@@ -85,18 +86,6 @@ export function renderAdmin() {
           </table>
         </div>
       </div>
-
-    <script>
-        window.assignTag = (id) => {
-            const email = prompt('Enter Client Email to assign this tag:');
-            if (email && email.includes('@')) {
-                import('../store.js').then(({ store }) => {
-                    store.assignTagToUser(id, email);
-                    window.location.reload(); // Quick refresh for admin
-                });
-            }
-        };
-    </script>
 
       <div class="section-card card-glass animate-fade-in" style="margin-top: 2rem;">
         <div class="card-header">
@@ -108,4 +97,21 @@ export function renderAdmin() {
         </div>
       </div>
     `;
+
+    // Event Listeners for Admin Actions
+    main.querySelectorAll('.assign-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tagId = btn.dataset.tagId;
+            const email = prompt('Enter Client Email to assign this tag:');
+            if (email && email.includes('@')) {
+                const success = store.assignTagToUser(tagId, email);
+                if (success) {
+                    showToast(`Provisioned tag to ${email}`, 'success');
+                    renderAdmin(); // Refresh view
+                }
+            } else if (email) {
+                showToast('Invalid email format', 'error');
+            }
+        });
+    });
 }
