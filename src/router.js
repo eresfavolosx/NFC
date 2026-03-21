@@ -9,9 +9,8 @@ export function registerRoute(path, handler) {
     routes[path] = handler;
 }
 
-export function navigate(path) {
-    window.location.hash = path;
-}
+import { navigate } from './utils.js';
+export { navigate };
 
 export function getCurrentRoute() {
     const hash = window.location.hash.slice(1) || '/login';
