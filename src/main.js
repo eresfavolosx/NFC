@@ -101,6 +101,9 @@ function initializeGlobalFAB() {
     const app = document.getElementById('app');
     if (!app || document.getElementById('global-fab-root')) return;
 
+    // ONLY the Super Admin can see the global "Write" button
+    if (!store.isSuperAdmin()) return;
+
     const fabRoot = document.createElement('div');
     fabRoot.id = 'global-fab-root';
     fabRoot.className = 'fab-container animate-fade-in';
@@ -224,9 +227,9 @@ function openWriteWizard() {
         const link = store.getLink(linkId);
         const compat = store.nfcCompat;
         
-        // Final URL Logic
+        // Final URL Logic: Admin ALWAYS writes a redirect link if a Tag ID is selected
         let finalUrl = link.url;
-        if (store.settings.dynamicRedirection && tagId) {
+        if (tagId) {
             finalUrl = `${window.location.origin}/#/r/${tagId}`;
         }
 
