@@ -361,11 +361,10 @@ registerRoute('/404', () => {
 console.log('App initialization started...');
 store.init().then(async () => {
   console.log('Store initialized. Checking nfcCompat...');
-  // Ensure nfcCompat is updated on boot if not already done in store.init
+  // Ensure nfcCompat is updated on boot
   if (!store.nfcCompat || store.nfcCompat.platform === 'loading') {
       try {
-          store.data.settings.nfcCompat = await nfc.getCompatibilityInfo();
-          store._notify();
+          await store.refreshNfcCompat();
       } catch (e) {
           console.error('Failed to get compatibility info:', e);
       }
