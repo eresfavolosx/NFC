@@ -213,8 +213,9 @@ export const store = {
   },
 
   getLink(id) { 
-    const link = data.links.find(l => l.id === id);
-    if (this.isSuperAdmin()) return link;
+    // ⚡ Bolt: Use O(1) Map lookup instead of O(N) array scan
+    const link = this.linksById.get(id);
+    if (this.isSuperAdmin()) return link || null;
     return (link && link.ownerEmail === this.user?.email) ? link : null;
   },
 
@@ -312,8 +313,9 @@ export const store = {
   },
 
   getTag(id) { 
-    const tag = data.tags.find(t => t.id === id);
-    if (this.isSuperAdmin()) return tag;
+    // ⚡ Bolt: Use O(1) Map lookup instead of O(N) array scan
+    const tag = this.tagsById.get(id);
+    if (this.isSuperAdmin()) return tag || null;
     return (tag && tag.ownerEmail === this.user?.email) ? tag : null;
   },
 
