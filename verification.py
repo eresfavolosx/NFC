@@ -1,48 +1,45 @@
 from playwright.sync_api import sync_playwright
+import time
 
-def verify_feature():
+def verify_xss_fix():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context(record_video_dir="/app/verification/video", viewport={"width": 1280, "height": 720})
-        page = context.new_page()
+        page = browser.new_page()
 
-        page.goto("http://localhost:5174")
-        page.wait_for_timeout(500)
+        # Route firebase to our mock
+        page.route("**/src/firebase.js", lambda route: route.fulfill(path="mock_firebase.js"))
 
-        page.evaluate("""
-            localStorage.setItem('nfc_tag_manager', JSON.stringify({
-                settings: { adminPin: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', isAuthenticated: false, dynamicRedirection: true },
-                subscription: { tier: 'free', status: 'active' },
-                links: [
-                    { id: 'l1', title: 'My Portfolio', url: 'https://example.com/portfolio', category: 'portfolio', clicks: 5 }
-                ],
-                tags: [
-                    { id: 't1', label: 'Black Bracelet', assignedLinkId: 'l1', createdAt: new Date().toISOString() },
-                    { id: 't2', label: 'Blue Bracelet', assignedLinkId: null, createdAt: new Date().toISOString() }
-                ],
-                activity: []
-            }));
+        # Inject state before any JS is evaluated
+        page.add_init_script("""
+            const data = {
+                settings: {
+                    isAuthenticated: true,
+                    user: { id: "1", email: "test@example.com", displayName: "Test User" },
+                    brandName: 'Tocaito',
+                    language: 'en'
+                },
+                links: [{
+                    id: 'xss-test',
+                    title: '<script>alert("link title XSS")</script>XSS Link',
+                    url: 'javascript:alert("url XSS")',
+                    category: 'general',
+                    clicks: 0,
+                    ownerEmail: 'test@example.com'
+                }],
+                tags: []
+            };
+            localStorage.setItem('nfc_tag_manager', JSON.stringify(data));
         """)
 
-        # Navigate, then authenticate via the UI normally to make sure it loads all the views properly.
-        page.goto("http://localhost:5174/#/login")
-        page.wait_for_timeout(500)
-        page.keyboard.press("1")
-        page.keyboard.press("2")
-        page.keyboard.press("3")
-        page.keyboard.press("4")
-        page.wait_for_timeout(1000)
+        # Load the application directly to the links view
+        page.goto("http://localhost:5173/#/links")
 
-        page.goto("http://localhost:5174/#/links")
-        page.wait_for_timeout(1000)
-        page.screenshot(path="/app/verification/links.png")
+        time.sleep(2) # let things settle and render
 
-        page.goto("http://localhost:5174/#/tags")
-        page.wait_for_timeout(1000)
-        page.screenshot(path="/app/verification/tags.png")
+        # Take a screenshot
+        page.screenshot(path="verification/links_xss_mitigated.png")
 
-        context.close()
         browser.close()
 
 if __name__ == "__main__":
-    verify_feature()
+    verify_xss_fix()

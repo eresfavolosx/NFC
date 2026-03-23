@@ -1,6 +1,7 @@
 import { auth, provider, signInWithPopup, signOut, onAuthStateChanged } from './firebase.js';
 import { nfc } from './nfc.js';
 import { translations } from './i18n.js';
+import { isValidUrl } from './utils/sanitize.js';
 
 /* ═══════════════════════════════════════════════════════════
    NFC Tag Manager — Data Store (localStorage-backed)
@@ -253,6 +254,9 @@ export const store = {
   },
 
   createLink({ title, url, category = 'general', icon = '🔗' }) {
+    if (!isValidUrl(url)) {
+      throw new Error('Invalid URL');
+    }
     const link = {
       id: crypto.randomUUID(),
       title,
@@ -271,6 +275,9 @@ export const store = {
   },
 
   updateLink(id, updates) {
+    if (updates.url && !isValidUrl(updates.url)) {
+      throw new Error('Invalid URL');
+    }
     const idx = data.links.findIndex(l => l.id === id);
     if (idx === -1) return null;
     data.links[idx] = {
