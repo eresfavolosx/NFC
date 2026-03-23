@@ -32,16 +32,16 @@ export function renderTags() {
           <input class="form-input" type="text" id="tagSearch" placeholder="Search tags..." aria-label="Search tags">
         </div>
         <button class="btn btn-primary" id="addTagBtn">
-          <span>➕</span> Register Tag
+          <span aria-hidden="true">➕</span> Register Tag
         </button>
       </div>
 
       ${tags.length === 0 ? `
         <div class="empty-state">
-          <div class="empty-state-icon">🏷️</div>
+          <div class="empty-state-icon" aria-hidden="true">🏷️</div>
           <h3 class="empty-state-title">No tags registered</h3>
           <p class="empty-state-desc">Register an NFC tag to start assigning links. You can scan a tag's serial number or add one manually.</p>
-          <button class="btn btn-primary" id="emptyAddTag">➕ Register Tag</button>
+          <button class="btn btn-primary" id="emptyAddTag"><span aria-hidden="true">➕</span> Register Tag</button>
         </div>
       ` : `
         <div class="tags-list" id="tagsList">

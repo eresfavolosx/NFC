@@ -101,7 +101,7 @@ function renderIOSGuide(links) {
           <div class="ios-copy-preview" id="iosCopyPreview" style="display: none;">
             <code class="ios-copy-url" id="iosCopyUrl"></code>
             <button class="btn btn-primary" id="iosCopyBtn">
-              <span>📋</span> Copy URL
+              <span aria-hidden="true">📋</span> Copy URL
             </button>
           </div>
         `}
@@ -153,10 +153,10 @@ function initIOSEvents(links) {
 
     try {
       await navigator.clipboard.writeText(url);
-      copyBtn.innerHTML = '<span>✅</span> Copied!';
+      copyBtn.innerHTML = '<span aria-hidden="true">✅</span> Copied!';
       showToast('URL copied to clipboard!', 'success');
       setTimeout(() => {
-        copyBtn.innerHTML = '<span>📋</span> Copy URL';
+        copyBtn.innerHTML = '<span aria-hidden="true">📋</span> Copy URL';
       }, 2000);
     } catch {
       // Fallback for older browsers
@@ -168,10 +168,10 @@ function initIOSEvents(links) {
       ta.select();
       document.execCommand('copy');
       document.body.removeChild(ta);
-      copyBtn.innerHTML = '<span>✅</span> Copied!';
+      copyBtn.innerHTML = '<span aria-hidden="true">✅</span> Copied!';
       showToast('URL copied to clipboard!', 'success');
       setTimeout(() => {
-        copyBtn.innerHTML = '<span>📋</span> Copy URL';
+        copyBtn.innerHTML = '<span aria-hidden="true">📋</span> Copy URL';
       }, 2000);
     }
   });
@@ -274,7 +274,7 @@ function renderWriterUI(links, tags, compatInfo) {
           <div class="writer-action-area" id="writerActionArea">
             <div class="nfc-tap-target" id="nfcTapTarget">
               <div class="nfc-tap-icon-wrap">
-                <div class="nfc-tap-icon">📡</div>
+                <div class="nfc-tap-icon" aria-hidden="true">📡</div>
                 <div class="nfc-ring"></div>
                 <div class="nfc-ring"></div>
                 <div class="nfc-ring"></div>
@@ -283,7 +283,7 @@ function renderWriterUI(links, tags, compatInfo) {
             </div>
 
             <button class="btn btn-primary btn-lg" id="writeBtn" ${!isSupported ? 'disabled' : ''}>
-              <span>📡</span> Write to Tag
+              <span aria-hidden="true">📡</span> Write to Tag
             </button>
 
             <div class="writer-status" id="writerStatus" style="display: none;"></div>
