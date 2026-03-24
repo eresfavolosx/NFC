@@ -170,6 +170,10 @@ function initLinksEvents() {
                         showToast('Please fill in all fields', 'warning');
                         return;
                     }
+                    if (!isValidUrl(data.url)) {
+                        showToast('Please enter a valid URL', 'error');
+                        return;
+                    }
                     store.updateLink(link.id, data);
                     closeModal();
                     showToast(`Link updated!`, 'success');

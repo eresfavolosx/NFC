@@ -1,3 +1,5 @@
+import { isValidUrl } from "./utils/sanitize.js";
+
 import { auth, provider, signInWithPopup, signOut, onAuthStateChanged } from './firebase.js';
 import { nfc } from './nfc.js';
 import { translations } from './i18n.js';
@@ -253,6 +255,10 @@ export const store = {
   },
 
   createLink({ title, url, category = 'general', icon = '🔗' }) {
+    // Security enhancement: Server-side validation to prevent DOM XSS via malicious URIs (e.g. javascript:)
+    if (url && !isValidUrl(url)) {
+        throw new Error('Invalid URL protocol. Only http and https are allowed.');
+    }
     const link = {
       id: crypto.randomUUID(),
       title,
@@ -271,6 +277,10 @@ export const store = {
   },
 
   updateLink(id, updates) {
+    // Security enhancement: Server-side validation to prevent DOM XSS via malicious URIs (e.g. javascript:)
+    if (updates.url && !isValidUrl(updates.url)) {
+        throw new Error('Invalid URL protocol. Only http and https are allowed.');
+    }
     const idx = data.links.findIndex(l => l.id === id);
     if (idx === -1) return null;
     data.links[idx] = {
