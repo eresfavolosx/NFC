@@ -213,7 +213,7 @@ export const store = {
   },
 
   getLink(id) { 
-    const link = data.links.find(l => l.id === id);
+    const link = this.linksById.get(id); // ⚡ Bolt: O(1) Map lookup instead of O(N) Array.find()
     if (this.isSuperAdmin()) return link;
     return (link && link.ownerEmail === this.user?.email) ? link : null;
   },
@@ -312,7 +312,7 @@ export const store = {
   },
 
   getTag(id) { 
-    const tag = data.tags.find(t => t.id === id);
+    const tag = this.tagsById.get(id); // ⚡ Bolt: O(1) Map lookup instead of O(N) Array.find()
     if (this.isSuperAdmin()) return tag;
     return (tag && tag.ownerEmail === this.user?.email) ? tag : null;
   },

@@ -13,3 +13,7 @@
 ## 2024-05-18 - Replacing O(N) array methods with imperative loops
 **Learning:** Re-writing O(N) declarative array methods like `.filter()` and `.reduce()` into imperative `for` loops is a micro-optimization that degrades code readability without providing measurable performance gains in typical frontend Javascript scenarios. The actual bottleneck is usually DOM manipulation.
 **Action:** Avoid replacing standard array iteration methods with `for` loops unless dealing with millions of records in a tight loop where a profiler has explicitly flagged it. Instead, focus on debouncing events that trigger DOM updates.
+
+## 2025-02-12 - Replacing O(N) array methods with O(1) getter access in store
+**Learning:** O(N) Array methods like `.find()` inside `store.getLink()` and `store.getTag()` are frequently accessed by nested mapping methods in UI templates, causing O(N*M) degradation. Using cached Map getters (`this.linksById` / `this.tagsById`) solves this. A reviewer incorrectly assumed these Maps were undefined instead of getters that lazy load caches that map global state.
+**Action:** When creating performance enhancements that swap Array searches for cached getters, ensure the getters actually exist, are correctly initializing state on the first call, and are properly invalidating caches when the base state mutates. Verify this context explicitly to ensure reviewers are informed.
