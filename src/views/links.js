@@ -64,10 +64,10 @@ export function renderLinks() {
         </div>
         <div class="toolbar-actions">
           <button class="btn btn-secondary" id="templateBtn">
-            <span>📋</span> Templates
+            <span aria-hidden="true">📋</span> Templates
           </button>
           <button class="btn btn-primary" id="addLinkBtn">
-            <span>➕</span> New Link
+            <span aria-hidden="true">➕</span> New Link
           </button>
         </div>
       </div>
@@ -75,10 +75,10 @@ export function renderLinks() {
       <div class="links-grid grid grid-3" id="linksGrid">
         ${links.length === 0 ? `
           <div class="empty-state" style="grid-column: 1 / -1">
-            <div class="empty-state-icon">🔗</div>
+            <div class="empty-state-icon" aria-hidden="true">🔗</div>
             <h3 class="empty-state-title">No links yet</h3>
             <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
-            <button class="btn btn-primary" id="emptyAddLink">➕ Create Link</button>
+            <button class="btn btn-primary" id="emptyAddLink"><span aria-hidden="true">➕</span> Create Link</button>
           </div>
         ` : links.map((link, i) => renderLinkCard(link, store.getTagsForLink(link.id), i)).join('')}
       </div>

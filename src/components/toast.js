@@ -31,7 +31,7 @@ export function showToast(message, type = 'info', duration = 3500) {
 
     // 🛡️ Sentinel: Prevent XSS by using textContent for user-controlled message
     toast.innerHTML = `
-    <span class="toast-icon">${ICONS[type]}</span>
+    <span class="toast-icon" aria-hidden="true">${ICONS[type]}</span>
     <span class="toast-message">${escapeHTML(message)}</span>
     <button class="toast-close" aria-label="Close">✕</button>
   `;
