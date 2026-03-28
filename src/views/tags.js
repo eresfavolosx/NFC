@@ -21,31 +21,32 @@ export function renderTags() {
     const container = document.getElementById('page-content');
     const tags = store.tags;
     const links = store.links;
+    const t = (k) => store.t(k);
 
     container.innerHTML = `
-    ${renderHeader('Tags', 'Manage your NFC tags')}
+    ${renderHeader(t('tags'), t('manage_tags'))}
 
     <div class="page-container">
       <div class="links-toolbar">
         <div class="search-bar">
           <span class="search-icon" aria-hidden="true">🔍</span>
-          <input class="form-input" type="text" id="tagSearch" placeholder="Search tags..." aria-label="Search tags">
+          <input class="form-input" type="text" id="tagSearch" placeholder="${t('search_tags')}" aria-label="${t('search_tags')}">
         </div>
         <button class="btn btn-primary" id="addTagBtn">
-          <span aria-hidden="true">➕</span> Register Tag
+          <span aria-hidden="true">➕</span> ${t('register_tag')}
         </button>
       </div>
 
       ${tags.length === 0 ? `
         <div class="empty-state">
           <div class="empty-state-icon" aria-hidden="true">🏷️</div>
-          <h3 class="empty-state-title">No tags registered</h3>
-          <p class="empty-state-desc">Register an NFC tag to start assigning links. You can scan a tag's serial number or add one manually.</p>
-          <button class="btn btn-primary" id="emptyAddTag"><span aria-hidden="true">➕</span> Register Tag</button>
+          <h3 class="empty-state-title">${t('no_tags')}</h3>
+          <p class="empty-state-desc">${t('no_tags_desc')}</p>
+          <button class="btn btn-primary" id="emptyAddTag"><span aria-hidden="true">➕</span> ${t('register_tag')}</button>
         </div>
       ` : `
         <div class="tags-list" id="tagsList">
-          ${tags.map((tag, i) => renderTagRow(tag, i)).join('')}
+          ${tags.map((tag, i) => renderTagRow(tag, i, t)).join('')}
         </div>
       `}
     </div>
@@ -54,7 +55,7 @@ export function renderTags() {
     initTagsEvents(links);
 }
 
-function renderTagRow(tag, index) {
+function renderTagRow(tag, index, t) {
     const assignedLink = tag.assignedLinkId ? store.getLink(tag.assignedLinkId) : null;
 
     return `
@@ -66,14 +67,14 @@ function renderTagRow(tag, index) {
         <div class="tag-info">
           <h3 class="tag-label">${escapeHTML(tag.label)}</h3>
           <div class="tag-details">
-            ${tag.serialNumber ? `<span class="badge badge-info">SN: ${escapeHTML(tag.serialNumber)}</span>` : ''}
+            ${tag.serialNumber ? `<span class="badge badge-info">${t('sn')}: ${escapeHTML(tag.serialNumber)}</span>` : ''}
             ${assignedLink
             ? `<span class="badge badge-success">🔗 ${escapeHTML(assignedLink.title)}</span>`
-            : `<span class="badge badge-warning">⚠️ No link assigned</span>`
+            : `<span class="badge badge-warning">⚠️ ${t('no_link_assigned')}</span>`
         }
             <div class="tag-meta">
-              ${tag.isLocked ? '<span class="tag-badge status-locked">🔒 Locked</span>' : ''}
-              ${tag.location ? `<span class="tag-badge location-badge" title="${tag.location.lat}, ${tag.location.lng}">📍 Geo-tagged</span>` : ''}
+              ${tag.isLocked ? `<span class="tag-badge status-locked">🔒 ${t('locked')}</span>` : ''}
+              ${tag.location ? `<span class="tag-badge location-badge" title="${tag.location.lat}, ${tag.location.lng}">📍 ${t('geo_tagged')}</span>` : ''}
               <span class="tag-date">Added ${new Date(tag.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
@@ -81,7 +82,7 @@ function renderTagRow(tag, index) {
       </div>
       <div class="tag-row-actions">
         <button class="btn btn-secondary assign-link-btn" data-id="${tag.id}">
-          ${assignedLink ? '🔄 Reassign' : '🔗 Assign Link'}
+          ${assignedLink ? `🔄 ${t('reassign')}` : `🔗 ${t('assign_link')}`}
         </button>
         <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${tag.id}" title="Write to this tag" aria-label="Write to tag ${escapeHTML(tag.label)}">
           📡
@@ -95,11 +96,12 @@ function renderTagRow(tag, index) {
 }
 
 function initTagsEvents(links) {
+    const t = (k) => store.t(k);
     const openRegisterModal = () => {
         const isSupported = nfc.isSupported();
 
         openModal({
-            title: 'Register New Tag',
+            title: t('register_tag'),
             content: `
         <div class="form-group">
           <label class="form-label" for="tagLabel">Tag Name</label>
@@ -174,7 +176,7 @@ function initTagsEvents(links) {
             }
 
             openModal({
-                title: `Assign Link to "${tag.label}"`,
+                title: `${t('assign_link')} to "${tag.label}"`,
                 content: `
           <div class="form-group">
             <label class="form-label">Select a link to assign</label>

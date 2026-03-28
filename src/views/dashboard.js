@@ -17,7 +17,7 @@ export function renderDashboard() {
       
       <div class="stats-grid">
         <div class="stat-card card-glass animate-fade-up">
-          <div class="stat-value">${stats.activeLinks}</div>
+          <div class="stat-value">${stats.totalLinks}</div>
           <div class="stat-label">${t('active_links')}</div>
         </div>
         <div class="stat-card card-glass animate-fade-up" style="animation-delay: 0.1s">

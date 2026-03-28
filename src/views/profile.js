@@ -10,16 +10,17 @@ export function renderProfile() {
     const sub = store.subscription;
     const isPro = store.isPremium();
     const trialEnds = sub.trialEndsAt ? new Date(sub.trialEndsAt).toLocaleDateString() : null;
+    const t = (key) => store.t(key);
 
     container.innerHTML = `
-        ${renderHeader('Profile & Subscription', 'Manage your account and plan')}
+        ${renderHeader(t('profile'), t('profile_sub'))}
 
         <div class="page-container animate-fade-in">
             <div class="grid grid-2">
                 <!-- User Profile Card -->
                 <div class="card-glass">
                     <div class="card-header">
-                        <h3 class="card-title">User Account</h3>
+                        <h3 class="card-title">${t('user_account')}</h3>
                     </div>
                     <div class="profile-info">
                         <div class="profile-avatar">
@@ -31,22 +32,22 @@ export function renderProfile() {
                         </div>
                     </div>
                     <div class="card-actions" style="margin-top: 2rem">
-                        <button class="btn btn-secondary btn-sm" id="logout-btn">Sign Out</button>
+                        <button class="btn btn-secondary btn-sm" id="logout-btn">${t('logout')}</button>
                     </div>
                 </div>
 
                 <!-- Subscription Status Card -->
                 <div class="card-glass ${isPro ? 'card-pro' : ''}">
                     <div class="card-header">
-                        <h3 class="card-title">Current Plan</h3>
+                        <h3 class="card-title">${t('current_plan')}</h3>
                         <span class="badge ${isPro ? 'badge-primary' : 'badge-secondary'}">
-                            ${sub.tier === 'pro' ? 'Professional' : sub.trialEndsAt && isPro ? 'Pro Trial' : 'Free Tier'}
+                            ${sub.tier === 'pro' ? 'Professional' : sub.trialEndsAt && isPro ? t('pro_trial') : t('free_tier')}
                         </span>
                     </div>
                     
                     <div class="subscription-card-body">
                         ${!isPro ? `
-                            <p class="text-secondary">You are currently on the limited free plan.</p>
+                            <p class="text-secondary">${t('free_desc')}</p>
                             <ul class="plan-features">
                                 <li class="feat-disabled">Analytics Dashboard</li>
                                 <li class="feat-disabled">Business Templates</li>
@@ -54,13 +55,13 @@ export function renderProfile() {
                                 <li>Max 3 NFC Tags</li>
                             </ul>
                             <div class="card-actions" style="margin-top: 1.5rem">
-                                <button class="btn btn-primary w-full" id="upgrade-btn">Upgrade to Pro ($9.99/mo)</button>
+                                <button class="btn btn-primary w-full" id="upgrade-btn">${t('upgrade_pro')}</button>
                                 ${!sub.trialStartedAt ? `
-                                    <button class="btn btn-secondary w-full" id="start-trial-btn" style="margin-top: 0.5rem">Start 14-day Free Trial</button>
+                                    <button class="btn btn-secondary w-full" id="start-trial-btn" style="margin-top: 0.5rem">${t('start_trial')}</button>
                                 ` : ''}
                             </div>
                         ` : `
-                            <p class="text-secondary">You have access to all premium features.</p>
+                            <p class="text-secondary">${t('pro_desc')}</p>
                             <ul class="plan-features">
                                 <li class="feat-enabled">Advanced Analytics</li>
                                 <li class="feat-enabled">Industry Templates</li>
@@ -80,15 +81,15 @@ export function renderProfile() {
                 <!-- Refer a Friend Card -->
                 <div class="card-glass" style="grid-column: 1 / -1;">
                     <div class="card-header">
-                        <h3 class="card-title">🎁 Refer a Friend</h3>
+                        <h3 class="card-title">🎁 ${t('refer_friend')}</h3>
                     </div>
                     <div class="subscription-card-body">
                         <p class="text-secondary" style="margin-bottom: 1rem;">
-                            Share NFC Manager with your network! When they sign up using your link, we'll extend your premium trial by <strong>1 month</strong>.
+                            ${t('refer_desc')}
                         </p>
                         <div class="form-group" style="display: flex; gap: var(--space-sm);">
                             <input class="form-input" style="flex:1;" type="text" readonly id="referralLink" value="https://nfc-manager-fv96.web.app/?ref=${user?.id || 'early-tester'}">
-                            <button class="btn btn-primary" id="copyReferralBtn">Copy Link</button>
+                            <button class="btn btn-primary" id="copyReferralBtn">${t('copy_link')}</button>
                         </div>
                     </div>
                 </div>
@@ -97,7 +98,7 @@ export function renderProfile() {
             <!-- Plan Comparison Table -->
             <div class="card-glass" style="margin-top: 2rem">
                 <div class="card-header">
-                    <h3 class="card-title">Plan Comparison</h3>
+                    <h3 class="card-title">${t('plan_comparison')}</h3>
                 </div>
                 <table class="comparison-table">
                     <thead>
@@ -158,7 +159,6 @@ export function renderProfile() {
     });
 
     container.querySelector('#upgrade-btn')?.addEventListener('click', () => {
-        // Placeholder for Stripe
         showToast('Stripe Checkout integration placeholder...', 'info');
         setTimeout(() => {
             store.upgrade();

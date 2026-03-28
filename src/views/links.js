@@ -1,7 +1,3 @@
-/* ═══════════════════════════════════════════════════════════
-   NFC Tag Manager — Links View
-   ═══════════════════════════════════════════════════════════ */
-
 import { store } from '../store.js';
 import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
@@ -52,9 +48,10 @@ export function renderLinks() {
     const container = document.getElementById('page-content');
     const links = store.links;
     const tags = store.tags;
+    const t = (k) => store.t(k);
 
     container.innerHTML = `
-    ${renderHeader('Links', 'Manage your destination URLs')}
+    ${renderHeader(t('my_links'), t('manage_links'))}
 
     <div class="page-container">
       <div class="links-toolbar">
@@ -67,7 +64,7 @@ export function renderLinks() {
             <span aria-hidden="true">📋</span> Templates
           </button>
           <button class="btn btn-primary" id="addLinkBtn">
-            <span aria-hidden="true">➕</span> New Link
+            <span aria-hidden="true">➕</span> ${t('create_link')}
           </button>
         </div>
       </div>
@@ -76,11 +73,11 @@ export function renderLinks() {
         ${links.length === 0 ? `
           <div class="empty-state" style="grid-column: 1 / -1">
             <div class="empty-state-icon" aria-hidden="true">🔗</div>
-            <h3 class="empty-state-title">No links yet</h3>
-            <p class="empty-state-desc">Create your first link to assign to NFC tags.</p>
-            <button class="btn btn-primary" id="emptyAddLink"><span aria-hidden="true">➕</span> Create Link</button>
+            <h3 class="empty-state-title">${t('no_links')}</h3>
+            <p class="empty-state-desc">${t('no_links_desc')}</p>
+            <button class="btn btn-primary" id="emptyAddLink"><span aria-hidden="true">➕</span> ${t('create_link')}</button>
           </div>
-        ` : links.map((link, i) => renderLinkCard(link, store.getTagsForLink(link.id), i)).join('')}
+        ` : links.map((link, i) => renderLinkCard(link, store.getTagsForLink(link.id), i, t)).join('')}
       </div>
     </div>
   `;
@@ -88,7 +85,7 @@ export function renderLinks() {
     initLinksEvents();
 }
 
-function renderLinkCard(link, assignedTags, index) {
+function renderLinkCard(link, assignedTags, index, t) {
     const cat = getCategoryInfo(link.category);
     const assignedTagsCount = assignedTags.length;
 
@@ -97,9 +94,9 @@ function renderLinkCard(link, assignedTags, index) {
       <div class="link-card-header">
         <span class="link-icon" aria-hidden="true">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon copy-link" data-url="${escapeHTML(link.url)}" title="Copy Link" aria-label="Copy link to ${escapeHTML(link.title)}">📋</button>
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="Edit" aria-label="Edit ${escapeHTML(link.title)}">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="Delete" aria-label="Delete ${escapeHTML(link.title)}">🗑️</button>
+          <button class="btn btn-ghost btn-icon copy-link" data-url="${escapeHTML(link.url)}" title="${t('copy_link')}" aria-label="${t('copy_link')} ${escapeHTML(link.title)}">📋</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="${t('edit')}" aria-label="${t('edit')} ${escapeHTML(link.title)}">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="${t('delete')}" aria-label="${t('delete')} ${escapeHTML(link.title)}">🗑️</button>
         </div>
       </div>
       <h3 class="link-title">${escapeHTML(link.title)}</h3>
@@ -114,9 +111,10 @@ function renderLinkCard(link, assignedTags, index) {
 }
 
 function initLinksEvents() {
+    const t = (k) => store.t(k);
     const openAddLinkModal = () => {
         openModal({
-            title: 'Create New Link',
+            title: t('create_link'),
             content: linkFormContent(),
             submitLabel: 'Create',
             onSubmit: () => {
@@ -197,9 +195,9 @@ function initLinksEvents() {
             const link = store.getLink(deleteBtn.dataset.id);
             if (!link) return;
             openModal({
-                title: 'Delete Link',
+                title: t('delete'),
                 content: `<p>Are you sure you want to delete <strong>"${escapeHTML(link.title)}"</strong>? This will also unassign it from any cards.</p>`,
-                submitLabel: 'Delete',
+                submitLabel: t('delete'),
                 onSubmit: () => {
                     store.deleteLink(link.id);
                     closeModal();

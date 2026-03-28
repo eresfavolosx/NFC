@@ -210,7 +210,7 @@ export const store = {
   // ── Links CRUD ──
   get links() { 
     if (this.isSuperAdmin()) return [...data.links];
-    return data.links.filter(l => l.ownerEmail === this.user?.email);
+    return data.links.filter(l => l.ownerEmail === this.user?.email || !l.ownerEmail);
   },
 
   getLink(id) { 
@@ -219,7 +219,7 @@ export const store = {
     // causing O(N^2) search bottlenecks when filtering DOM nodes on large datasets.
     const link = this.linksById.get(id);
     if (this.isSuperAdmin()) return link;
-    return (link && link.ownerEmail === this.user?.email) ? link : null;
+    return (link && (link.ownerEmail === this.user?.email || !link.ownerEmail)) ? link : null;
   },
 
   // ── Subscription Logic ──
@@ -318,7 +318,7 @@ export const store = {
   get tags() { 
     if (this.isSuperAdmin()) return [...data.tags];
     const userEmail = this.user?.email?.toLowerCase();
-    return data.tags.filter(t => t.ownerEmail?.toLowerCase() === userEmail);
+    return data.tags.filter(t => t.ownerEmail?.toLowerCase() === userEmail || !t.ownerEmail);
   },
 
   getTag(id) { 
@@ -327,11 +327,11 @@ export const store = {
     // causing O(N^2) bottlenecks when searching thousands of tags.
     const tag = this.tagsById.get(id);
     if (this.isSuperAdmin()) return tag;
-    return (tag && tag.ownerEmail === this.user?.email) ? tag : null;
+    return (tag && (tag.ownerEmail?.toLowerCase() === this.user?.email?.toLowerCase() || !tag.ownerEmail)) ? tag : null;
   },
 
   createTag({ id = null, label, serialNumber = null, ownerEmail = null }) {
-    if (!this.values.isSuperAdmin && !this.canCreateTag()) {
+    if (!this.isSuperAdmin() && !this.canCreateTag()) {
         throw new Error('Tag limit reached. Upgrade to Pro for unlimited tags.');
     }
     const tag = {
@@ -427,12 +427,6 @@ export const store = {
     }
 
     this._addActivity('tag_assigned', `Assigned "${link?.title || 'link'}" to tag "${tag.label}"`);
-    
-    // Add to explicit client registry for future quick-assignment
-    const normalizedEmail = email.toLowerCase().trim();
-    if (normalizedEmail && !data.clients.includes(normalizedEmail)) {
-        data.clients.push(normalizedEmail);
-    }
     
     this._notify();
     return true;
