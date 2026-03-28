@@ -214,7 +214,10 @@ export const store = {
   },
 
   getLink(id) { 
-    const link = data.links.find(l => l.id === id);
+    // ⚡ Bolt: Replace O(N) Array.find() with O(1) Map lookup
+    // Why: getLink is frequently called in loops (e.g. filterLinks in views/links.js)
+    // causing O(N^2) search bottlenecks when filtering DOM nodes on large datasets.
+    const link = this.linksById.get(id);
     if (this.isSuperAdmin()) return link;
     return (link && link.ownerEmail === this.user?.email) ? link : null;
   },
@@ -319,7 +322,10 @@ export const store = {
   },
 
   getTag(id) { 
-    const tag = data.tags.find(t => t.id === id);
+    // ⚡ Bolt: Replace O(N) Array.find() with O(1) Map lookup
+    // Why: getTag is frequently called in loops (e.g. during search in views/tags.js)
+    // causing O(N^2) bottlenecks when searching thousands of tags.
+    const tag = this.tagsById.get(id);
     if (this.isSuperAdmin()) return tag;
     return (tag && tag.ownerEmail === this.user?.email) ? tag : null;
   },
