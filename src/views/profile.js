@@ -1,5 +1,6 @@
 import { store } from '../store.js';
 import { renderHeader, escapeHTML, showToast } from '../utils.js';
+import { isValidUrl } from '../utils/sanitize.js';
 
 export function renderProfile() {
     const container = document.getElementById('page-content');
@@ -22,7 +23,7 @@ export function renderProfile() {
                     </div>
                     <div class="profile-info">
                         <div class="profile-avatar">
-                            ${user?.photoURL ? `<img src="${user.photoURL}" alt="Avatar">` : `<div class="avatar-placeholder">${user?.displayName?.[0] || 'U'}</div>`}
+                            ${user?.photoURL && isValidUrl(user.photoURL) ? `<img src="${escapeHTML(user.photoURL)}" alt="Avatar">` : `<div class="avatar-placeholder">${user?.displayName?.[0] || 'U'}</div>`}
                         </div>
                         <div class="profile-details">
                             <div class="profile-name">${escapeHTML(user?.displayName || 'Tocaito User')}</div>

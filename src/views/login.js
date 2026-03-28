@@ -36,7 +36,13 @@ export function renderLogin() {
   `;
 
     // Google Login
-    document.getElementById('googleLoginBtn')?.addEventListener('click', async () => {
+    document.getElementById('googleLoginBtn')?.addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const originalHtml = btn.innerHTML;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="border-top-color: currentColor;"></span> Signing in...';
+
         try {
             if (await store.loginWithGoogle()) {
                 showToast('Welcome back!', 'success');
@@ -44,6 +50,9 @@ export function renderLogin() {
             }
         } catch (error) {
             showToast('Sign-In failed. Please try again.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
         }
     });
 }

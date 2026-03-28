@@ -136,7 +136,7 @@ function openWriteWizard() {
                     <p style="margin-bottom: var(--space-md); color: var(--text-secondary);">Select the content you want to program onto your NFC tag.</p>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Existing Links</label>
+                    <label class="form-label" for="wizard-link-id">Existing Links</label>
                     <select class="form-select" id="wizard-link-id">
                         <option value="">— Select a saved link —</option>
                         ${links.map(l => `<option value="${l.id}">${l.icon} ${escapeHTML(l.title)}</option>`).join('')}
@@ -171,11 +171,11 @@ function openWriteWizard() {
             title: 'Create Link',
             content: `
                 <div class="form-group">
-                    <label class="form-label">Title</label>
+                    <label class="form-label" for="wiz-link-title">Title</label>
                     <input class="form-input" id="wiz-link-title" placeholder="e.g. My Website">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Destination URL</label>
+                    <label class="form-label" for="wiz-link-url">Destination URL</label>
                     <input class="form-input" id="wiz-link-url" type="url" placeholder="https://...">
                 </div>
             `,
@@ -199,14 +199,14 @@ function openWriteWizard() {
             content: `
                 <p style="margin-bottom: var(--space-md); color: var(--text-secondary);">Assign this link to a registered tag for tracking, or write it directly.</p>
                 <div class="form-group">
-                    <label class="form-label">Available Tags</label>
+                    <label class="form-label" for="wizard-tag-id">Available Tags</label>
                     <select class="form-select" id="wizard-tag-id">
                         <option value="">— Write Generic / Guest Tag —</option>
                         ${tags.map(t => `<option value="${t.id}">${escapeHTML(t.label)}</option>`).join('')}
                     </select>
                 </div>
                 <div class="form-group" style="margin-top: var(--space-md)">
-                    <label class="checkbox-container" style="display: flex; align-items: center; gap: var(--space-sm); cursor: pointer;">
+                    <label class="checkbox-container" for="wiz-lock" style="display: flex; align-items: center; gap: var(--space-sm); cursor: pointer;">
                         <input type="checkbox" id="wiz-lock">
                         <span style="font-size: var(--font-size-sm);"><strong>Lock Tag</strong> (Anti-overwrite)</span>
                     </label>

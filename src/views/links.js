@@ -103,7 +103,7 @@ function renderLinkCard(link, assignedTags, index) {
         </div>
       </div>
       <h3 class="link-title">${escapeHTML(link.title)}</h3>
-      <a class="link-url truncate" href="${escapeHTML(link.url)}" target="_blank" rel="noopener">${escapeHTML(link.url)}</a>
+      <a class="link-url truncate" href="${isValidUrl(link.url) ? escapeHTML(link.url) : '#'}" ${!isValidUrl(link.url) ? 'onclick="return false;"' : 'target="_blank" rel="noopener"'}>${escapeHTML(link.url)}</a>
       <div class="link-meta">
         <span class="badge badge-primary">${cat.label}</span>
         ${assignedTagsCount > 0 ? `<span class="badge badge-success">🏷️ ${assignedTagsCount} tag${assignedTagsCount > 1 ? 's' : ''}</span>` : ''}
@@ -129,10 +129,14 @@ function initLinksEvents() {
                     showToast('Please enter a valid URL', 'error');
                     return;
                 }
-                store.createLink(data);
-                closeModal();
-                showToast(`Link "${data.title}" created!`, 'success');
-                renderLinks();
+                try {
+                    store.createLink(data);
+                    closeModal();
+                    showToast(`Link "${data.title}" created!`, 'success');
+                    renderLinks();
+                } catch (err) {
+                    showToast(err.message, 'error');
+                }
             },
         });
     };
@@ -174,10 +178,14 @@ function initLinksEvents() {
                         showToast('Please enter a valid URL', 'error');
                         return;
                     }
-                    store.updateLink(link.id, data);
-                    closeModal();
-                    showToast(`Link updated!`, 'success');
-                    renderLinks();
+                    try {
+                        store.updateLink(link.id, data);
+                        closeModal();
+                        showToast(`Link updated!`, 'success');
+                        renderLinks();
+                    } catch (err) {
+                        showToast(err.message, 'error');
+                    }
                 },
             });
             return;
