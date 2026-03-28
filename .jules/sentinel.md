@@ -11,3 +11,8 @@
 **Vulnerability:** Found missing input validation before executing `window.location.href = link.url;` in `src/views/redirect.js`. While `link.url` validation exists in the UI during creation, it can be bypassed through other means (e.g. direct API calls or direct localStorage manipulation), making it possible to store `javascript:...` payloads. When a user is redirected, this payload is executed leading to a Cross-Site Scripting (XSS) vulnerability.
 **Learning:** Defense in depth dictates that validation should occur at the time of execution. Stored data cannot always be trusted, especially when the redirection logic takes place on the client side without strict backend validation.
 **Prevention:** Always validate URLs using `isValidUrl` (ensuring `http:` or `https:`) right before modifying `window.location.href`.
+
+## 2025-03-22 - Missing Update Validation in Link Storage (Stored XSS)
+**Vulnerability:** Found a Stored XSS vulnerability where `isValidUrl` validation was only applied during link creation, but completely omitted during link updates in the UI (`src/views/links.js`) and within the data access layer (`src/store.js`). This allowed an attacker to create a valid link, then edit it to a malicious `javascript:` payload.
+**Learning:** Validation must be applied consistently across all lifecycle events of an entity (Create AND Update). Client-side UI validation is insufficient; the data access layer (e.g., `store.js`) must also enforce strict validation rules as a defense-in-depth measure.
+**Prevention:** Ensure all data modification methods (create, update, patch) in the data store enforce identical validation rules before persisting state, and enforce the same in all corresponding UI flows.
