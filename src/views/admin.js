@@ -98,7 +98,7 @@ export function renderAdmin() {
                 title: `👥 ${t('assign_to_client')}`,
                 content: `
                     <div class="form-group">
-                        <label class="form-label">${t('select_client')}</label>
+                        <label class="form-label" for="assign-email-select">${t('select_client')}</label>
                         <select class="form-select" id="assign-email-select">
                             <option value="">— Select an existing client —</option>
                             ${emails.map(e => `<option value="${e}">${e}</option>`).join('')}
@@ -109,7 +109,7 @@ export function renderAdmin() {
                         <span style="position: absolute; top:50%; left:50%; transform: translate(-50%, -50%); background: var(--bg-surface-elevated); padding: 0 10px; font-size: 0.75rem; color: var(--text-muted);">OR</span>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">${t('new_client_email')}</label>
+                        <label class="form-label" for="assign-email-custom">${t('new_client_email')}</label>
                         <input class="form-input" id="assign-email-custom" type="email" placeholder="client@example.com">
                     </div>
                 `,
