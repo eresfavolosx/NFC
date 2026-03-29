@@ -31,7 +31,7 @@ export function renderBottomNav() {
                 <a href="#${item.path}" 
                    class="bottom-nav-item ${currentPath === item.path ? 'active' : ''}" 
                    data-path="${item.path}">
-                    <span class="bottom-nav-icon">${item.icon}</span>
+                    <span class="bottom-nav-icon" aria-hidden="true">${item.icon}</span>
                     <span class="bottom-nav-label">${item.label}</span>
                 </a>
             `).join('')}
@@ -64,31 +64,35 @@ export function renderSidebar() {
 
     sidebar.innerHTML = `
     <div class="sidebar-brand">
-      <div class="sidebar-brand-icon">🍊</div>
+      <div class="sidebar-brand-icon" aria-hidden="true">🍊</div>
       <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px;">
         <span class="sidebar-brand-text">${brandLabel}</span>
         ${store.isSuperAdmin() ? `<span class="beta-badge-label">🛡️ ${t('admin').toUpperCase()}</span>` : ''}
       </div>
       <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
-        <span class="toggle-icon">◀</span>
+        <span class="toggle-icon" aria-hidden="true">◀</span>
       </button>
     </div>
 
     <nav class="sidebar-nav">
-      ${navItems.map(item => `
+      ${navItems.map(item => {
+        const isLocked = item.premium && !store.isPremium();
+        return `
         <a href="#${item.path}"
-           class="sidebar-nav-item ${currentPath === item.path ? 'active' : ''} ${item.premium && !store.isPremium() ? 'nav-locked' : ''}"
-           data-path="${item.path}">
-          <span class="nav-icon">${item.icon}</span>
+           class="sidebar-nav-item ${currentPath === item.path ? 'active' : ''} ${isLocked ? 'nav-locked' : ''}"
+           data-path="${item.path}"
+           ${isLocked ? `title="Premium Feature" aria-disabled="true"` : ''}>
+          <span class="nav-icon" aria-hidden="true">${item.icon}</span>
           <span class="nav-label">${item.label}</span>
         </a>
-      `).join('')}
+      `;
+      }).join('')}
       ${store.isSuperAdmin() ? `
         <div class="sidebar-divider" style="height: 1px; background: var(--border-color); margin: 0.5rem 1rem; opacity: 0.3;"></div>
         <a href="#/admin"
            class="sidebar-nav-item ${currentPath === '/admin' ? 'active' : ''}"
            data-path="/admin">
-          <span class="nav-icon">🛡️</span>
+          <span class="nav-icon" aria-hidden="true">🛡️</span>
           <span class="nav-label">${t('admin_console')}</span>
         </a>
       ` : ''}
@@ -100,7 +104,7 @@ export function renderSidebar() {
         <button class="btn-lang ${lang === 'en' ? 'active' : ''}" id="lang-en">EN</button>
       </div>
       <button class="sidebar-nav-item" id="logoutBtn">
-        <span class="nav-icon">🚪</span>
+        <span class="nav-icon" aria-hidden="true">🚪</span>
         <span class="nav-label">${t('logout')}</span>
       </button>
     </div>
