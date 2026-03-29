@@ -1,3 +1,7 @@
 ## 2026-02-15 - Icon-Only Buttons Accessibility
 **Learning:** The application frequently uses icon-only buttons (e.g., ✏️, 🗑️) for critical actions like editing and deleting items. These buttons lacked `aria-label` attributes, making them confusing or inaccessible to screen reader users who rely on text descriptions.
 **Action:** Always add descriptive `aria-label` attributes to icon-only buttons. Include the name of the item being acted upon (e.g., `aria-label="Delete ${itemName}"`) to provide context in lists where multiple identical icons appear.
+
+## 2026-02-23 - Decorative Emoji Accessibility and Disabled States
+**Learning:** The application extensively uses emojis as decorative icons alongside text labels (e.g., in navigation items like `📊 Dashboard`). Screen readers will announce both the emoji's default description and the text label, causing redundancy and potential confusion. Furthermore, locked/premium features were visually styled but lacked proper accessibility attributes, meaning screen readers would not know they were disabled or why.
+**Action:** Always add `aria-hidden="true"` to decorative emojis or icons that accompany text labels. When an interactive element is visually disabled or locked (like a premium feature), add `aria-disabled="true"` and a descriptive `title` (e.g., "Premium Feature") so the state and reason are accessible to all users.
