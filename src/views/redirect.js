@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 import { store } from '../store.js';
-import { isValidUrl } from '../utils/sanitize.js';
+import { isValidUrl, escapeHTML } from '../utils/sanitize.js';
 import { navigate } from '../router.js';
 import { showToast } from '../utils.js';
 import { openModal, closeModal } from '../components/modal.js';
@@ -145,7 +145,7 @@ export function renderRedirect({ id }) {
                 </div>
                 
                 <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); font-size: 0.75rem; color: var(--text-muted);">
-                    ${t('tag_id')}: <span style="font-family: monospace; opacity: 0.8;">${id}</span>
+                    ${t('tag_id')}: <span style="font-family: monospace; opacity: 0.8;">${escapeHTML(id)}</span>
                 </div>
             </div>
         </div>

@@ -16,3 +16,8 @@
 **Vulnerability:** Found a Stored XSS vulnerability where `isValidUrl` validation was only applied during link creation, but completely omitted during link updates in the UI (`src/views/links.js`) and within the data access layer (`src/store.js`). This allowed an attacker to create a valid link, then edit it to a malicious `javascript:` payload.
 **Learning:** Validation must be applied consistently across all lifecycle events of an entity (Create AND Update). Client-side UI validation is insufficient; the data access layer (e.g., `store.js`) must also enforce strict validation rules as a defense-in-depth measure.
 **Prevention:** Ensure all data modification methods (create, update, patch) in the data store enforce identical validation rules before persisting state, and enforce the same in all corresponding UI flows.
+
+## 2024-03-30 - XSS in Tag Activation View
+**Vulnerability:** Reflected XSS via `id` URL fragment parameter on the tag activation view.
+**Learning:** Even internal UUID parameters can be maliciously crafted by users if read from the URL fragment and rendered unescaped into the DOM (e.g. `/#/r/<svg onload=alert(1)>`).
+**Prevention:** Always escape user-controlled routing parameters before interpolating them into the DOM, even if the system normally expects a UUID.
