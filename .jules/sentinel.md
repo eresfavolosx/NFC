@@ -16,3 +16,8 @@
 **Vulnerability:** Found a Stored XSS vulnerability where `isValidUrl` validation was only applied during link creation, but completely omitted during link updates in the UI (`src/views/links.js`) and within the data access layer (`src/store.js`). This allowed an attacker to create a valid link, then edit it to a malicious `javascript:` payload.
 **Learning:** Validation must be applied consistently across all lifecycle events of an entity (Create AND Update). Client-side UI validation is insufficient; the data access layer (e.g., `store.js`) must also enforce strict validation rules as a defense-in-depth measure.
 **Prevention:** Ensure all data modification methods (create, update, patch) in the data store enforce identical validation rules before persisting state, and enforce the same in all corresponding UI flows.
+
+## 2025-04-18 - XSS Vulnerability in Link Redirection
+**Vulnerability:** DOM-based Stored XSS via `link.url` and `link.title` being directly interpolated into HTML template literals (`<a href="${link.url}">` and `<option>${l.title}</option>`) in `src/views/redirect.js`.
+**Learning:** Even internal redirects or UI drop-downs can be vectors if the underlying data (like a URL or a title) is populated from a potentially untrusted or malicious source and not escaped before DOM insertion.
+**Prevention:** Always use `escapeHTML()` when interpolating any dynamic or user-supplied data into HTML template literals, especially for attributes like `href` and element text content.
