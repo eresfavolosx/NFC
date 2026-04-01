@@ -23,7 +23,7 @@ export function openModal({ title, content, onSubmit, submitLabel = 'Save', show
       <div class="modal animate-scale-in" role="dialog" aria-labelledby="modalTitle">
         <div class="modal-header">
           <h3 id="modalTitle">${escapeHTML(title)}</h3>
-          <button class="btn-icon btn-ghost modal-close" id="modalClose" aria-label="Close">✕</button>
+          <button class="btn-icon btn-ghost modal-close" id="modalClose" aria-label="Close"><span aria-hidden="true">✕</span></button>
         </div>
         <form id="modalForm">
           <div class="modal-body" id="modalBody">
