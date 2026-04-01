@@ -16,3 +16,7 @@
 **Vulnerability:** Found a Stored XSS vulnerability where `isValidUrl` validation was only applied during link creation, but completely omitted during link updates in the UI (`src/views/links.js`) and within the data access layer (`src/store.js`). This allowed an attacker to create a valid link, then edit it to a malicious `javascript:` payload.
 **Learning:** Validation must be applied consistently across all lifecycle events of an entity (Create AND Update). Client-side UI validation is insufficient; the data access layer (e.g., `store.js`) must also enforce strict validation rules as a defense-in-depth measure.
 **Prevention:** Ensure all data modification methods (create, update, patch) in the data store enforce identical validation rules before persisting state, and enforce the same in all corresponding UI flows.
+## 2024-04-01 - Reflected XSS in URL Parameters
+**Vulnerability:** The `id` parameter from the URL hash in `src/views/redirect.js` was interpolated directly into the HTML string without escaping, allowing for Reflected XSS.
+**Learning:** URL parameters are often implicitly trusted as "just IDs" but can carry arbitrary payloads. Direct interpolation into `innerHTML` strings exposes the application to XSS.
+**Prevention:** Always wrap variables from the URL router, such as `id`, with `escapeHTML` when they are reflected back into the DOM.
