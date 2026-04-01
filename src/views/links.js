@@ -94,9 +94,9 @@ function renderLinkCard(link, assignedTags, index, t) {
       <div class="link-card-header">
         <span class="link-icon" aria-hidden="true">${cat.icon}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon copy-link" data-url="${escapeHTML(link.url)}" title="${t('copy_link')}" aria-label="${t('copy_link')} ${escapeHTML(link.title)}">📋</button>
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="${t('edit')}" aria-label="${t('edit')} ${escapeHTML(link.title)}">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="${t('delete')}" aria-label="${t('delete')} ${escapeHTML(link.title)}">🗑️</button>
+          <button class="btn btn-ghost btn-icon copy-link" data-url="${escapeHTML(link.url)}" title="${t('copy_link')}" aria-label="${t('copy_link')} ${escapeHTML(link.title)}"><span aria-hidden="true">📋</span></button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="${t('edit')}" aria-label="${t('edit')} ${escapeHTML(link.title)}"><span aria-hidden="true">✏️</span></button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="${t('delete')}" aria-label="${t('delete')} ${escapeHTML(link.title)}"><span aria-hidden="true">🗑️</span></button>
         </div>
       </div>
       <h3 class="link-title">${escapeHTML(link.title)}</h3>
@@ -151,6 +151,11 @@ function initLinksEvents() {
             try {
                 await navigator.clipboard.writeText(url);
                 showToast('Link copied to clipboard!', 'success');
+                const iconSpan = copyBtn.querySelector('span');
+                if (iconSpan) {
+                    iconSpan.textContent = '✅';
+                    setTimeout(() => iconSpan.textContent = '📋', 1500);
+                }
             } catch (err) {
                 showToast('Failed to copy link', 'error');
             }

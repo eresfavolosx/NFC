@@ -33,7 +33,7 @@ export function showToast(message, type = 'info', duration = 3500) {
     toast.innerHTML = `
     <span class="toast-icon" aria-hidden="true">${ICONS[type]}</span>
     <span class="toast-message">${escapeHTML(message)}</span>
-    <button class="toast-close" aria-label="Close">✕</button>
+    <button class="toast-close" aria-label="Close"><span aria-hidden="true">✕</span></button>
   `;
     // Use textContent instead of innerHTML interpolation to prevent DOM-based XSS
     toast.querySelector('.toast-message').textContent = message;
