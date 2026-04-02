@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 import { store } from '../store.js';
-import { isValidUrl } from '../utils/sanitize.js';
+import { isValidUrl, escapeHTML } from '../utils/sanitize.js';
 import { navigate } from '../router.js';
 import { showToast } from '../utils.js';
 import { openModal, closeModal } from '../components/modal.js';
@@ -49,7 +49,7 @@ export function renderRedirect({ id }) {
                     </p>
                     
                     <div style="display: flex; flex-direction: column; gap: var(--space-md);">
-                        <a href="${link.url}" class="btn btn-primary w-full" style="height: 52px; font-weight: 600;">
+                        <a href="${escapeHTML(link.url)}" class="btn btn-primary w-full" style="height: 52px; font-weight: 600;">
                             ${t('go_now')}
                         </a>
                         <button id="edit-destination-btn" class="btn btn-outline w-full" style="border-color: var(--border-color); color: var(--text-secondary);">
@@ -136,7 +136,7 @@ export function renderRedirect({ id }) {
                     `}
 
                     ${link && isValidUrl(link.url) ? `
-                        <a href="${link.url}" id="skip-to-destination" class="btn btn-outline w-full" style="border-color: var(--border-color); color: var(--text-secondary);">
+                        <a href="${escapeHTML(link.url)}" id="skip-to-destination" class="btn btn-outline w-full" style="border-color: var(--border-color); color: var(--text-secondary);">
                             ➡️ ${t('cancel')} & ${t('dashboard')}
                         </a>
                     ` : `
@@ -145,7 +145,7 @@ export function renderRedirect({ id }) {
                 </div>
                 
                 <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); font-size: 0.75rem; color: var(--text-muted);">
-                    ${t('tag_id')}: <span style="font-family: monospace; opacity: 0.8;">${id}</span>
+                    ${t('tag_id')}: <span style="font-family: monospace; opacity: 0.8;">${escapeHTML(id)}</span>
                 </div>
             </div>
         </div>
