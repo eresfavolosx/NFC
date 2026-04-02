@@ -16,3 +16,8 @@
 **Vulnerability:** Found a Stored XSS vulnerability where `isValidUrl` validation was only applied during link creation, but completely omitted during link updates in the UI (`src/views/links.js`) and within the data access layer (`src/store.js`). This allowed an attacker to create a valid link, then edit it to a malicious `javascript:` payload.
 **Learning:** Validation must be applied consistently across all lifecycle events of an entity (Create AND Update). Client-side UI validation is insufficient; the data access layer (e.g., `store.js`) must also enforce strict validation rules as a defense-in-depth measure.
 **Prevention:** Ensure all data modification methods (create, update, patch) in the data store enforce identical validation rules before persisting state, and enforce the same in all corresponding UI flows.
+
+## 2024-04-02 - XSS via Unescaped URL Attributes
+**Vulnerability:** Found an unescaped DOM-based Cross-Site Scripting (XSS) vulnerability in `src/views/redirect.js` where user-controlled `link.url` was injected directly into an anchor tag's `href` attribute without being HTML escaped. The `id` parameter from the URL was also interpolated without escaping.
+**Learning:** Even if a URL is validated for safe protocols (e.g., `http:` or `https:`) using `isValidUrl`, it must still be HTML-escaped before being interpolated into HTML attributes. If not escaped, an attacker can use quotes to break out of the `href` attribute and inject event handlers like `onmouseover="alert(1)"`.
+**Prevention:** Always combine protocol validation (`isValidUrl`) with HTML escaping (`escapeHTML`) before injecting user-supplied URLs into DOM elements or attributes.
