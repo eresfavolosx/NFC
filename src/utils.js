@@ -15,6 +15,10 @@ export function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast animate-fade-in ${type === 'success' ? 'toast-success' : type === 'error' ? 'toast-error' : 'toast-info'}`;
     
+    const isAlert = type === 'error' || type === 'warning';
+    toast.setAttribute('role', isAlert ? 'alert' : 'status');
+    toast.setAttribute('aria-live', isAlert ? 'assertive' : 'polite');
+
     const iconMap = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
     
     toast.innerHTML = `
