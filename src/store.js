@@ -198,8 +198,12 @@ export const store = {
       const map = new Map();
       for (const tag of data.tags) {
         if (tag.assignedLinkId) {
-          if (!map.has(tag.assignedLinkId)) map.set(tag.assignedLinkId, []);
-          map.get(tag.assignedLinkId).push(tag);
+          let list = map.get(tag.assignedLinkId);
+          if (!list) {
+            list = [];
+            map.set(tag.assignedLinkId, list);
+          }
+          list.push(tag);
         }
       }
       this._cache.tagsByLinkId = map;
@@ -209,8 +213,15 @@ export const store = {
 
   // ── Links CRUD ──
   get links() { 
-    if (this.isSuperAdmin()) return [...data.links];
-    return data.links.filter(l => l.ownerEmail === this.user?.email || !l.ownerEmail);
+    if (!this._cache.links) {
+      if (this.isSuperAdmin()) {
+        this._cache.links = [...data.links];
+      } else {
+        const userEmail = this.user?.email;
+        this._cache.links = data.links.filter(l => l.ownerEmail === userEmail || !l.ownerEmail);
+      }
+    }
+    return this._cache.links;
   },
 
   getLink(id) { 
@@ -316,9 +327,15 @@ export const store = {
 
   // ── Tags CRUD ──
   get tags() { 
-    if (this.isSuperAdmin()) return [...data.tags];
-    const userEmail = this.user?.email?.toLowerCase();
-    return data.tags.filter(t => t.ownerEmail?.toLowerCase() === userEmail || !t.ownerEmail);
+    if (!this._cache.tags) {
+      if (this.isSuperAdmin()) {
+        this._cache.tags = [...data.tags];
+      } else {
+        const userEmail = this.user?.email?.toLowerCase();
+        this._cache.tags = data.tags.filter(t => t.ownerEmail?.toLowerCase() === userEmail || !t.ownerEmail);
+      }
+    }
+    return this._cache.tags;
   },
 
   getTag(id) { 
@@ -467,41 +484,47 @@ export const store = {
 
   // ── Client Discovery ──
   get allClientEmails() {
-    const emails = new Set();
-    
-    // 1. From explicit registry
-    data.clients.forEach(e => emails.add(e.toLowerCase().trim()));
-    
-    // 2. From tags (Provisioned or Active)
-    data.tags.forEach(t => {
-      if (t.ownerEmail) emails.add(t.ownerEmail.toLowerCase().trim());
-    });
-    
-    // 3. From links (Owner filtering)
-    data.links.forEach(l => {
-      if (l.ownerEmail) emails.add(l.ownerEmail.toLowerCase().trim());
-    });
+    if (!this._cache.allClientEmails) {
+      const emails = new Set();
 
-    // 4. From current user session
-    if (data.settings.user?.email) {
-      emails.add(data.settings.user.email.toLowerCase().trim());
+      // 1. From explicit registry
+      data.clients.forEach(e => emails.add(e.toLowerCase().trim()));
+
+      // 2. From tags (Provisioned or Active)
+      data.tags.forEach(t => {
+        if (t.ownerEmail) emails.add(t.ownerEmail.toLowerCase().trim());
+      });
+
+      // 3. From links (Owner filtering)
+      data.links.forEach(l => {
+        if (l.ownerEmail) emails.add(l.ownerEmail.toLowerCase().trim());
+      });
+
+      // 4. From current user session
+      if (data.settings.user?.email) {
+        emails.add(data.settings.user.email.toLowerCase().trim());
+      }
+
+      this._cache.allClientEmails = Array.from(emails).filter(Boolean).sort();
     }
-
-    return Array.from(emails).filter(Boolean).sort();
+    return this._cache.allClientEmails;
   },
 
   // ── Stats ──
   get stats() {
-    const userTags = this.tags;
-    const userLinks = this.links;
-    
-    return {
-      totalTags: userTags.length,
-      totalLinks: userLinks.length,
-      totalClicks: userLinks.reduce((sum, l) => sum + (l.clicks || 0), 0),
-      activeTags: userTags.filter(t => t.assignedLinkId).length,
-      recentActivity: [...data.activity].slice(0, 10)
-    };
+    if (!this._cache.stats) {
+      const userTags = this.tags;
+      const userLinks = this.links;
+
+      this._cache.stats = {
+        totalTags: userTags.length,
+        totalLinks: userLinks.length,
+        totalClicks: userLinks.reduce((sum, l) => sum + (l.clicks || 0), 0),
+        activeTags: userTags.filter(t => t.assignedLinkId).length,
+        recentActivity: [...data.activity].slice(0, 10)
+      };
+    }
+    return this._cache.stats;
   },
 
   // ── Reset ──
