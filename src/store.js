@@ -294,7 +294,7 @@ export const store = {
   },
 
   deleteLink(id) {
-    const link = data.links.find(l => l.id === id);
+    const link = this.linksById.get(id);
     if (!link) return false;
     data.links = data.links.filter(l => l.id !== id);
     // Unassign any tags pointing to this link
@@ -307,7 +307,7 @@ export const store = {
   },
 
   incrementClicks(linkId) {
-    const link = data.links.find(l => l.id === linkId);
+    const link = this.linksById.get(linkId);
     if (link) {
       link.clicks++;
       this._notify();
@@ -396,8 +396,8 @@ export const store = {
   },
 
   assignLinkToTag(tagId, linkId) {
-    const tag = data.tags.find(t => t.id === tagId);
-    const link = data.links.find(l => l.id === linkId);
+    const tag = this.tagsById.get(tagId);
+    const link = this.linksById.get(linkId);
     if (!tag) return false;
     tag.assignedLinkId = linkId;
     tag.lastWritten = new Date().toISOString();
@@ -433,7 +433,7 @@ export const store = {
   },
 
   deleteTag(id) {
-    const tag = data.tags.find(t => t.id === id);
+    const tag = this.tagsById.get(id);
     if (!tag) return false;
     data.tags = data.tags.filter(t => t.id !== id);
     this._addActivity('tag_deleted', `Deleted tag "${tag.label}"`);
