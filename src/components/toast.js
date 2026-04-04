@@ -29,6 +29,14 @@ export function showToast(message, type = 'info', duration = 3500) {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type} animate-fade-up`;
 
+    if (type === 'error' || type === 'warning') {
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+    } else {
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+    }
+
     // 🛡️ Sentinel: Prevent XSS by using textContent for user-controlled message
     toast.innerHTML = `
     <span class="toast-icon" aria-hidden="true">${ICONS[type]}</span>
