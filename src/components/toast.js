@@ -28,6 +28,8 @@ export function showToast(message, type = 'info', duration = 3500) {
 
     const toast = document.createElement('div');
     toast.className = `toast toast-${type} animate-fade-up`;
+    toast.setAttribute('role', type === 'error' || type === 'warning' ? 'alert' : 'status');
+    toast.setAttribute('aria-live', type === 'error' || type === 'warning' ? 'assertive' : 'polite');
 
     // 🛡️ Sentinel: Prevent XSS by using textContent for user-controlled message
     toast.innerHTML = `
