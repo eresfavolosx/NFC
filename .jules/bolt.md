@@ -13,3 +13,7 @@
 ## 2024-05-18 - Replacing O(N) array methods with imperative loops
 **Learning:** Re-writing O(N) declarative array methods like `.filter()` and `.reduce()` into imperative `for` loops is a micro-optimization that degrades code readability without providing measurable performance gains in typical frontend Javascript scenarios. The actual bottleneck is usually DOM manipulation.
 **Action:** Avoid replacing standard array iteration methods with `for` loops unless dealing with millions of records in a tight loop where a profiler has explicitly flagged it. Instead, focus on debouncing events that trigger DOM updates.
+
+## 2024-06-12 - N+1 State Getter Overhead in Rendering Loops
+**Learning:** Calling a state getter inside a mapping loop (e.g., `store.getTagsForLink(link.id)` inside `links.map()`) introduces an N+1 overhead. Even if the underlying state getter uses O(1) map lookups, crossing the getter boundary `N` times for a large collection adds unnecessary execution cost and negatively impacts rendering times.
+**Action:** Pre-fetch mapped properties or necessary lazy-loaded state objects (like a `tagsByLinkId` Map) into a local variable before iterating. Then use this local variable in the mapping function to achieve significant performance improvements while keeping O(1) lookups.
