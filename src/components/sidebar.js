@@ -31,7 +31,7 @@ export function renderBottomNav() {
                 <a href="#${item.path}" 
                    class="bottom-nav-item ${currentPath === item.path ? 'active' : ''}" 
                    data-path="${item.path}">
-                    <span class="bottom-nav-icon">${item.icon}</span>
+                    <span class="bottom-nav-icon" aria-hidden="true">${item.icon}</span>
                     <span class="bottom-nav-label">${item.label}</span>
                 </a>
             `).join('')}
@@ -78,8 +78,9 @@ export function renderSidebar() {
       ${navItems.map(item => `
         <a href="#${item.path}"
            class="sidebar-nav-item ${currentPath === item.path ? 'active' : ''} ${item.premium && !store.isPremium() ? 'nav-locked' : ''}"
-           data-path="${item.path}">
-          <span class="nav-icon">${item.icon}</span>
+           data-path="${item.path}"
+           ${item.premium && !store.isPremium() ? 'aria-disabled="true" tabindex="-1"' : ''}>
+          <span class="nav-icon" aria-hidden="true">${item.icon}</span>
           <span class="nav-label">${item.label}</span>
         </a>
       `).join('')}
