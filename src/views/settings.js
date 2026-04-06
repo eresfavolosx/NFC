@@ -5,6 +5,7 @@
 import { store } from '../store.js';
 import { renderHeader } from '../components/header.js';
 import { showToast } from '../components/toast.js';
+import { escapeHTML } from '../utils/sanitize.js';
 
 export function renderSettings() {
     const container = document.getElementById('page-content');
@@ -21,7 +22,7 @@ export function renderSettings() {
         <div class="settings-form">
           <div class="form-group">
             <label class="form-label" for="brandName">Brand Name</label>
-            <input class="form-input" type="text" id="brandName" value="${settings.brandName || ''}" placeholder="e.g. My Awesome Brand">
+            <input class="form-input" type="text" id="brandName" value="${escapeHTML(settings.brandName || '')}" placeholder="e.g. My Awesome Brand">
           </div>
           
           <div class="form-group">
@@ -38,7 +39,7 @@ export function renderSettings() {
           <div>
             <div class="form-group">
               <label class="form-label" for="restaurantName">Restaurant Name</label>
-              <input class="form-input" type="text" id="restaurantName" value="${settings.restaurantName || ''}" placeholder="e.g. La Trattoria">
+              <input class="form-input" type="text" id="restaurantName" value="${escapeHTML(settings.restaurantName || '')}" placeholder="e.g. La Trattoria">
             </div>
           </div>
 
