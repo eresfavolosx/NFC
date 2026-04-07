@@ -20,7 +20,7 @@ export function showToast(message, type = 'info') {
     toast.innerHTML = `
       <span class="toast-icon">${iconMap[type] || 'ℹ️'}</span>
       <div class="toast-message">${message}</div>
-      <button class="toast-close">&times;</button>
+      <button class="toast-close" aria-label="Close">✕</button>
     `;
     
     container.appendChild(toast);
