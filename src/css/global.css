@@ -77,6 +77,12 @@ a:hover {
     color: var(--color-primary);
 }
 
+a:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
 img {
     max-width: 100%;
     display: block;
