@@ -63,10 +63,10 @@ export function renderAdmin() {
                     <div style="font-weight: 600; color: var(--text-primary);">${escapeHTML(tag.label)}</div>
                     <div class="text-xs text-muted" style="font-size: 0.7rem;">ID: ${tag.id.slice(0, 8)}...</div>
                   </td>
-                  <td data-label="Serial / ID"><code style="background: var(--bg-surface); padding: 2px 6px; border-radius: 4px;">${tag.serialNumber || '—'}</code></td>
+                  <td data-label="Serial / ID"><code style="background: var(--bg-surface); padding: 2px 6px; border-radius: 4px;">${tag.serialNumber ? escapeHTML(tag.serialNumber) : '—'}</code></td>
                   <td data-label="Owner / Client">
                     ${tag.ownerEmail 
-                      ? `<div style="font-size: 0.85rem; color: var(--color-primary); font-weight: 500;">${tag.ownerEmail}</div>`
+                      ? `<div style="font-size: 0.85rem; color: var(--color-primary); font-weight: 500;">${escapeHTML(tag.ownerEmail)}</div>`
                       : `<span class="text-muted" style="font-size: 0.8rem; font-style: italic;">Unassigned</span>`}
                   </td>
                   <td data-label="Status">
