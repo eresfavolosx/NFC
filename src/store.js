@@ -10,6 +10,13 @@ import { isValidUrl } from './utils/sanitize.js';
 const STORAGE_KEY = 'nfc_tag_manager';
 const SUPER_ADMIN_EMAIL = 'fabian.velez1996@gmail.com';
 
+const EMPTY_ARRAY = Object.freeze([]);
+class TagMap extends Map {
+  get(key) {
+    return super.get(key) || EMPTY_ARRAY;
+  }
+}
+
 const defaultData = {
   settings: {
     brandName: 'Tocaito',
@@ -195,7 +202,7 @@ export const store = {
   },
   get tagsByLinkId() {
     if (!this._cache.tagsByLinkId) {
-      const map = new Map();
+      const map = new TagMap();
       for (const tag of data.tags) {
         if (tag.assignedLinkId) {
           if (!map.has(tag.assignedLinkId)) map.set(tag.assignedLinkId, []);
