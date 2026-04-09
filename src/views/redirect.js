@@ -49,7 +49,7 @@ export function renderRedirect({ id }) {
                     </p>
                     
                     <div style="display: flex; flex-direction: column; gap: var(--space-md);">
-                        <a href="${link.url}" class="btn btn-primary w-full" style="height: 52px; font-weight: 600;">
+                        <a href="${escapeHTML(link.url)}" class="btn btn-primary w-full" style="height: 52px; font-weight: 600;">
                             ${t('go_now')}
                         </a>
                         <button id="edit-destination-btn" class="btn btn-outline w-full" style="border-color: var(--border-color); color: var(--text-secondary);">
@@ -136,7 +136,7 @@ export function renderRedirect({ id }) {
                     `}
 
                     ${link && isValidUrl(link.url) ? `
-                        <a href="${link.url}" id="skip-to-destination" class="btn btn-outline w-full" style="border-color: var(--border-color); color: var(--text-secondary);">
+                        <a href="${escapeHTML(link.url)}" id="skip-to-destination" class="btn btn-outline w-full" style="border-color: var(--border-color); color: var(--text-secondary);">
                             ➡️ ${t('cancel')} & ${t('dashboard')}
                         </a>
                     ` : `
@@ -184,7 +184,7 @@ function openLinkPickerForTag(tagId) {
                 <label class="form-label">${t('links')}</label>
                 <select class="form-select" id="claim-link-select">
                     <option value="">— Select a saved link —</option>
-                    ${links.map(l => `<option value="${l.id}">${l.icon} ${l.title}</option>`).join('')}
+                    ${links.map(l => `<option value="${escapeHTML(l.id)}">${escapeHTML(l.icon)} ${escapeHTML(l.title)}</option>`).join('')}
                 </select>
             </div>
         `,
