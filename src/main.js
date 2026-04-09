@@ -400,7 +400,9 @@ store.init().then(async () => {
   startRouter();
 }).catch(err => {
     console.error('App boot failure:', err);
-    document.getElementById('app').innerHTML = `<div style="padding: 2rem; color: white;">Critical Error: ${err.message}</div>`;
+    const appEl = document.getElementById('app');
+    appEl.innerHTML = `<div style="padding: 2rem; color: white;">Critical Error: <span></span></div>`;
+    appEl.querySelector('span').textContent = err.message;
 });
 
 // ── PWA: Register Service Worker ──

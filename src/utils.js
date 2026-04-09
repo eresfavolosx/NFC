@@ -19,9 +19,10 @@ export function showToast(message, type = 'info') {
     
     toast.innerHTML = `
       <span class="toast-icon">${iconMap[type] || 'ℹ️'}</span>
-      <div class="toast-message">${message}</div>
+      <div class="toast-message"></div>
       <button class="toast-close">&times;</button>
     `;
+    toast.querySelector('.toast-message').textContent = message;
     
     container.appendChild(toast);
     
