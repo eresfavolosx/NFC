@@ -4,6 +4,7 @@
 
 import { store } from '../store.js';
 import { escapeHTML } from '../utils.js';
+import { showToast } from '../components/toast.js';
 
 export function renderAnalytics() {
     const container = document.getElementById('app');
@@ -89,7 +90,7 @@ export function renderAnalytics() {
     document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
         const csv = store.exportToCSV();
         if (!csv) {
-            alert('No data to export yet!');
+            showToast('No data to export yet!', 'warning');
             return;
         }
 
