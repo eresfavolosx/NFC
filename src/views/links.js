@@ -93,8 +93,9 @@ function renderLinkCard(link, assignedTags, index, t) {
     const cat = getCategoryInfo(link.category);
     const assignedTagsCount = assignedTags.length;
 
+    const searchString = escapeHTML((link.title + ' ' + link.url).toLowerCase());
     return `
-    <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
+    <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}" data-search="${searchString}" data-category="${link.category}">
       <div class="link-card-header">
         <span class="link-icon" aria-hidden="true">${cat.icon}</span>
         <div class="link-card-actions">
@@ -230,16 +231,14 @@ function initLinksEvents() {
 }
 
 function filterLinks(search, category) {
+    // ⚡ Bolt: High-performance DOM filtering
+    // Why: Filter directly against dataset attributes to avoid N+1 store lookups and O(N) string allocations during loop
     const cards = document.querySelectorAll('.link-card');
 
     cards.forEach(card => {
-        const link = store.getLink(card.dataset.id);
-        if (!link) return;
-
-        const matchSearch = !search ||
-            link.title.toLowerCase().includes(search) ||
-            link.url.toLowerCase().includes(search);
-        const matchCategory = !category || link.category === category;
+        const ds = card.dataset;
+        const matchSearch = !search || ds.search.includes(search);
+        const matchCategory = !category || ds.category === category;
 
         card.style.display = matchSearch && matchCategory ? '' : 'none';
     });
