@@ -184,7 +184,7 @@ function openLinkPickerForTag(tagId) {
                 <label class="form-label">${t('links')}</label>
                 <select class="form-select" id="claim-link-select">
                     <option value="">— Select a saved link —</option>
-                    ${links.map(l => `<option value="${l.id}">${l.icon} ${l.title}</option>`).join('')}
+                    ${links.map(l => `<option value="${l.id}">${escapeHTML(l.icon || '')} ${escapeHTML(l.title)}</option>`).join('')}
                 </select>
             </div>
         `,
