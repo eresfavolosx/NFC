@@ -93,8 +93,12 @@ function renderLinkCard(link, assignedTags, index, t) {
     const cat = getCategoryInfo(link.category);
     const assignedTagsCount = assignedTags.length;
 
+    // ⚡ Bolt: Pre-calculate search string for O(1) filtering
+    // Why: Computing toLowerCase() strings on every keystroke during DOM filtering is expensive.
+    const searchStr = escapeHTML((link.title + ' ' + link.url).toLowerCase());
+
     return `
-    <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}">
+    <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}" data-search="${searchStr}" data-category="${escapeHTML(link.category)}">
       <div class="link-card-header">
         <span class="link-icon" aria-hidden="true">${cat.icon}</span>
         <div class="link-card-actions">
@@ -233,13 +237,13 @@ function filterLinks(search, category) {
     const cards = document.querySelectorAll('.link-card');
 
     cards.forEach(card => {
-        const link = store.getLink(card.dataset.id);
-        if (!link) return;
-
-        const matchSearch = !search ||
-            link.title.toLowerCase().includes(search) ||
-            link.url.toLowerCase().includes(search);
-        const matchCategory = !category || link.category === category;
+        // ⚡ Bolt: Direct DOM dataset access
+        // Why: Calling store.getLink() and creating new strings via .toLowerCase() in
+        // a loop for thousands of DOM elements causes main thread lag. Using data-* attributes
+        // reduces complexity and memory allocations.
+        const ds = card.dataset;
+        const matchSearch = !search || ds.search.includes(search);
+        const matchCategory = !category || ds.category === category;
 
         card.style.display = matchSearch && matchCategory ? '' : 'none';
     });
