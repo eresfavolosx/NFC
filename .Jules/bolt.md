@@ -1,3 +1,6 @@
 ## 2026-04-08 - Avoid N+1 Map Pre-fetching Micro-optimizations
 **Learning:** Pre-fetching Maps and replacing simple property getter calls inside loops with closures or pre-fetched map references is considered a 'useless micro-optimization' and an architectural anti-pattern in JS, as property access is extremely fast. Additionally, attempts to provide default fallbacks using arrays (e.g., `[]`) inside those loops degrades memory by allocating unused arrays.
 **Action:** Do not attempt to optimize O(N) property getters that rely on internal lazy-caching Maps. If a fallback array is absolutely necessary, subclass the `Map` to return a shared `Object.freeze([])` instance to avoid memory bloat.
+## 2024-05-18 - Fast DOM Filtering
+**Learning:** Calling data store getters (like `store.getLink`) and allocating new strings (like `.toLowerCase()`) inside inner loops during keystroke-driven UI filtering causes main thread lag on large datasets.
+**Action:** Pre-calculate filterable strings (lowercased) during template rendering and attach them via `data-*` attributes. Update the filter loop to read directly from the DOM `dataset` to eliminate string allocations and object lookups during active filtering.
