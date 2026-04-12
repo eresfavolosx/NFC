@@ -139,7 +139,7 @@ function openWriteWizard() {
                     <label class="form-label" for="wizard-link-id">Existing Links</label>
                     <select class="form-select" id="wizard-link-id">
                         <option value="">— Select a saved link —</option>
-                        ${links.map(l => `<option value="${l.id}">${l.icon} ${escapeHTML(l.title)}</option>`).join('')}
+                        ${links.map(l => `<option value="${escapeHTML(l.id)}">${escapeHTML(l.icon)} ${escapeHTML(l.title)}</option>`).join('')}
                     </select>
                 </div>
                 <div style="text-align: center; margin: var(--space-md) 0; position: relative;">
@@ -202,7 +202,7 @@ function openWriteWizard() {
                     <label class="form-label" for="wizard-tag-id">Available Tags</label>
                     <select class="form-select" id="wizard-tag-id">
                         <option value="">— Write Generic / Guest Tag —</option>
-                        ${tags.map(t => `<option value="${t.id}">${escapeHTML(t.label)}</option>`).join('')}
+                        ${tags.map(t => `<option value="${escapeHTML(t.id)}">${escapeHTML(t.label)}</option>`).join('')}
                     </select>
                 </div>
                 <div class="form-group" style="margin-top: var(--space-md)">
