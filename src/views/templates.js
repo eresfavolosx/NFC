@@ -55,18 +55,18 @@ export function renderTemplates() {
             ${TEMPLATES.map(t => `
                 <div class="card-glass template-card animate-fade-up">
                     <div class="template-header">
-                        <h2 class="template-title">${t.name}</h2>
-                        <p class="template-desc">${t.description}</p>
+                        <h2 class="template-title">${escapeHTML(t.name)}</h2>
+                        <p class="template-desc">${escapeHTML(t.description)}</p>
                     </div>
                     <div class="template-preview">
                         ${t.links.map(l => `
                             <div class="template-link-pill">
-                                <span>${l.icon}</span> ${l.title}
+                                <span>${escapeHTML(l.icon)}</span> ${escapeHTML(l.title)}
                             </div>
                         `).join('')}
                     </div>
                     <div class="template-footer" style="margin-top: auto;">
-                        <button class="btn btn-primary template-apply-btn w-full" data-id="${t.id}">
+                        <button class="btn btn-primary template-apply-btn w-full" data-id="${escapeHTML(t.id)}">
                             Use Template
                         </button>
                     </div>
