@@ -57,9 +57,10 @@ export function renderTags() {
 
 function renderTagRow(tag, index, t) {
     const assignedLink = tag.assignedLinkId ? store.getLink(tag.assignedLinkId) : null;
+    const searchString = escapeHTML((tag.label + ' ' + (tag.serialNumber || '')).toLowerCase());
 
     return `
-    <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}">
+    <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}" data-search="${searchString}">
       <div class="tag-row-main">
         <div class="tag-icon-wrap">
           <span class="tag-icon-big" aria-hidden="true">🏷️</span>
@@ -238,10 +239,7 @@ function initTagsEvents(links) {
         searchTimeout = setTimeout(() => {
             const q = e.target.value.toLowerCase();
             document.querySelectorAll('.tag-row').forEach(row => {
-                const tag = store.getTag(row.dataset.id);
-                if (!tag) return;
-                const match = tag.label.toLowerCase().includes(q) ||
-                    (tag.serialNumber && tag.serialNumber.toLowerCase().includes(q));
+                const match = !q || row.dataset.search.includes(q);
                 row.style.display = match ? '' : 'none';
             });
         }, 300);
