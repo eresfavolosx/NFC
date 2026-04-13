@@ -128,9 +128,18 @@ export function initSidebarEvents() {
     }
 
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-            await store.logout();
-            navigate('/login');
+        logoutBtn.addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner" style="width: 14px; height: 14px; border-width: 2px;"></span> <span class="nav-label" style="margin-left: 8px;">Logging out...</span>`;
+            try {
+                await store.logout();
+                navigate('/login');
+            } catch {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
         });
     }
 
