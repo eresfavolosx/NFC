@@ -146,9 +146,16 @@ export function renderProfile() {
     `;
 
     // Events
-    container.querySelector('#logout-btn')?.addEventListener('click', () => {
+    container.querySelector('#logout-btn')?.addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner" style="width: 14px; height: 14px; border-width: 2px;"></span> ${originalText}`;
         store.logout().then(() => {
             window.location.hash = '/login';
+        }).catch(() => {
+            btn.disabled = false;
+            btn.textContent = originalText;
         });
     });
 
