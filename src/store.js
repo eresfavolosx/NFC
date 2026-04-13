@@ -307,13 +307,21 @@ export const store = {
   },
 
   deleteLink(id) {
-    const link = data.links.find(l => l.id === id);
+    // ⚡ Bolt: Use O(1) cached lookups to find the link and affected tags.
+    // Replaces O(N) data.tags array scan with an O(1) Map lookup.
+    const link = this.getLink(id);
     if (!link) return false;
-    data.links = data.links.filter(l => l.id !== id);
-    // Unassign any tags pointing to this link
-    data.tags.forEach(t => {
-      if (t.assignedLinkId === id) t.assignedLinkId = null;
+
+    // In-place removal to avoid allocating a new array (O(N) vs O(N) + memory)
+    const idx = data.links.findIndex(l => l.id === id);
+    if (idx !== -1) data.links.splice(idx, 1);
+
+    // Unassign any tags pointing to this link using cached mapping
+    const assignedTags = this.getTagsForLink(id);
+    assignedTags.forEach(t => {
+      t.assignedLinkId = null;
     });
+
     this._addActivity('link_deleted', `Deleted link "${link.title}"`);
     this._notify();
     return true;
