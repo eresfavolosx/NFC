@@ -310,10 +310,13 @@ export const store = {
     const link = data.links.find(l => l.id === id);
     if (!link) return false;
     data.links = data.links.filter(l => l.id !== id);
-    // Unassign any tags pointing to this link
-    data.tags.forEach(t => {
-      if (t.assignedLinkId === id) t.assignedLinkId = null;
-    });
+    // ⚡ Bolt: Replace full array scan with O(1) Map lookup for unassigning tags
+    // Why: Iterating over all `data.tags` causes O(M) overhead on deletion.
+    // Impact: Reduces tag unassignment time from O(M) to O(K) where K is assigned tags.
+    const assignedTags = this.getTagsForLink(id);
+    for (const t of assignedTags) {
+      t.assignedLinkId = null;
+    }
     this._addActivity('link_deleted', `Deleted link "${link.title}"`);
     this._notify();
     return true;
@@ -522,7 +525,11 @@ export const store = {
         totalTags: userTags.length,
         totalLinks: userLinks.length,
         totalClicks: userLinks.reduce((sum, l) => sum + (l.clicks || 0), 0),
-        activeTags: userTags.filter(t => t.assignedLinkId).length,
+        // ⚡ Bolt: Replace `.filter().length` with `.reduce()` to count active tags.
+        // Why: Using `.filter()` allocates a completely new intermediate array just to get
+        // its length, increasing memory pressure.
+        // Impact: Reduces memory allocations during stats recalculation.
+        activeTags: userTags.reduce((count, t) => count + (t.assignedLinkId ? 1 : 0), 0),
         recentActivity: [...data.activity].slice(0, 10)
       };
     }
