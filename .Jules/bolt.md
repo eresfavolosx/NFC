@@ -5,3 +5,6 @@
 ## 2024-05-14 - Optimize DOM search filtering
 **Learning:** Calling `store.getLink()` or `store.getTag()` inside a DOM filtering loop (like `querySelectorAll().forEach()`) introduces unnecessary overhead, even when the lookup is O(1). Attaching search strings and filter criteria directly to the DOM nodes via `data-*` attributes during rendering eliminates object lookups entirely and significantly speeds up client-side search, reducing filter times by over 20x.
 **Action:** When implementing client-side filtering on lists of DOM elements, pre-calculate the search string and attach it as a `data-` attribute during the initial render, and filter using `dataset` properties instead of fetching the underlying object.
+## 2026-04-15 - Array Iteration Performance
+**Learning:** Calling static functions like `Date.now()` inside array iteration callbacks (e.g., `.filter` or `.reduce`) forces the JavaScript engine to execute the function on every single iteration, which can degrade performance significantly on large arrays.
+**Action:** Always hoist static function calls outside of the loop into a constant variable and reference that constant within the callback.
