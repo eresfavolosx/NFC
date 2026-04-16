@@ -13,7 +13,12 @@ export function renderAnalytics() {
 
     // Calculate Stats
     const totalScans = analytics.length;
-    const scansLast24h = analytics.filter(a => a.timestamp > Date.now() - 86400000).length;
+    const oneDayAgo = Date.now() - 86400000;
+    // ⚡ Bolt: Use .reduce() instead of .filter().length and hoist Date.now()
+    // Why: .filter() creates an unnecessary intermediate array, which consumes memory and causes GC overhead.
+    // Hoisting Date.now() prevents redundant function calls on every iteration.
+    // Impact: Reduces memory overhead and slightly speeds up execution for large arrays.
+    const scansLast24h = analytics.reduce((count, a) => a.timestamp > oneDayAgo ? count + 1 : count, 0);
     
     // Most scanned links
     const topLinks = [...links]
