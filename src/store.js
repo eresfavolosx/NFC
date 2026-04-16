@@ -518,11 +518,15 @@ export const store = {
       const userTags = this.tags;
       const userLinks = this.links;
       
+      // ⚡ Bolt: Use .reduce() instead of .filter().length
+      // Why: .filter().length creates an unnecessary intermediate array just to count items,
+      // consuming memory and increasing garbage collection overhead.
+      // Impact: Avoids O(N) memory allocation when calculating active tags.
       this._cache.stats = {
         totalTags: userTags.length,
         totalLinks: userLinks.length,
         totalClicks: userLinks.reduce((sum, l) => sum + (l.clicks || 0), 0),
-        activeTags: userTags.filter(t => t.assignedLinkId).length,
+        activeTags: userTags.reduce((count, t) => t.assignedLinkId ? count + 1 : count, 0),
         recentActivity: [...data.activity].slice(0, 10)
       };
     }
