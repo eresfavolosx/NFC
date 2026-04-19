@@ -5,3 +5,6 @@
 ## 2024-05-14 - Optimize DOM search filtering
 **Learning:** Calling `store.getLink()` or `store.getTag()` inside a DOM filtering loop (like `querySelectorAll().forEach()`) introduces unnecessary overhead, even when the lookup is O(1). Attaching search strings and filter criteria directly to the DOM nodes via `data-*` attributes during rendering eliminates object lookups entirely and significantly speeds up client-side search, reducing filter times by over 20x.
 **Action:** When implementing client-side filtering on lists of DOM elements, pre-calculate the search string and attach it as a `data-` attribute during the initial render, and filter using `dataset` properties instead of fetching the underlying object.
+## $(date +%Y-%m-%d) - Array Counting Optimization
+**Learning:** Chaining `.filter(condition).length` inside getters creates an intermediate array in memory that is immediately thrown away, causing unnecessary O(N) memory allocations, especially for operations run on every render/state update.
+**Action:** Always use `.reduce((count, item) => count + (condition ? 1 : 0), 0)` when simply counting elements in an array to maintain O(1) memory complexity. Also, hoist static calculations (like `Date.now()`) outside of loops to avoid redundant execution.
