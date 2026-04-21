@@ -207,7 +207,7 @@ function renderWriterUI(links, tags, compatInfo) {
               </div>
             ` : `
               <select class="form-input" id="linkSelect">
-                  ${links.map(l => `<option value="${l.id}">${l.icon} ${escapeHTML(l.title)}</option>`).join('')}
+                  ${links.map(l => `<option value="${l.id}">${escapeHTML(l.icon)} ${escapeHTML(l.title)}</option>`).join('')}
               </select>
             </div>
 
