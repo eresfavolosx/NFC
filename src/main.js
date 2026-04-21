@@ -139,7 +139,7 @@ function openWriteWizard() {
                     <label class="form-label" for="wizard-link-id">Existing Links</label>
                     <select class="form-select" id="wizard-link-id">
                         <option value="">— Select a saved link —</option>
-                        ${links.map(l => `<option value="${l.id}">${l.icon} ${escapeHTML(l.title)}</option>`).join('')}
+                        ${links.map(l => `<option value="${l.id}">${escapeHTML(l.icon)} ${escapeHTML(l.title)}</option>`).join('')}
                     </select>
                 </div>
                 <div style="text-align: center; margin: var(--space-md) 0; position: relative;">

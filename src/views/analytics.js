@@ -50,7 +50,7 @@ export function renderAnalytics() {
                 ${topLinks.length === 0 ? '<p class="empty-state-desc">No scan data yet.</p>' : topLinks.map(l => `
                     <div class="analytics-item">
                         <div class="analytics-info">
-                            <span class="analytics-icon">${l.icon}</span>
+                            <span class="analytics-icon">${escapeHTML(l.icon)}</span>
                             <div>
                                 <div class="analytics-name">${escapeHTML(l.title)}</div>
                                 <div class="analytics-url">${escapeHTML(l.url)}</div>
