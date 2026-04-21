@@ -396,7 +396,7 @@ function initWriterEvents() {
       showToast(escapeHTML(err.message), 'error');
     } finally {
       writeBtn.disabled = false;
-      writeBtn.innerHTML = '<span>📡</span> Write to Tag';
+      writeBtn.innerHTML = '<span aria-hidden="true">📡</span> Write to Tag';
       tapTarget.classList.remove('active');
     }
   });
