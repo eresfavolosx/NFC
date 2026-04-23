@@ -5,3 +5,6 @@
 ## 2024-05-14 - Optimize DOM search filtering
 **Learning:** Calling `store.getLink()` or `store.getTag()` inside a DOM filtering loop (like `querySelectorAll().forEach()`) introduces unnecessary overhead, even when the lookup is O(1). Attaching search strings and filter criteria directly to the DOM nodes via `data-*` attributes during rendering eliminates object lookups entirely and significantly speeds up client-side search, reducing filter times by over 20x.
 **Action:** When implementing client-side filtering on lists of DOM elements, pre-calculate the search string and attach it as a `data-` attribute during the initial render, and filter using `dataset` properties instead of fetching the underlying object.
+## 2024-05-19 - Hoisting Static Operations and Avoiding Redundant Memory Allocation in Counts
+**Learning:** Chaining `.filter(condition).length` allocates a full intermediate array in memory only to compute its length, causing O(N) memory overhead for a simple count. Additionally, calling dynamic functions like `Date.now()` inside loop conditions causes redundant evaluation on every iteration.
+**Action:** When computing counts, use `.reduce()` instead of `.filter().length` for O(1) space complexity. Always evaluate and hoist static loop values outside the loop to prevent redundant processing.
