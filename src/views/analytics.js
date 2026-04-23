@@ -13,7 +13,13 @@ export function renderAnalytics() {
 
     // Calculate Stats
     const totalScans = analytics.length;
-    const scansLast24h = analytics.filter(a => a.timestamp > Date.now() - 86400000).length;
+
+    // ⚡ Bolt: Hoist static time calculation & prevent intermediate array allocation
+    // Why: Date.now() was previously evaluated on every iteration of the filter loop,
+    // and .filter().length allocated a new array. By hoisting the cutoff time and
+    // using .reduce(), we save redundant computations and memory allocations.
+    const cutoff24h = Date.now() - 86400000;
+    const scansLast24h = analytics.reduce((sum, a) => sum + (a.timestamp > cutoff24h ? 1 : 0), 0);
     
     // Most scanned links
     const topLinks = [...links]
