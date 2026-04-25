@@ -47,7 +47,7 @@ export function renderSettings() {
 
           <div class="form-group-row">
             <div class="form-info">
-              <label class="form-label">Biometric Authentication</label>
+              <label class="form-label" for="useBiometrics">Biometric Authentication</label>
               <p class="form-desc">Use FaceID or TouchID to unlock administrative settings.</p>
             </div>
             <label class="switch">
