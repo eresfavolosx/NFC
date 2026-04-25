@@ -1,16 +1,5 @@
-export function escapeHTML(str) {
-  if (!str) return '';
-  return String(str).replace(/[&<>"']/g, (match) => {
-    const chars = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    };
-    return chars[match];
-  });
-}
+import { escapeHTML } from './sanitize.js';
+export { escapeHTML };
 
 export function sanitizeURL(url) {
   try {
