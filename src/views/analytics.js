@@ -13,7 +13,10 @@ export function renderAnalytics() {
 
     // Calculate Stats
     const totalScans = analytics.length;
-    const scansLast24h = analytics.filter(a => a.timestamp > Date.now() - 86400000).length;
+    // ⚡ Bolt: Hoist timestamp calculation outside the loop and use .reduce instead of .filter().length
+    // to prevent redundant evaluations per iteration and intermediate array allocations.
+    const cutoff24h = Date.now() - 86400000;
+    const scansLast24h = analytics.reduce((count, a) => count + (a.timestamp > cutoff24h ? 1 : 0), 0);
     
     // Most scanned links
     const topLinks = [...links]
