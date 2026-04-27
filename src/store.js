@@ -522,7 +522,10 @@ export const store = {
         totalTags: userTags.length,
         totalLinks: userLinks.length,
         totalClicks: userLinks.reduce((sum, l) => sum + (l.clicks || 0), 0),
-        activeTags: userTags.filter(t => t.assignedLinkId).length,
+        // ⚡ Bolt: Memory optimization
+        // Why: Replaced .filter().length with .reduce() to prevent creating an intermediate
+        // array just to count active tags, reducing garbage collection overhead.
+        activeTags: userTags.reduce((count, t) => t.assignedLinkId ? count + 1 : count, 0),
         recentActivity: [...data.activity].slice(0, 10)
       };
     }
