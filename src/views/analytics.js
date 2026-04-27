@@ -13,7 +13,13 @@ export function renderAnalytics() {
 
     // Calculate Stats
     const totalScans = analytics.length;
-    const scansLast24h = analytics.filter(a => a.timestamp > Date.now() - 86400000).length;
+
+    // ⚡ Bolt: Memory & CPU optimization
+    // Why: Hoists Date.now() outside the loop to prevent redundant evaluation,
+    // and uses reduce instead of filter().length to avoid allocating a throwaway array.
+    // Impact: Reduces CPU cycles during render and lowers garbage collection pressure for large analytics arrays.
+    const cutoffTime = Date.now() - 86400000;
+    const scansLast24h = analytics.reduce((count, a) => a.timestamp > cutoffTime ? count + 1 : count, 0);
     
     // Most scanned links
     const topLinks = [...links]
