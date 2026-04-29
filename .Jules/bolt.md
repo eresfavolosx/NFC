@@ -5,3 +5,7 @@
 ## 2024-05-14 - Optimize DOM search filtering
 **Learning:** Calling `store.getLink()` or `store.getTag()` inside a DOM filtering loop (like `querySelectorAll().forEach()`) introduces unnecessary overhead, even when the lookup is O(1). Attaching search strings and filter criteria directly to the DOM nodes via `data-*` attributes during rendering eliminates object lookups entirely and significantly speeds up client-side search, reducing filter times by over 20x.
 **Action:** When implementing client-side filtering on lists of DOM elements, pre-calculate the search string and attach it as a `data-` attribute during the initial render, and filter using `dataset` properties instead of fetching the underlying object.
+
+## $(date +%Y-%m-%d) - Avoid memory allocation micro-optimizations
+**Learning:** Replacing `.filter().length` with `.reduce()` to avoid an intermediate array allocation is a textbook micro-optimization. Unless iterating over massive arrays (e.g., 100k+ elements), the performance impact is zero, and it violates the "no micro-optimizations with no measurable impact" rule.
+**Action:** Do not create PRs for `.filter().length` -> `.reduce()` refactors unless dealing with explicitly large datasets where memory allocation becomes a measured bottleneck.
