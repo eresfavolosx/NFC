@@ -22,12 +22,12 @@ function getCategoryInfo(val) {
 function linkFormContent(link = null) {
     return `
     <div class="form-group">
-      <label class="form-label" for="linkTitle">Title</label>
+      <label class="form-label" for="linkTitle">Title <span aria-hidden="true" style="color: var(--color-error);">*</span></label>
       <input class="form-input" type="text" id="linkTitle" name="title"
         placeholder="e.g. My Instagram" value="${escapeHTML(link?.title || '')}" required>
     </div>
     <div class="form-group">
-      <label class="form-label" for="linkUrl">URL</label>
+      <label class="form-label" for="linkUrl">URL <span aria-hidden="true" style="color: var(--color-error);">*</span></label>
       <input class="form-input" type="url" id="linkUrl" name="url"
         placeholder="https://..." value="${escapeHTML(link?.url || '')}" required>
     </div>
