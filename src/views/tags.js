@@ -105,7 +105,7 @@ function initTagsEvents(links) {
             title: t('register_tag'),
             content: `
         <div class="form-group">
-          <label class="form-label" for="tagLabel">Tag Name</label>
+          <label class="form-label" for="tagLabel">Tag Name <span aria-hidden="true" style="color: var(--color-error);">*</span></label>
           <input class="form-input" type="text" id="tagLabel" name="label"
             placeholder="e.g. Blue Bracelet #1" required>
         </div>
