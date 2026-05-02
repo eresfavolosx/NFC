@@ -7,3 +7,6 @@
 ## 2024-04-10 - Dynamic ARIA attributes on Toast Notifications
 **Learning:** Setting static `aria-live` and `aria-atomic` on a global notification container is less accessible, especially when rendering multiple messages of different severities simultaneously or frequently. Global properties may fail to correctly signal the true urgency of individual updates.
 **Action:** Always configure `role` and `aria-live` attributes dynamically on individual notification elements. Use `role="alert"` and `aria-live="assertive"` for errors/warnings, and `role="status"` and `aria-live="polite"` for non-critical informational messages.
+## 2026-05-02 - Required Indicators Accessibility
+**Learning:** When adding visual indicators like asterisks (*) for required form fields, they should be wrapped in an element with `aria-hidden="true"` if the associated input already uses the HTML `required` attribute. Otherwise, screen readers will redundantly announce "star required" since the browser already communicates the required state.
+**Action:** Always add `aria-hidden="true"` to visual required indicators when the input field is structurally marked as required.
