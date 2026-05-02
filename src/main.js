@@ -171,12 +171,12 @@ function openWriteWizard() {
             title: 'Create Link',
             content: `
                 <div class="form-group">
-                    <label class="form-label" for="wiz-link-title">Title</label>
-                    <input class="form-input" id="wiz-link-title" placeholder="e.g. My Website">
+                    <label class="form-label" for="wiz-link-title">Title <span aria-hidden="true" style="color: var(--color-error)">*</span></label>
+                    <input class="form-input" id="wiz-link-title" placeholder="e.g. My Website" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="wiz-link-url">Destination URL</label>
-                    <input class="form-input" id="wiz-link-url" type="url" placeholder="https://...">
+                    <label class="form-label" for="wiz-link-url">Destination URL <span aria-hidden="true" style="color: var(--color-error)">*</span></label>
+                    <input class="form-input" id="wiz-link-url" type="url" placeholder="https://..." required>
                 </div>
             `,
             submitLabel: 'Create & Continue',
