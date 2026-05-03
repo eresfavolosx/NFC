@@ -415,8 +415,11 @@ export const store = {
   },
 
   assignLinkToTag(tagId, linkId) {
-    const tag = data.tags.find(t => t.id === tagId);
-    const link = data.links.find(l => l.id === linkId);
+    // ⚡ Bolt: Replace O(N) Array.find() with O(1) Map lookup
+    // Why: assignLinkToTag benefits from centralized Map-based lookups
+    // which also enforce ownership-based access control.
+    const tag = this.getTag(tagId);
+    const link = this.getLink(linkId);
     if (!tag) return false;
     tag.assignedLinkId = linkId;
     tag.lastWritten = new Date().toISOString();
