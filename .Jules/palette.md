@@ -7,3 +7,6 @@
 ## 2024-04-10 - Dynamic ARIA attributes on Toast Notifications
 **Learning:** Setting static `aria-live` and `aria-atomic` on a global notification container is less accessible, especially when rendering multiple messages of different severities simultaneously or frequently. Global properties may fail to correctly signal the true urgency of individual updates.
 **Action:** Always configure `role` and `aria-live` attributes dynamically on individual notification elements. Use `role="alert"` and `aria-live="assertive"` for errors/warnings, and `role="status"` and `aria-live="polite"` for non-critical informational messages.
+## 2026-05-06 - Add aria-hidden to decorative icons in buttons
+**Learning:** Screen readers may read out emojis inside buttons with `aria-label` (e.g. reading 'Clipboard, Copy Link'). Wrapping decorative emojis explicitly in `<span aria-hidden="true">`, even when an `aria-label` exists on the parent, is a robust accessibility practice to prevent redundant announcements.
+**Action:** When adding emojis or decorative icons to elements with `aria-label`, wrap the decorative content in `<span aria-hidden="true">`, even if the parent seems sufficiently labeled.
