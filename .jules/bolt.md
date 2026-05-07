@@ -1,3 +1,6 @@
 ## 2026-04-08 - Avoid N+1 Map Pre-fetching Micro-optimizations
 **Learning:** Pre-fetching Maps and replacing simple property getter calls inside loops with closures or pre-fetched map references is considered a 'useless micro-optimization' and an architectural anti-pattern in JS, as property access is extremely fast. Additionally, attempts to provide default fallbacks using arrays (e.g., `[]`) inside those loops degrades memory by allocating unused arrays.
 **Action:** Do not attempt to optimize O(N) property getters that rely on internal lazy-caching Maps. If a fallback array is absolutely necessary, subclass the `Map` to return a shared `Object.freeze([])` instance to avoid memory bloat.
+## 2024-05-15 - Array Loop Hoisting and Reduction
+**Learning:** Calling functions like `Date.now()` inside loop callbacks (e.g. `Array.filter`) causes redundant evaluation on every iteration, leading to O(N) performance bottlenecks. Additionally, using `.filter(...).length` allocates an intermediate array just to count items, increasing garbage collection (GC) overhead.
+**Action:** When iterating over arrays, hoist static function calls like `Date.now()` into a constant before the loop. Replace `.filter(...).length` with `.reduce(...)` to count elements in O(N) time with O(1) space complexity.
