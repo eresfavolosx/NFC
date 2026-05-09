@@ -18,9 +18,9 @@ export function showToast(message, type = 'info') {
     const iconMap = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
     
     toast.innerHTML = `
-      <span class="toast-icon">${iconMap[type] || 'ℹ️'}</span>
+      <span class="toast-icon" aria-hidden="true">${iconMap[type] || 'ℹ️'}</span>
       <div class="toast-message"></div>
-      <button class="toast-close" aria-label="Close">✕</button>
+      <button class="toast-close" aria-label="Close"><span aria-hidden="true">✕</span></button>
     `;
     toast.querySelector('.toast-message').textContent = message;
     

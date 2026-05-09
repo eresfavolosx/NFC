@@ -83,13 +83,13 @@ function renderTagRow(tag, index, t) {
       </div>
       <div class="tag-row-actions">
         <button class="btn btn-secondary assign-link-btn" data-id="${tag.id}">
-          ${assignedLink ? `🔄 ${t('reassign')}` : `🔗 ${t('assign_link')}`}
+          ${assignedLink ? `<span aria-hidden="true">🔄</span> ${t('reassign')}` : `<span aria-hidden="true">🔗</span> ${t('assign_link')}`}
         </button>
         <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${tag.id}" title="Write to this tag" aria-label="Write to tag ${escapeHTML(tag.label)}">
-          📡
+          <span aria-hidden="true">📡</span>
         </button>
         <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${tag.id}" title="Delete tag" aria-label="Delete tag ${escapeHTML(tag.label)}">
-          🗑️
+          <span aria-hidden="true">🗑️</span>
         </button>
       </div>
     </div>
