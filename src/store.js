@@ -388,6 +388,8 @@ export const store = {
         throw new Error('Bulk creation exceeds limit. Upgrade to Pro for more tags.');
     }
     const createdTags = [];
+    // ⚡ Bolt: Hoist new Date().toISOString() outside of the loop to prevent redundant evaluation
+    const now = new Date().toISOString();
     for (let i = 0; i < count; i++) {
         const num = startNum + i;
         const tag = {
@@ -396,7 +398,7 @@ export const store = {
             serialNumber: null,
             assignedLinkId: null,
             lastWritten: null,
-            createdAt: new Date().toISOString(),
+            createdAt: now,
         };
         data.tags.unshift(tag);
         createdTags.push(tag);
