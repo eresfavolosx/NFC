@@ -70,7 +70,7 @@ export function renderSidebar() {
         ${store.isSuperAdmin() ? `<span class="beta-badge-label">🛡️ ${t('admin').toUpperCase()}</span>` : ''}
       </div>
       <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
-        <span class="toggle-icon">◀</span>
+        <span class="toggle-icon" aria-hidden="true">◀</span>
       </button>
     </div>
 
