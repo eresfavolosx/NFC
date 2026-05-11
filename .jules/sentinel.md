@@ -29,3 +29,8 @@
 **Vulnerability:** Found unescaped template string interpolations of user-controlled inputs (`tag.serialNumber`, `tag.ownerEmail`) within the Admin view in `src/views/admin.js`. If an attacker provisions an NFC tag with malicious payloads in these fields, the Admin UI executes the payloads when rendering the tag list.
 **Learning:** Even though some fields (`tag.label`) were escaped, others were missed. This indicates a pattern of inconsistent escaping. Secondary identifying properties like serial numbers or emails must also be treated as untrusted user input, especially in administrative consoles which might be targeted for privilege escalation.
 **Prevention:** Audit all properties of objects being rendered in lists. Enforce a rule that *all* object properties interpolated into HTML strings must be wrapped in `escapeHTML()`, not just the primary names or titles.
+
+## 2025-05-26 - Remove hardcoded Firebase API key
+**Vulnerability:** Found a hardcoded Firebase API key in src/firebase.js.
+**Learning:** Hardcoded API keys in configuration files are critical vulnerabilities, even if Firebase keys are generally public by design in web clients. They must be managed via environment variables.
+**Prevention:** Always use Vite environment variables (e.g., import.meta.env.VITE_FIREBASE_API_KEY || '') instead of hardcoded strings, and provide an .env.example file for developers.
