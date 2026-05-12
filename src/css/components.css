@@ -506,3 +506,10 @@
 .nfc-ring:nth-child(3) {
     animation-delay: 1s;
 }
+button:disabled,
+.btn:disabled,
+input:disabled,
+select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
