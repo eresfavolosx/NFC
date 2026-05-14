@@ -39,6 +39,26 @@
     outline-offset: 2px;
 }
 
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+    background: inherit;
+    border-color: inherit;
+}
+
+.btn:disabled:hover::after {
+    display: none;
+}
+
+.btn:disabled:active {
+    transform: none;
+}
+
 .btn-primary {
     background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
     color: white;

@@ -7,3 +7,6 @@
 ## 2024-04-10 - Dynamic ARIA attributes on Toast Notifications
 **Learning:** Setting static `aria-live` and `aria-atomic` on a global notification container is less accessible, especially when rendering multiple messages of different severities simultaneously or frequently. Global properties may fail to correctly signal the true urgency of individual updates.
 **Action:** Always configure `role` and `aria-live` attributes dynamically on individual notification elements. Use `role="alert"` and `aria-live="assertive"` for errors/warnings, and `role="status"` and `aria-live="polite"` for non-critical informational messages.
+## 2025-05-14 - Disabled Button Feedback
+**Learning:** Found that disabled buttons lacked proper visual feedback, appearing similar to active buttons but simply not responding to clicks. This could lead to confusion and frustration as users might not understand why an action is unavailable.
+**Action:** Implemented a `.btn:disabled` state with `opacity: 0.5` and `cursor: not-allowed`, while explicitly nullifying misleading hover and active effects (like shadow glows and transforms). This provides clear visual cues that an element is currently inactive. Always ensure interactive elements clearly distinguish between active and disabled states.
