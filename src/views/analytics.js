@@ -13,7 +13,13 @@ export function renderAnalytics() {
 
     // Calculate Stats
     const totalScans = analytics.length;
-    const scansLast24h = analytics.filter(a => a.timestamp > Date.now() - 86400000).length;
+    // ⚡ Bolt: Hoist Date.now() outside of the loop to prevent redundant evaluation.
+    // Replace .filter().length with .reduce() to prevent intermediate array allocation.
+    const cutoff = Date.now() - 86400000;
+    const scansLast24h = analytics.reduce((count, a) => {
+        const timestamp = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
+        return timestamp > cutoff ? count + 1 : count;
+    }, 0);
     
     // Most scanned links
     const topLinks = [...links]
