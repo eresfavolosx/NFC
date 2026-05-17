@@ -522,7 +522,8 @@ export const store = {
         totalTags: userTags.length,
         totalLinks: userLinks.length,
         totalClicks: userLinks.reduce((sum, l) => sum + (l.clicks || 0), 0),
-        activeTags: userTags.filter(t => t.assignedLinkId).length,
+        // ⚡ Bolt: Replace .filter().length with .reduce() to prevent intermediate array allocations
+        activeTags: userTags.reduce((count, t) => t.assignedLinkId ? count + 1 : count, 0),
         recentActivity: [...data.activity].slice(0, 10)
       };
     }
