@@ -101,7 +101,7 @@ export function renderAdmin() {
                         <label class="form-label" for="assign-email-select">${t('select_client')}</label>
                         <select class="form-select" id="assign-email-select">
                             <option value="">— Select an existing client —</option>
-                            ${emails.map(e => `<option value="${e}">${e}</option>`).join('')}
+                            ${emails.map(e => `<option value="${escapeHTML(e)}">${escapeHTML(e)}</option>`).join('')}
                         </select>
                     </div>
                     <div style="text-align: center; margin: 1.5rem 0; position: relative;">
