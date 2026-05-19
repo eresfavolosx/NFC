@@ -44,7 +44,7 @@ export function renderDashboard() {
             <div class="activity-item">
               <div class="activity-icon">${getActivityIcon(act.type)}</div>
               <div class="activity-content">
-                <div class="activity-desc">${escapeHTML(act.description)}</div>
+                <div class="activity-desc">${escapeHTML(act.message)}</div>
                 <div class="activity-time">${new Date(act.timestamp).toLocaleString()}</div>
               </div>
             </div>
