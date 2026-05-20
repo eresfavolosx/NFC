@@ -8,12 +8,14 @@ import { showToast } from '../components/toast.js';
 
 export function renderAnalytics() {
     const container = document.getElementById('app');
-    const analytics = store.getAnalytics();
+    const analytics = store.analytics;
     const links = store.data.links;
 
     // Calculate Stats
     const totalScans = analytics.length;
-    const scansLast24h = analytics.filter(a => a.timestamp > Date.now() - 86400000).length;
+    // ⚡ Bolt: Hoist Date.now() outside of O(N) loop to avoid redundant system calls
+    const cutoff = Date.now() - 86400000;
+    const scansLast24h = analytics.filter(a => a.timestamp > cutoff).length;
     
     // Most scanned links
     const topLinks = [...links]
