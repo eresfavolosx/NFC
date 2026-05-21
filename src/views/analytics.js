@@ -13,7 +13,14 @@ export function renderAnalytics() {
 
     // Calculate Stats
     const totalScans = analytics.length;
-    const scansLast24h = analytics.filter(a => a.timestamp > Date.now() - 86400000).length;
+
+    // ⚡ Bolt: Hoist constant calculation outside of loop
+    // Why: Date.now() was being evaluated on every iteration inside filter(),
+    // causing redundant O(N) calculation overhead.
+    // Impact: Converts O(N) function calls to O(1), speeding up array filtering.
+    // Measurement: Saves N Date.now() function calls during render.
+    const cutoff = Date.now() - 86400000;
+    const scansLast24h = analytics.filter(a => a.timestamp > cutoff).length;
     
     // Most scanned links
     const topLinks = [...links]
