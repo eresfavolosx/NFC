@@ -86,10 +86,10 @@ function renderTagRow(tag, index, t) {
           ${assignedLink ? `🔄 ${t('reassign')}` : `🔗 ${t('assign_link')}`}
         </button>
         <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${tag.id}" title="Write to this tag" aria-label="Write to tag ${escapeHTML(tag.label)}">
-          📡
+          <span aria-hidden="true">📡</span>
         </button>
         <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${tag.id}" title="Delete tag" aria-label="Delete tag ${escapeHTML(tag.label)}">
-          🗑️
+          <span aria-hidden="true">🗑️</span>
         </button>
       </div>
     </div>
