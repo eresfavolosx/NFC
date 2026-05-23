@@ -111,7 +111,7 @@ function initializeGlobalFAB() {
     fabRoot.innerHTML = `
         <span class="fab-label">Write NFC Tag</span>
         <button class="fab" id="mainWriteFab" aria-label="Write NFC Tag">
-            <span class="fab-icon">📡</span>
+            <span class="fab-icon" aria-hidden="true">📡</span>
         </button>
     `;
     app.appendChild(fabRoot);
