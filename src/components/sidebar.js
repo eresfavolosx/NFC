@@ -4,6 +4,7 @@
 
 import { navigate, getCurrentRoute } from '../router.js';
 import { store } from '../store.js';
+import { escapeHTML } from '../utils/sanitize.js';
 
 export function renderBottomNav() {
     const currentPath = getCurrentRoute();
@@ -66,7 +67,7 @@ export function renderSidebar() {
     <div class="sidebar-brand">
       <div class="sidebar-brand-icon">🍊</div>
       <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px;">
-        <span class="sidebar-brand-text">${brandLabel}</span>
+        <span class="sidebar-brand-text">${escapeHTML(brandLabel)}</span>
         ${store.isSuperAdmin() ? `<span class="beta-badge-label">🛡️ ${t('admin').toUpperCase()}</span>` : ''}
       </div>
       <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
