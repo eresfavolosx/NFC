@@ -7,3 +7,6 @@
 ## 2024-04-10 - Dynamic ARIA attributes on Toast Notifications
 **Learning:** Setting static `aria-live` and `aria-atomic` on a global notification container is less accessible, especially when rendering multiple messages of different severities simultaneously or frequently. Global properties may fail to correctly signal the true urgency of individual updates.
 **Action:** Always configure `role` and `aria-live` attributes dynamically on individual notification elements. Use `role="alert"` and `aria-live="assertive"` for errors/warnings, and `role="status"` and `aria-live="polite"` for non-critical informational messages.
+## 2025-05-27 - Disabled Button State Feedback
+**Learning:** The application lacked visual feedback for disabled buttons. Applying `pointer-events: none` breaks the `not-allowed` cursor, so the correct approach is opacity, custom cursor, and negating hover/active transforms.
+**Action:** Always provide explicit disabled styling (`:disabled`) for buttons, utilizing `opacity: 0.6` and `cursor: not-allowed`, while overriding `:hover` and `:active` effects to remove misleading visual feedback.

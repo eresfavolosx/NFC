@@ -34,6 +34,26 @@
     transform: scale(0.97);
 }
 
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn:disabled:hover,
+.btn:disabled:active {
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-primary:disabled {
+    box-shadow: none;
+}
+
+.btn-primary:disabled:hover {
+    box-shadow: none;
+}
+
 .btn:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
