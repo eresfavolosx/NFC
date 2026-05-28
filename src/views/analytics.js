@@ -13,7 +13,9 @@ export function renderAnalytics() {
 
     // Calculate Stats
     const totalScans = analytics.length;
-    const scansLast24h = analytics.filter(a => a.timestamp > Date.now() - 86400000).length;
+    // ⚡ Bolt: Hoist static Date.now() evaluation outside the loop to prevent O(N) redundant calculations
+    const oneDayAgo = Date.now() - 86400000;
+    const scansLast24h = analytics.filter(a => a.timestamp > oneDayAgo).length;
     
     // Most scanned links
     const topLinks = [...links]
