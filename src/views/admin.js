@@ -61,7 +61,7 @@ export function renderAdmin() {
                 <tr>
                   <td data-label="Tag Label">
                     <div style="font-weight: 600; color: var(--text-primary);">${escapeHTML(tag.label)}</div>
-                    <div class="text-xs text-muted" style="font-size: 0.7rem;">ID: ${tag.id.slice(0, 8)}...</div>
+                    <div class="text-xs text-muted" style="font-size: 0.7rem;">ID: ${escapeHTML(tag.id.slice(0, 8))}...</div>
                   </td>
                   <td data-label="Serial / ID"><code style="background: var(--bg-surface); padding: 2px 6px; border-radius: 4px;">${tag.serialNumber ? escapeHTML(tag.serialNumber) : '—'}</code></td>
                   <td data-label="Owner / Client">
@@ -101,7 +101,7 @@ export function renderAdmin() {
                         <label class="form-label" for="assign-email-select">${t('select_client')}</label>
                         <select class="form-select" id="assign-email-select">
                             <option value="">— Select an existing client —</option>
-                            ${emails.map(e => `<option value="${e}">${e}</option>`).join('')}
+                            ${emails.map(e => `<option value="${escapeHTML(e)}">${escapeHTML(e)}</option>`).join('')}
                         </select>
                     </div>
                     <div style="text-align: center; margin: 1.5rem 0; position: relative;">
