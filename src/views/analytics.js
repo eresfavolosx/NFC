@@ -13,7 +13,12 @@ export function renderAnalytics() {
 
     // Calculate Stats
     const totalScans = analytics.length;
-    const scansLast24h = analytics.filter(a => a.timestamp > Date.now() - 86400000).length;
+    // ⚡ Bolt: Hoisted Date.now() evaluation outside the loop
+    // Why: Evaluating Date.now() on every iteration causes unnecessary O(N) overhead during array filtering.
+    // Impact: Avoids redundant function calls and arithmetic operations inside the loop, improving performance for large analytics datasets.
+    // Measurement: O(N) evaluations reduced to a single O(1) evaluation.
+    const cutoffTime = Date.now() - 86400000;
+    const scansLast24h = analytics.filter(a => a.timestamp > cutoffTime).length;
     
     // Most scanned links
     const topLinks = [...links]
