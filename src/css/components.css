@@ -92,6 +92,29 @@
     border-radius: var(--radius-lg);
 }
 
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn:disabled:active {
+    transform: none;
+}
+
+.btn-primary:disabled:hover {
+    box-shadow: var(--shadow-glow);
+    transform: none;
+}
+
+.btn-secondary:disabled:hover {
+    background: var(--bg-surface-elevated);
+    border-color: var(--border-color);
+}
+
+.btn:disabled::after {
+    display: none;
+}
+
 /* ── Cards ── */
 .card {
     background: var(--bg-surface);
