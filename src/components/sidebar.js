@@ -4,6 +4,7 @@
 
 import { navigate, getCurrentRoute } from '../router.js';
 import { store } from '../store.js';
+import { escapeHTML } from '../utils.js';
 
 export function renderBottomNav() {
     const currentPath = getCurrentRoute();
@@ -49,7 +50,7 @@ export function renderSidebar() {
     sidebar.className = 'sidebar';
 
     const settings = store.settings;
-    const brandLabel = settings.brandName || 'Tocaito';
+    const brandLabel = escapeHTML(settings.brandName || 'Tocaito');
     const lang = settings.language || 'es';
 
     const navItems = [
