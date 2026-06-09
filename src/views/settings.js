@@ -51,7 +51,7 @@ export function renderSettings() {
               <p class="form-desc">Use FaceID or TouchID to unlock administrative settings.</p>
             </div>
             <label class="switch">
-              <input type="checkbox" id="useBiometrics" ${settings.useBiometrics ? 'checked' : ''}>
+              <input type="checkbox" id="useBiometrics" aria-label="Enable Biometric Authentication" ${settings.useBiometrics ? 'checked' : ''}>
               <span class="slider round"></span>
             </label>
           </div>
