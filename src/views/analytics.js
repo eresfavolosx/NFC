@@ -13,7 +13,10 @@ export function renderAnalytics() {
 
     // Calculate Stats
     const totalScans = analytics.length;
-    const scansLast24h = analytics.filter(a => a.timestamp > Date.now() - 86400000).length;
+    // ⚡ Bolt: Hoist threshold calculation outside the loop
+    // Why: Prevents recalculating Date.now() for every element in the array (O(N) -> O(1) overhead)
+    const threshold24h = Date.now() - 86400000;
+    const scansLast24h = analytics.filter(a => a.timestamp > threshold24h).length;
     
     // Most scanned links
     const topLinks = [...links]
