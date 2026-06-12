@@ -53,8 +53,11 @@ export function renderAdmin() {
             <tbody>
               ${allTags.length === 0 ? `
                 <tr>
-                  <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
-                    No tags registered in the system yet.
+                  <td colspan="6">
+                    <div class="empty-state">
+                      <div class="empty-state-icon" aria-hidden="true">🏷️</div>
+                      <p class="empty-state-desc">No tags registered in the system yet.</p>
+                    </div>
                   </td>
                 </tr>
               ` : allTags.map(tag => `
