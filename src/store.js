@@ -388,6 +388,9 @@ export const store = {
         throw new Error('Bulk creation exceeds limit. Upgrade to Pro for more tags.');
     }
     const createdTags = [];
+    // ⚡ Bolt: Hoisted static calculation and replaced O(N^2) sequential array unshifts with O(N) batched spread operation
+    // Why: Repeatedly unshifting into a large array causes unnecessary memory shifting, and new Date() creation is expensive inside a loop.
+    const now = new Date().toISOString();
     for (let i = 0; i < count; i++) {
         const num = startNum + i;
         const tag = {
@@ -396,11 +399,11 @@ export const store = {
             serialNumber: null,
             assignedLinkId: null,
             lastWritten: null,
-            createdAt: new Date().toISOString(),
+            createdAt: now,
         };
-        data.tags.unshift(tag);
         createdTags.push(tag);
     }
+    data.tags.unshift(...[...createdTags].reverse());
     this._addActivity('tag_created', `Registered ${count} bulk tags starting with "${prefix}"`);
     this._notify();
     return createdTags;
