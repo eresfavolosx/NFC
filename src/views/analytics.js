@@ -47,7 +47,12 @@ export function renderAnalytics() {
         <div class="card-glass animate-fade-up" style="margin-top: var(--space-xl); animation-delay: 0.2s">
             <h2 class="section-title">Top Performing Links</h2>
             <div class="analytics-list">
-                ${topLinks.length === 0 ? '<p class="empty-state-desc">No scan data yet.</p>' : topLinks.map(l => `
+                ${topLinks.length === 0 ? `
+                <div class="empty-state">
+                  <div class="empty-state-icon" aria-hidden="true">📊</div>
+                  <h3 class="empty-state-title">No Top Links</h3>
+                  <p class="empty-state-desc">No scan data yet.</p>
+                </div>` : topLinks.map(l => `
                     <div class="analytics-item">
                         <div class="analytics-info">
                             <span class="analytics-icon">${l.icon}</span>
@@ -68,7 +73,12 @@ export function renderAnalytics() {
         <div class="card-glass animate-fade-up" style="margin-top: var(--space-xl); animation-delay: 0.3s">
             <h2 class="section-title">Recent Activity</h2>
             <div class="recent-scans">
-                ${analytics.length === 0 ? '<p class="empty-state-desc">Waiting for first scan...</p>' : 
+                ${analytics.length === 0 ? `
+                <div class="empty-state">
+                  <div class="empty-state-icon" aria-hidden="true">⏱️</div>
+                  <h3 class="empty-state-title">No Recent Activity</h3>
+                  <p class="empty-state-desc">Waiting for first scan...</p>
+                </div>` :
                   analytics.slice(-10).reverse().map(a => {
                     const link = store.getLink(a.linkId);
                     const tag = a.tagId ? store.getTag(a.tagId) : null;
