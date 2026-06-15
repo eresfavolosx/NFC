@@ -91,6 +91,8 @@ function renderIOSGuide(links) {
       <div class="ios-copy-section">
         ${links.length === 0 ? `
           <div class="empty-state" style="padding: var(--space-lg) 0">
+            <div class="empty-state-icon" aria-hidden="true">🔗</div>
+            <h3 class="empty-state-title">No Links</h3>
             <p class="empty-state-desc">No links available. Create a link first from the Links page.</p>
           </div>
         ` : `
@@ -203,6 +205,8 @@ function renderWriterUI(links, tags, compatInfo) {
           <div class="writer-link-selector">
             ${links.length === 0 ? `
               <div class="empty-state" style="padding: var(--space-lg) 0">
+                <div class="empty-state-icon" aria-hidden="true">🔗</div>
+                <h3 class="empty-state-title">No Links</h3>
                 <p class="empty-state-desc">No links available. Create a link first from the Links page.</p>
               </div>
             ` : `
