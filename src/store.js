@@ -387,7 +387,12 @@ export const store = {
     if (!this.isPremium() && data.tags.length + count > 3) {
         throw new Error('Bulk creation exceeds limit. Upgrade to Pro for more tags.');
     }
+    // ⚡ Bolt: Convert O(N^2) unshift inside loop to batched O(N) operation
+    // Why: unshift() inside a loop causes memory reallocation on every iteration.
+    // Impact: Batched unshift with spread operator eliminates the O(N^2) bottleneck. Hoisting timestamp evaluation eliminates redundant O(N) object creation overhead.
+    // Measurement: Time complexity for creation reduced from O(N^2) to O(N).
     const createdTags = [];
+    const timestamp = new Date().toISOString();
     for (let i = 0; i < count; i++) {
         const num = startNum + i;
         const tag = {
@@ -396,11 +401,11 @@ export const store = {
             serialNumber: null,
             assignedLinkId: null,
             lastWritten: null,
-            createdAt: new Date().toISOString(),
+            createdAt: timestamp,
         };
-        data.tags.unshift(tag);
         createdTags.push(tag);
     }
+    data.tags.unshift(...[...createdTags].reverse());
     this._addActivity('tag_created', `Registered ${count} bulk tags starting with "${prefix}"`);
     this._notify();
     return createdTags;
