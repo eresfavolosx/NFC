@@ -398,9 +398,10 @@ export const store = {
             lastWritten: null,
             createdAt: new Date().toISOString(),
         };
-        data.tags.unshift(tag);
         createdTags.push(tag);
     }
+    // ⚡ Bolt: Batch unshift array operation to prevent O(N^2) memory reallocation bottleneck
+    data.tags.unshift(...[...createdTags].reverse());
     this._addActivity('tag_created', `Registered ${count} bulk tags starting with "${prefix}"`);
     this._notify();
     return createdTags;
