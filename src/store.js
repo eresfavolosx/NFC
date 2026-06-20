@@ -398,9 +398,16 @@ export const store = {
             lastWritten: null,
             createdAt: new Date().toISOString(),
         };
-        data.tags.unshift(tag);
         createdTags.push(tag);
     }
+
+    // ⚡ Bolt: Batched Array Unshift
+    // Why: sequential unshift() inside a loop causes O(N^2) memory reallocations
+    // because it shifts all existing array elements on every iteration.
+    // Impact: Batching insertions into a single operation using spread syntax makes it O(N).
+    // Measurement: O(N^2) time complexity reduced to O(N) for bulk tag insertions.
+    data.tags.unshift(...[...createdTags].reverse());
+
     this._addActivity('tag_created', `Registered ${count} bulk tags starting with "${prefix}"`);
     this._notify();
     return createdTags;
