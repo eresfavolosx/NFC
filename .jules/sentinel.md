@@ -29,3 +29,8 @@
 **Vulnerability:** Found unescaped template string interpolations of user-controlled inputs (`tag.serialNumber`, `tag.ownerEmail`) within the Admin view in `src/views/admin.js`. If an attacker provisions an NFC tag with malicious payloads in these fields, the Admin UI executes the payloads when rendering the tag list.
 **Learning:** Even though some fields (`tag.label`) were escaped, others were missed. This indicates a pattern of inconsistent escaping. Secondary identifying properties like serial numbers or emails must also be treated as untrusted user input, especially in administrative consoles which might be targeted for privilege escalation.
 **Prevention:** Audit all properties of objects being rendered in lists. Enforce a rule that *all* object properties interpolated into HTML strings must be wrapped in `escapeHTML()`, not just the primary names or titles.
+
+## 2025-05-26 - Fix DOM-based escapeHTML vulnerability failing to escape quotes
+**Vulnerability:** The DOM-based escapeHTML function in src/utils.js used div.textContent and div.innerHTML, which successfully escapes < and >, but fails to escape quotes (" and '). This allowed attackers to break out of HTML attributes (like href or src) and execute XSS payloads.
+**Learning:** Using native DOM properties like textContent/innerHTML for HTML escaping is incomplete because it does not reliably encode quotes, which are critical when injecting user data into HTML attributes.
+**Prevention:** Always use a robust regex-based escaping function that explicitly replaces &, <, >, ", and ' with their corresponding HTML entities.
