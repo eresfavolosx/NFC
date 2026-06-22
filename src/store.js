@@ -398,9 +398,12 @@ export const store = {
             lastWritten: null,
             createdAt: new Date().toISOString(),
         };
-        data.tags.unshift(tag);
         createdTags.push(tag);
     }
+    // Performance optimization: Batch prepend newly created tags using O(N) array concatenation
+    // instead of sequentially unshifting inside the loop, preventing an O(N^2) memory reallocation bottleneck
+    // and avoiding Maximum Call Stack Size errors that can occur with spread syntax on large arrays.
+    data.tags = createdTags.concat(data.tags);
     this._addActivity('tag_created', `Registered ${count} bulk tags starting with "${prefix}"`);
     this._notify();
     return createdTags;
