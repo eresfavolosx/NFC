@@ -37,8 +37,9 @@ export function renderDashboard() {
         
         <div class="activity-feed">
           ${stats.recentActivity.length === 0 ? `
-            <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
-              ${t('no_activity')}
+            <div class="empty-state" style="padding: 2rem 0;">
+              <div class="empty-state-icon" aria-hidden="true">📋</div>
+              <p class="empty-state-desc" style="margin-bottom: 0;">${t('no_activity')}</p>
             </div>
           ` : stats.recentActivity.map(act => `
             <div class="activity-item">
