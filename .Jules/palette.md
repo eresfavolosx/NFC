@@ -7,3 +7,6 @@
 ## 2024-04-10 - Dynamic ARIA attributes on Toast Notifications
 **Learning:** Setting static `aria-live` and `aria-atomic` on a global notification container is less accessible, especially when rendering multiple messages of different severities simultaneously or frequently. Global properties may fail to correctly signal the true urgency of individual updates.
 **Action:** Always configure `role` and `aria-live` attributes dynamically on individual notification elements. Use `role="alert"` and `aria-live="assertive"` for errors/warnings, and `role="status"` and `aria-live="polite"` for non-critical informational messages.
+## 2025-06-25 - Custom Toggle Switch Accessibility
+**Learning:** Custom CSS-based toggle switches (`input[type="checkbox"]` hidden with a custom `.slider`) often lack proper programmatic association with their surrounding text labels and descriptions. While visually apparent, screen readers may fail to announce the label or the helper text when the toggle is focused.
+**Action:** Always link the text label directly to the custom toggle input using the `for` attribute (pointing to the input's `id`), and link any helper/description paragraphs using the `aria-describedby` attribute on the input. This ensures both are announced to assistive technologies.
