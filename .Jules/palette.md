@@ -7,3 +7,7 @@
 ## 2024-04-10 - Dynamic ARIA attributes on Toast Notifications
 **Learning:** Setting static `aria-live` and `aria-atomic` on a global notification container is less accessible, especially when rendering multiple messages of different severities simultaneously or frequently. Global properties may fail to correctly signal the true urgency of individual updates.
 **Action:** Always configure `role` and `aria-live` attributes dynamically on individual notification elements. Use `role="alert"` and `aria-live="assertive"` for errors/warnings, and `role="status"` and `aria-live="polite"` for non-critical informational messages.
+
+## 2024-05-30 - Missing visual disabled states
+**Learning:** While the application correctly disabled interactive elements (buttons, inputs) in JavaScript logic to prevent interaction, it lacked corresponding CSS styles (like opacity or cursor changes) to visually communicate this state to users. This discrepancy leads to user confusion as elements appear interactive but are unresponsive.
+**Action:** Always ensure that when implementing interactive states in logic, corresponding visual feedback styles (e.g., `:disabled`, `[aria-disabled="true"]`) are defined in the global or component CSS to provide clear affordances.
