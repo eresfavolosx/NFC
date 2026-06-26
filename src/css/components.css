@@ -39,6 +39,17 @@
     outline-offset: 2px;
 }
 
+.btn:disabled,
+.btn[aria-disabled="true"],
+.form-input:disabled,
+.form-select:disabled,
+input:disabled,
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(0.5);
+}
+
 .btn-primary {
     background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
     color: white;
