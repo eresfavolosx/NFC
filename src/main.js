@@ -207,10 +207,10 @@ function openWriteWizard() {
                 </div>
                 <div class="form-group" style="margin-top: var(--space-md)">
                     <label class="checkbox-container" for="wiz-lock" style="display: flex; align-items: center; gap: var(--space-sm); cursor: pointer;">
-                        <input type="checkbox" id="wiz-lock">
+                        <input type="checkbox" id="wiz-lock" aria-describedby="wiz-lock-desc">
                         <span style="font-size: var(--font-size-sm);"><strong>Lock Tag</strong> (Anti-overwrite)</span>
                     </label>
-                    <p class="text-xs text-muted">A locked tag can never be rewritten again.</p>
+                    <p class="text-xs text-muted" id="wiz-lock-desc">A locked tag can never be rewritten again.</p>
                 </div>
             `,
             submitLabel: 'Ready to Program',
