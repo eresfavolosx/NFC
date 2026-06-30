@@ -5,7 +5,7 @@ const firebaseConfig = {
   projectId: "nfc-manager-fv96",
   appId: "1:369384689589:web:2a98456e0b9e38db1913fc",
   storageBucket: "nfc-manager-fv96.firebasestorage.app",
-  apiKey: "AIzaSyBuYtwyaiO0IJ42GZ8D6BdN9Ke5E-DcbLo",
+  apiKey: typeof import.meta !== "undefined" && import.meta.env ? import.meta.env.VITE_FIREBASE_API_KEY : (typeof process !== "undefined" ? process.env.VITE_FIREBASE_API_KEY : ""),
   authDomain: "nfc-manager-fv96.firebaseapp.com",
   messagingSenderId: "369384689589",
 };
