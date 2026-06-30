@@ -398,9 +398,10 @@ export const store = {
             lastWritten: null,
             createdAt: new Date().toISOString(),
         };
-        data.tags.unshift(tag);
         createdTags.push(tag);
     }
+    // Prepend createdTags while keeping the reversed creation order.
+    data.tags = [...createdTags].reverse().concat(data.tags);
     this._addActivity('tag_created', `Registered ${count} bulk tags starting with "${prefix}"`);
     this._notify();
     return createdTags;
