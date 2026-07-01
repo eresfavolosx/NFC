@@ -1,3 +1,6 @@
 ## 2026-04-08 - Avoid N+1 Map Pre-fetching Micro-optimizations
 **Learning:** Pre-fetching Maps and replacing simple property getter calls inside loops with closures or pre-fetched map references is considered a 'useless micro-optimization' and an architectural anti-pattern in JS, as property access is extremely fast. Additionally, attempts to provide default fallbacks using arrays (e.g., `[]`) inside those loops degrades memory by allocating unused arrays.
 **Action:** Do not attempt to optimize O(N) property getters that rely on internal lazy-caching Maps. If a fallback array is absolutely necessary, subclass the `Map` to return a shared `Object.freeze([])` instance to avoid memory bloat.
+## 2024-05-18 - Replacing Sequential Array Unshifts with Concat for O(N) Complexity
+**Learning:** Using `unshift()` repeatedly inside a loop to prepend items to a large array is an O(N^2) operation because JavaScript must reallocate and shift all existing elements in memory on every single iteration.
+**Action:** When prepending multiple elements, accumulate them in a temporary array during the loop, and use `[...temp].reverse().concat(targetArray)` outside the loop to achieve O(N) time complexity and prevent major memory reallocation bottlenecks.
