@@ -216,14 +216,14 @@ function renderWriterUI(links, tags, compatInfo) {
                     <label class="form-label">Lock Tag (Permanent)</label>
                     <div class="form-group animate-fade-up" style="animation-delay: 0.1s">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem">
-                        <label class="form-label" style="margin-bottom:0">Lock Tag (Read-Only)</label>
+                        <label class="form-label" style="margin-bottom:0" for="lock-tag-toggle">Lock Tag (Read-Only)</label>
                         <span class="badge ${store.isPremium() ? 'badge-info' : 'badge-secondary'}">${store.isPremium() ? 'Pro' : 'Pro Feature'}</span>
                     </div>
                     <label class="toggle-switch ${!store.isPremium() ? 'disabled' : ''}">
-                        <input type="checkbox" id="lock-tag-toggle" ${!store.isPremium() ? 'disabled' : ''}>
+                        <input type="checkbox" id="lock-tag-toggle" aria-describedby="lock-tag-desc" ${!store.isPremium() ? 'disabled' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
-                    <p class="text-sm text-muted" style="margin-top: 0.5rem">Permanent. Once locked, the tag cannot be erased or rewritten.</p>
+                    <p class="text-sm text-muted" id="lock-tag-desc" style="margin-top: 0.5rem">Permanent. Once locked, the tag cannot be erased or rewritten.</p>
                 </div>
                 </div>
             </div>
@@ -237,7 +237,7 @@ function renderWriterUI(links, tags, compatInfo) {
               </div>
 
               <div class="form-group" style="margin-top: -var(--space-sm)">
-                <label class="checkbox-container" style="display: flex; align-items: center; gap: var(--space-sm); font-size: var(--font-size-sm); cursor: pointer;">
+                <label class="checkbox-container" style="display: flex; align-items: center; gap: var(--space-sm); font-size: var(--font-size-sm); cursor: pointer;" for="sequentialMode">
                   <input type="checkbox" id="sequentialMode">
                   <span><strong>Sequential Mode</strong> (Auto-advance to next tag after writing)</span>
                 </label>
