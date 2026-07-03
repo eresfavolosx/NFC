@@ -2,12 +2,7 @@
    NFC Tag Manager — Utility Functions
    ═══════════════════════════════════════════════════════════ */
 
-export function escapeHTML(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
+export { escapeHTML } from './utils/sanitize.js';
 
 export function showToast(message, type = 'info') {
     console.log(`[Toast] ${type}: ${message}`);
