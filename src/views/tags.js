@@ -75,7 +75,7 @@ function renderTagRow(tag, index, t) {
         }
             <div class="tag-meta">
               ${tag.isLocked ? `<span class="tag-badge status-locked">🔒 ${t('locked')}</span>` : ''}
-              ${tag.location ? `<span class="tag-badge location-badge" title="${tag.location.lat}, ${tag.location.lng}">📍 ${t('geo_tagged')}</span>` : ''}
+              ${tag.location ? `<span class="tag-badge location-badge" title="${escapeHTML(tag.location.lat)}, ${escapeHTML(tag.location.lng)}">📍 ${t('geo_tagged')}</span>` : ''}
               <span class="tag-date">Added ${new Date(tag.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
