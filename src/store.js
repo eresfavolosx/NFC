@@ -398,9 +398,12 @@ export const store = {
             lastWritten: null,
             createdAt: new Date().toISOString(),
         };
-        data.tags.unshift(tag);
+        // ⚡ Bolt: Accumulate new tags in array instead of unshift inside loop
+        // Why: Calling unshift() sequentially inside a loop creates an O(N^2) memory
+        // reallocation bottleneck. Prepending via concat() is O(N).
         createdTags.push(tag);
     }
+    data.tags = [...createdTags].reverse().concat(data.tags);
     this._addActivity('tag_created', `Registered ${count} bulk tags starting with "${prefix}"`);
     this._notify();
     return createdTags;
