@@ -398,9 +398,13 @@ export const store = {
             lastWritten: null,
             createdAt: new Date().toISOString(),
         };
-        data.tags.unshift(tag);
         createdTags.push(tag);
     }
+    // ⚡ Bolt: Replace sequential unshift inside loop with array concatenation
+    // Why: Repeated unshift calls in a loop create an O(N^2) memory reallocation bottleneck.
+    // Reversing and prepending via concat preserves exact unshift insertion order without O(N^2) penalty.
+    // Impact: Avoids massive call stack overhead and slowdown for bulk operations on large arrays.
+    data.tags = [...createdTags].reverse().concat(data.tags);
     this._addActivity('tag_created', `Registered ${count} bulk tags starting with "${prefix}"`);
     this._notify();
     return createdTags;
