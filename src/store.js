@@ -398,9 +398,13 @@ export const store = {
             lastWritten: null,
             createdAt: new Date().toISOString(),
         };
-        data.tags.unshift(tag);
         createdTags.push(tag);
     }
+
+    // ⚡ Bolt: Replace O(N^2) sequential unshift inside loop with O(N) batched concat
+    // Why: data.tags.unshift() inside the loop caused massive memory reallocation
+    // overhead for large bulk generations.
+    data.tags = [...createdTags].reverse().concat(data.tags);
     this._addActivity('tag_created', `Registered ${count} bulk tags starting with "${prefix}"`);
     this._notify();
     return createdTags;
