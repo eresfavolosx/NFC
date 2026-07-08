@@ -47,11 +47,11 @@ export function renderSettings() {
 
           <div class="form-group-row">
             <div class="form-info">
-              <label class="form-label">Biometric Authentication</label>
-              <p class="form-desc">Use FaceID or TouchID to unlock administrative settings.</p>
+              <label class="form-label" for="useBiometrics">Biometric Authentication</label>
+              <p class="form-desc" id="biometrics-desc">Use FaceID or TouchID to unlock administrative settings.</p>
             </div>
             <label class="switch">
-              <input type="checkbox" id="useBiometrics" ${settings.useBiometrics ? 'checked' : ''}>
+              <input type="checkbox" id="useBiometrics" aria-describedby="biometrics-desc" ${settings.useBiometrics ? 'checked' : ''}>
               <span class="slider round"></span>
             </label>
           </div>
