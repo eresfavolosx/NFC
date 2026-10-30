@@ -398,9 +398,16 @@ export const store = {
             lastWritten: null,
             createdAt: new Date().toISOString(),
         };
-        data.tags.unshift(tag);
         createdTags.push(tag);
     }
+    // ⚡ Bolt: Array Prepend Optimization
+    // Why: Repeated Array.unshift() calls inside a loop shift existing elements on every iteration,
+    // creating an O(N^2) memory reallocation bottleneck when adding many tags sequentially.
+    // Impact: Transforms O(N^2) unshifts into O(N) array concatenation, significantly improving
+    // memory allocation and speed during bulk tag creation operations.
+    // Measurement: Time complexity for sequential insertion dropped from O(N^2) to O(N).
+    data.tags = [...createdTags].reverse().concat(data.tags);
+
     this._addActivity('tag_created', `Registered ${count} bulk tags starting with "${prefix}"`);
     this._notify();
     return createdTags;
