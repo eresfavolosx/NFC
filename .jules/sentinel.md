@@ -29,3 +29,7 @@
 **Vulnerability:** Found unescaped template string interpolations of user-controlled inputs (`tag.serialNumber`, `tag.ownerEmail`) within the Admin view in `src/views/admin.js`. If an attacker provisions an NFC tag with malicious payloads in these fields, the Admin UI executes the payloads when rendering the tag list.
 **Learning:** Even though some fields (`tag.label`) were escaped, others were missed. This indicates a pattern of inconsistent escaping. Secondary identifying properties like serial numbers or emails must also be treated as untrusted user input, especially in administrative consoles which might be targeted for privilege escalation.
 **Prevention:** Audit all properties of objects being rendered in lists. Enforce a rule that *all* object properties interpolated into HTML strings must be wrapped in `escapeHTML()`, not just the primary names or titles.
+## 2024-06-16 - Prevent Stored DOM XSS in Sidebar Brand Name
+**Vulnerability:** The application loaded the custom `brandName` setting from persistent storage (like `store.settings`) and directly interpolated it into the sidebar's `innerHTML` without sanitization.
+**Learning:** Application settings loaded from persistent storage must be treated as untrusted input and sanitized with `escapeHTML` before being interpolated into `innerHTML` to prevent stored DOM XSS vulnerabilities.
+**Prevention:** Always wrap variables that originate from user input or persistent storage with `escapeHTML` when rendering them directly into HTML templates.
