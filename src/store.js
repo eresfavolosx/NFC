@@ -354,7 +354,7 @@ export const store = {
         throw new Error('Tag limit reached. Upgrade to Pro for unlimited tags.');
     }
     const tag = {
-      id: crypto.randomUUID(),
+      id: id || crypto.randomUUID(),
       label,
       serialNumber,
       assignedLinkId: null,
@@ -424,16 +424,14 @@ export const store = {
     // Generate the URL to be written
     let urlToWrite = link?.url;
     if (data.settings.dynamicRedirection) {
-        // Construct a redirection URL pointing back to our app
-        // Using window.location.origin as the base
-        const base = window.location.origin;
+        const base = typeof window !== 'undefined' && window.location ? window.location.origin : 'https://nfc.novu.works';
         urlToWrite = `${base}/#/r/${tag.id}`;
     }
 
-    // Capture location if on native
-    if (Capacitor.isNativePlatform()) {
+    // Capture location if on native Capacitor runtime
+    if (typeof globalThis.Capacitor !== 'undefined' && globalThis.Capacitor?.isNativePlatform?.() && typeof globalThis.Geolocation !== 'undefined') {
         try {
-            Geolocation.getCurrentPosition().then(pos => {
+            globalThis.Geolocation.getCurrentPosition().then(pos => {
                 tag.location = {
                     lat: pos.coords.latitude,
                     lng: pos.coords.longitude
@@ -448,7 +446,32 @@ export const store = {
     this._addActivity('tag_assigned', `Assigned "${link?.title || 'link'}" to tag "${tag.label}"`);
     
     this._notify();
-    return true;
+    return urlToWrite || true;
+  },
+
+  simulateTap() {
+    let targetLink = this.links[0];
+    if (!targetLink) {
+      targetLink = this.createLink({
+        title: 'Tocaito Live Showcase',
+        url: 'https://nfc.novu.works',
+        category: 'general',
+        icon: '📡'
+      });
+    }
+    targetLink.clicks = (targetLink.clicks || 0) + 1;
+    const targetTag = this.tags[0];
+    data.analytics.unshift({
+      linkId: targetLink.id,
+      tagId: targetTag ? targetTag.id : 'sim-ndef-01',
+      timestamp: new Date().toISOString()
+    });
+    this._addActivity(
+      'visit',
+      `0.4s NFC Tap → "${targetLink.title}" (${targetTag ? targetTag.label : 'NDEF Token #01'})`
+    );
+    this._notify();
+    return targetLink;
   },
 
   deleteTag(id) {
@@ -476,6 +499,7 @@ export const store = {
       id: crypto.randomUUID(),
       type,
       message,
+      description: message,
       timestamp: new Date().toISOString(),
     });
     // Keep only the latest 100
