@@ -388,6 +388,7 @@ export const store = {
         throw new Error('Bulk creation exceeds limit. Upgrade to Pro for more tags.');
     }
     const createdTags = [];
+    const nowIso = new Date().toISOString();
     for (let i = 0; i < count; i++) {
         const num = startNum + i;
         const tag = {
@@ -396,11 +397,11 @@ export const store = {
             serialNumber: null,
             assignedLinkId: null,
             lastWritten: null,
-            createdAt: new Date().toISOString(),
+            createdAt: nowIso,
         };
-        data.tags.unshift(tag);
         createdTags.push(tag);
     }
+    data.tags = createdTags.slice().reverse().concat(data.tags);
     this._addActivity('tag_created', `Registered ${count} bulk tags starting with "${prefix}"`);
     this._notify();
     return createdTags;
