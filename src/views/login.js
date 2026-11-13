@@ -8,6 +8,7 @@ import { showToast } from '../components/toast.js';
 
 export function renderLogin() {
     const app = document.getElementById('app');
+    app?.removeAttribute('aria-busy');
 
     const t = (key) => store.t(key);
 

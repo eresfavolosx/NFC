@@ -321,32 +321,92 @@ select {
     }
 }
 
-.animate-fade-in {
-    animation: fadeIn var(--transition-slow) ease forwards;
-}
+@media (prefers-reduced-motion: no-preference) {
+    .animate-fade-in {
+        animation: fadeIn var(--transition-slow) ease forwards;
+    }
 
-.animate-fade-up {
-    animation: fadeInUp var(--transition-slow) ease forwards;
-}
+    .animate-fade-up {
+        animation: fadeInUp var(--transition-slow) ease forwards;
+    }
 
-.animate-scale-in {
-    animation: scaleIn var(--transition-spring) forwards;
+    .animate-scale-in {
+        animation: scaleIn var(--transition-spring) forwards;
+    }
 }
 
 .animate-shake {
     animation: shake 0.5s ease;
 }
 
+/* ── Focus Visibility & Forced Colors ── */
+:focus-visible {
+    outline: 2px solid var(--color-primary-light, #ff8c00);
+    outline-offset: 2px;
+}
+
+@media (forced-colors: active) {
+    :focus-visible {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+    }
+}
+
 /* ── Utility ── */
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
+.sr-only:where(:not(:focus-within, :active)),
+.visually-hidden:where(:not(:focus-within, :active)) {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip-path: inset(50%) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* ── Skeleton Loaders ── */
+.skeleton-block {
+    position: relative;
     overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    border: 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="light"] .skeleton-block {
+    background: rgba(15, 23, 42, 0.08);
+}
+
+.skeleton-block::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.16) 50%, transparent 100%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .skeleton-block::after {
+        animation: nfcSkeletonShimmer 1.45s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+}
+
+@keyframes nfcSkeletonShimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.nfc-shell-skeleton {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    padding: var(--space-lg, 1.5rem);
+    gap: var(--space-lg, 1.5rem);
 }
 
 .text-gradient {

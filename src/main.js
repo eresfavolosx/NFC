@@ -76,6 +76,7 @@ function adminGuard(renderFn) {
 // ── Ensure the sidebar + main layout is present ──
 function ensureAppLayout() {
   const app = document.getElementById('app');
+  app?.removeAttribute('aria-busy');
   if (!document.getElementById('sidebar')) {
     const { sidebar, bottomNav } = renderSidebar();
     app.innerHTML = '';
@@ -401,6 +402,7 @@ store.init().then(async () => {
 }).catch(err => {
     console.error('App boot failure:', err);
     const appEl = document.getElementById('app');
+    appEl?.removeAttribute('aria-busy');
     appEl.innerHTML = `<div style="padding: 2rem; color: white;">Critical Error: <span></span></div>`;
     appEl.querySelector('span').textContent = err.message;
 });
