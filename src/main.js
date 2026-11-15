@@ -23,54 +23,90 @@ import { renderAdmin } from './views/admin.js';
 import { nfc } from './nfc.js';
 import { showToast, renderHeader, escapeHTML } from './utils.js';
 import { openModal, closeModal, getModalFormData } from './components/modal.js';
+import { prompt2FALogin } from './components/two-factor-dialog.js';
 
 console.log('Main.js loading...');
 
-// ── Guard: redirect to login if not authenticated ──
+// ── Authentication & 2FA Verification Helper ──
+function verifyAuthAnd2FA(onVerified) {
+  if (!store.isAuthenticated) {
+    navigate('/login');
+    return false;
+  }
+  if (store.is2FAEnabled && !store.isSession2FAVerified()) {
+    prompt2FALogin(
+      () => onVerified(),
+      () => {
+        store.logout();
+        navigate('/login');
+      }
+    );
+    return false;
+  }
+  return true;
+}
+
+// ── Guard: redirect to login if not authenticated or 2FA unverified ──
 function authGuard(renderFn) {
   return () => {
-    if (!store.isAuthenticated) {
-      navigate('/login');
-      return;
+    if (verifyAuthAnd2FA(() => {
+      ensureAppLayout();
+      updateSidebarActive(getCurrentRoute());
+      renderFn();
+    })) {
+      ensureAppLayout();
+      updateSidebarActive(getCurrentRoute());
+      renderFn();
     }
-    ensureAppLayout();
-    updateSidebarActive(getCurrentRoute());
-    renderFn();
   };
 }
 
 function premiumGuard(renderFn) {
-    return () => {
-        if (!store.isAuthenticated) {
-            navigate('/login');
-            return;
-        }
-        if (!store.isPremium()) {
-            navigate('/profile');
-            showToast('Premium feature. Start your trial or upgrade to access!', 'warning');
-            return;
-        }
-        ensureAppLayout();
-        updateSidebarActive(getCurrentRoute());
-        renderFn();
-    };
+  return () => {
+    if (verifyAuthAnd2FA(() => {
+      if (!store.isPremium()) {
+        navigate('/profile');
+        showToast('Premium feature. Start your trial or upgrade to access!', 'warning');
+        return;
+      }
+      ensureAppLayout();
+      updateSidebarActive(getCurrentRoute());
+      renderFn();
+    })) {
+      if (!store.isPremium()) {
+        navigate('/profile');
+        showToast('Premium feature. Start your trial or upgrade to access!', 'warning');
+        return;
+      }
+      ensureAppLayout();
+      updateSidebarActive(getCurrentRoute());
+      renderFn();
+    }
+  };
 }
 
 function adminGuard(renderFn) {
-    return () => {
-        if (!store.isAuthenticated) {
-            navigate('/login');
-            return;
-        }
-        if (!store.isSuperAdmin()) {
-            navigate('/dashboard');
-            showToast('Access Denied: Super Admin only.', 'error');
-            return;
-        }
-        ensureAppLayout();
-        updateSidebarActive(getCurrentRoute());
-        renderFn();
-    };
+  return () => {
+    if (verifyAuthAnd2FA(() => {
+      if (!store.isSuperAdmin()) {
+        navigate('/dashboard');
+        showToast('Access Denied: Super Admin only.', 'error');
+        return;
+      }
+      ensureAppLayout();
+      updateSidebarActive(getCurrentRoute());
+      renderFn();
+    })) {
+      if (!store.isSuperAdmin()) {
+        navigate('/dashboard');
+        showToast('Access Denied: Super Admin only.', 'error');
+        return;
+      }
+      ensureAppLayout();
+      updateSidebarActive(getCurrentRoute());
+      renderFn();
+    }
+  };
 }
 
 // ── Ensure the sidebar + main layout is present ──
@@ -319,7 +355,7 @@ function openWriteWizard() {
 
 // ── Register Routes ──
 registerRoute('/login', () => {
-  if (store.isAuthenticated) {
+  if (store.isAuthenticated && (!store.is2FAEnabled || store.isSession2FAVerified())) {
     navigate('/dashboard');
     return;
   }
@@ -329,7 +365,7 @@ registerRoute('/login', () => {
 });
 
 registerRoute('', () => {
-  if (store.isAuthenticated) {
+  if (store.isAuthenticated && (!store.is2FAEnabled || store.isSession2FAVerified())) {
     navigate('/dashboard');
   } else {
     navigate('/login');

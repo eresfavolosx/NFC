@@ -2,6 +2,13 @@ import { auth, provider, signInWithPopup, signOut, onAuthStateChanged } from './
 import { nfc } from './nfc.js';
 import { translations } from './i18n.js';
 import { isValidUrl } from './utils/sanitize.js';
+import {
+    verifyTotpCode,
+    verifyAndConsumeBackupCode,
+    isSession2FAVerified,
+    markSession2FAVerified,
+    clearSession2FAVerification
+} from './utils/totp.js';
 
 /* ═══════════════════════════════════════════════════════════
    NFC Tag Manager — Data Store (localStorage-backed)
@@ -29,6 +36,7 @@ const defaultData = {
     dynamicRedirection: true,
     theme: 'system',
     language: 'es', // Default to Spanish
+    security2FA: null,
   },
   subscription: {
     tier: 'free', // 'free' or 'pro'
@@ -134,10 +142,54 @@ export const store = {
       await signOut(auth);
       data.settings.isAuthenticated = false;
       data.settings.user = null;
+      clearSession2FAVerification();
       this._notify();
     } catch (error) {
       console.error('Logout Error:', error);
     }
+  },
+
+  // ── Two-Factor Authentication (2FA) ──
+  get is2FAEnabled() {
+    return Boolean(data.settings.security2FA?.enabled && data.settings.security2FA?.secret);
+  },
+  get security2FA() {
+    return data.settings.security2FA || null;
+  },
+  enable2FA(secret, backupCodes) {
+    data.settings.security2FA = {
+      enabled: true,
+      secret,
+      backupCodes: Array.isArray(backupCodes) ? backupCodes : [],
+      enabledAt: new Date().toISOString()
+    };
+    markSession2FAVerified();
+    this._notify();
+  },
+  disable2FA() {
+    data.settings.security2FA = null;
+    clearSession2FAVerification();
+    this._notify();
+  },
+  async verify2FACode(code) {
+    if (!this.is2FAEnabled) return false;
+    return await verifyTotpCode(data.settings.security2FA.secret, code);
+  },
+  verify2FABackupCode(code) {
+    if (!this.is2FAEnabled) return false;
+    const res = verifyAndConsumeBackupCode(code, data.settings.security2FA.backupCodes || []);
+    if (res.valid) {
+      data.settings.security2FA.backupCodes = res.remainingCodes;
+      this._notify();
+      return true;
+    }
+    return false;
+  },
+  isSession2FAVerified() {
+    return isSession2FAVerified();
+  },
+  markSession2FAVerified() {
+    markSession2FAVerified();
   },
 
   get user() { return data.settings.user; },

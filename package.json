@@ -23,6 +23,7 @@
     "@capacitor/preferences": "^8.0.1",
     "@capgo/capacitor-nfc": "^8.0.17",
     "capacitor-native-biometric": "^4.2.2",
-    "firebase": "^12.10.0"
+    "firebase": "^12.10.0",
+    "qrcode": "^1.5.4"
   }
 }

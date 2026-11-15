@@ -5,6 +5,7 @@
 import { store } from '../store.js';
 import { navigate } from '../router.js';
 import { showToast } from '../components/toast.js';
+import { prompt2FALogin } from '../components/two-factor-dialog.js';
 
 export function renderLogin() {
     const app = document.getElementById('app');
@@ -48,8 +49,21 @@ export function renderLogin() {
 
         try {
             if (await store.loginWithGoogle()) {
-                showToast('Welcome back!', 'success');
-                navigate('/dashboard');
+                if (store.is2FAEnabled && !store.isSession2FAVerified()) {
+                    prompt2FALogin(
+                        () => {
+                            showToast('Welcome back!', 'success');
+                            navigate('/dashboard');
+                        },
+                        () => {
+                            store.logout();
+                            showToast('Sign-in cancelled.', 'info');
+                        }
+                    );
+                } else {
+                    showToast('Welcome back!', 'success');
+                    navigate('/dashboard');
+                }
             }
         } catch (error) {
             showToast('Sign-In failed. Please try again.', 'error');
