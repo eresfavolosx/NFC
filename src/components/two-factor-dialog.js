@@ -78,9 +78,15 @@ export function prompt2FALogin(onSuccess, onCancel) {
         title: 'Two-Factor Authentication',
         content: renderBody(),
         submitLabel: 'Verify & Enter',
+        cancelLabel: 'Sign Out',
         showCancel: true,
+        dismissible: false,
+        onClose: () => {
+            clearInterval(timer);
+            if (onCancel) onCancel();
+        },
         onSubmit: async (e) => {
-            e.preventDefault();
+            e?.preventDefault();
             const input = document.getElementById('nfc2faInput')?.value || '';
             const errEl = document.getElementById('nfc2faError');
 
@@ -129,16 +135,6 @@ export function prompt2FALogin(onSuccess, onCancel) {
             countdownEl.textContent = `Refreshes in ${getTotpSecondsRemaining()}s`;
         }
     }, 1000);
-
-    // If modal is dismissed without submitting
-    const cancelBtn = document.getElementById('modalCancel');
-    const closeBtn = document.getElementById('modalClose');
-    const handleCancel = () => {
-        clearInterval(timer);
-        if (onCancel) onCancel();
-    };
-    cancelBtn?.addEventListener('click', handleCancel);
-    closeBtn?.addEventListener('click', handleCancel);
 }
 
 /**
@@ -201,7 +197,7 @@ export async function open2FASetupModal(onActivated) {
         submitLabel: 'Verify & Activate 2FA',
         showCancel: true,
         onSubmit: async (e) => {
-            e.preventDefault();
+            e?.preventDefault();
             const input = document.getElementById('setupVerifyCodeInput')?.value || '';
             const cleanCode = input.replace(/\D/g, '').slice(0, 6);
             const errEl = document.getElementById('setupErrorMsg');

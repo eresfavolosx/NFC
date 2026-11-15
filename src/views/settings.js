@@ -133,7 +133,7 @@ function initSettingsEvents() {
             submitLabel: 'Yes, Disable 2FA',
             showCancel: true,
             onSubmit: (e) => {
-                e.preventDefault();
+                e?.preventDefault();
                 store.disable2FA();
                 closeModal();
                 showToast('Two-factor authentication disabled.', 'info');

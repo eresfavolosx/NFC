@@ -56,12 +56,21 @@ function loadData() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      return { ...defaultData, ...parsed };
+      return {
+        ...defaultData,
+        ...parsed,
+        settings: { ...defaultData.settings, ...(parsed?.settings || {}) },
+        subscription: { ...defaultData.subscription, ...(parsed?.subscription || {}) },
+      };
     }
   } catch (e) {
     console.warn('Failed to load store data:', e);
   }
-  return { ...defaultData };
+  return {
+    ...defaultData,
+    settings: { ...defaultData.settings },
+    subscription: { ...defaultData.subscription },
+  };
 }
 
 function saveData(dataToSave) {
@@ -608,14 +617,26 @@ export const store = {
 
   // ── Reset ──
   reset() {
-    data = { ...defaultData, links: [], tags: [], activity: [] };
+    data = {
+      ...defaultData,
+      settings: { ...defaultData.settings },
+      subscription: { ...defaultData.subscription },
+      links: [],
+      tags: [],
+      activity: []
+    };
+    clearSession2FAVerification();
     this._notify();
   },
 };
 
 // Listen for auth state changes to keep store in sync
 onAuthStateChanged(auth, (user) => {
+    const prevUid = data.settings.user?.id;
     if (user) {
+        if (prevUid && prevUid !== user.uid) {
+            clearSession2FAVerification();
+        }
         data.settings.isAuthenticated = true;
         data.settings.user = {
             id: user.uid,
@@ -626,6 +647,7 @@ onAuthStateChanged(auth, (user) => {
     } else {
         data.settings.isAuthenticated = false;
         data.settings.user = null;
+        clearSession2FAVerification();
     }
     store._notify();
 });
