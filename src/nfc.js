@@ -7,8 +7,6 @@ import { CapacitorNfc } from '@capgo/capacitor-nfc';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import { Geolocation } from '@capacitor/geolocation';
 
-import { NativeBiometric } from 'capacitor-native-biometric';
-
 export const nfc = {
     isNative() {
         return Capacitor.isNativePlatform();
@@ -295,12 +293,24 @@ export const nfc = {
         return this.getCompatibilityInfo().message;
     },
 
+    async getNativeBiometric() {
+        if (!this.isNative()) return null;
+        try {
+            const mod = await import('capacitor-native-biometric');
+            return mod.NativeBiometric || null;
+        } catch {
+            return null;
+        }
+    },
+
     // ── Biometrics ──
     async isBiometricAvailable() {
         if (!this.isNative()) return false;
         try {
-            const result = await NativeBiometric.isAvailable();
-            return result.isAvailable;
+            const plugin = await this.getNativeBiometric();
+            if (!plugin) return false;
+            const result = await plugin.isAvailable();
+            return Boolean(result?.isAvailable);
         } catch {
             return false;
         }
@@ -309,7 +319,9 @@ export const nfc = {
     async authenticateWithBiometrics() {
         if (!this.isNative()) return false;
         try {
-            await NativeBiometric.verifyIdentity({
+            const plugin = await this.getNativeBiometric();
+            if (!plugin) return false;
+            await plugin.verifyIdentity({
                 reason: "Unlock NFC Tag Manager",
                 title: "Authentication Required",
                 subtitle: "Use FaceID/TouchID to access admin settings",

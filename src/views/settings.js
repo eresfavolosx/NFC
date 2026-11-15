@@ -6,7 +6,7 @@ import { store } from '../store.js';
 import { renderHeader } from '../components/header.js';
 import { showToast } from '../components/toast.js';
 import { escapeHTML } from '../utils/sanitize.js';
-import { open2FASetupModal } from '../components/two-factor-dialog.js';
+import { open2FASetupModal, open2FADisableModal } from '../components/two-factor-dialog.js';
 import { openModal, closeModal } from '../components/modal.js';
 
 export function renderSettings() {
@@ -83,7 +83,7 @@ export function renderSettings() {
         </div>
         <div class="settings-form">
           <p class="form-desc" style="margin-bottom: 1rem;">
-            Add an extra layer of account security using Time-Based One-Time Passwords (RFC 6238 TOTP). Compatible with Google Authenticator, Apple Passwords, Authy, and 1Password — 100% free with zero SMS fees.
+            Add an extra layer of account security using Time-Based One-Time Passwords (RFC 6238 TOTP). Works directly with your Google Sign-In account (${escapeHTML(store.user?.email || 'Google Account')}) without requiring a password. Compatible with Google Authenticator, Apple Passwords, Authy, and 1Password — 100% free with zero SMS fees.
           </p>
 
           ${is2FAEnabled ? `
@@ -97,7 +97,7 @@ export function renderSettings() {
             </div>
           ` : `
             <p class="form-desc" style="margin-bottom: 1.25rem;">
-              Protect your NFC tags, redirects, and account even if your primary login session is compromised. You can enable, disable, or re-enable 2FA with fresh keys at any time.
+              Protect your NFC tags, redirects, and account even if your Google sign-in session is active on another device. You can enable, disable, or re-enable 2FA with fresh keys at any time.
             </p>
             <div class="settings-actions">
               <button type="button" class="btn btn-primary" id="enable2faBtn">Enable Two-Factor Authentication</button>
@@ -127,19 +127,7 @@ function initSettingsEvents() {
     });
 
     disable2faBtn?.addEventListener('click', () => {
-        openModal({
-            title: 'Disable Two-Factor Authentication?',
-            content: '<p>Are you sure you want to disable 2FA? Your account will only be protected by your Google sign-in credentials. You can re-enable 2FA anytime.</p>',
-            submitLabel: 'Yes, Disable 2FA',
-            showCancel: true,
-            onSubmit: (e) => {
-                e?.preventDefault();
-                store.disable2FA();
-                closeModal();
-                showToast('Two-factor authentication disabled.', 'info');
-                renderSettings();
-            }
-        });
+        open2FADisableModal(() => renderSettings());
     });
 
     saveBtn?.addEventListener('click', () => {

@@ -231,3 +231,22 @@ export async function open2FASetupModal(onActivated) {
         showToast('Emergency backup codes copied!', 'success');
     });
 }
+
+/**
+ * Prompt to disable 2FA with confirmation modal.
+ */
+export function open2FADisableModal(onDisabled) {
+    openModal({
+        title: 'Disable Two-Factor Authentication?',
+        content: '<p>Are you sure you want to disable 2FA? Your account will only be protected by your Google sign-in credentials. You can re-enable 2FA anytime with a fresh key.</p>',
+        submitLabel: 'Yes, Disable 2FA',
+        showCancel: true,
+        onSubmit: (e) => {
+            e?.preventDefault();
+            store.disable2FA();
+            closeModal();
+            showToast('Two-Factor Authentication has been disabled.', 'info');
+            if (onDisabled) onDisabled();
+        }
+    });
+}

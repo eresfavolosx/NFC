@@ -1,6 +1,7 @@
 import { store } from '../store.js';
 import { renderHeader, escapeHTML, showToast } from '../utils.js';
 import { isValidUrl } from '../utils/sanitize.js';
+import { open2FASetupModal, open2FADisableModal } from '../components/two-factor-dialog.js';
 
 export function renderProfile() {
     const container = document.getElementById('page-content');
@@ -9,6 +10,11 @@ export function renderProfile() {
     const user = store.user;
     const sub = store.subscription;
     const isPro = store.isPremium();
+    const is2FAEnabled = store.is2FAEnabled;
+    const security2FA = store.security2FA;
+    const remainingBackupCount = Array.isArray(security2FA?.backupCodes)
+        ? security2FA.backupCodes.length
+        : 0;
     const trialEnds = sub.trialEndsAt ? new Date(sub.trialEndsAt).toLocaleDateString() : null;
     const t = (key) => store.t(key);
 
@@ -19,8 +25,11 @@ export function renderProfile() {
             <div class="grid grid-2">
                 <!-- User Profile Card -->
                 <div class="card-glass">
-                    <div class="card-header">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                         <h3 class="card-title">${t('user_account')}</h3>
+                        <span class="badge ${is2FAEnabled ? 'badge-success' : 'badge-warning'}">
+                            ${is2FAEnabled ? '● 2FA Active' : '2FA Not Configured'}
+                        </span>
                     </div>
                     <div class="profile-info">
                         <div class="profile-avatar">
@@ -29,9 +38,42 @@ export function renderProfile() {
                         <div class="profile-details">
                             <div class="profile-name">${escapeHTML(user?.displayName || 'Tocaito User')}</div>
                             <div class="profile-email">${escapeHTML(user?.email || 'authenticated via device')}</div>
+                            <div style="font-size: 0.76rem; color: var(--color-primary); margin-top: 4px; font-weight: 600;">
+                                Signed in with Google Account
+                            </div>
                         </div>
                     </div>
-                    <div class="card-actions" style="margin-top: 2rem">
+
+                    <!-- Two-Factor Authentication Box -->
+                    <div style="margin-top: 1.5rem; padding: 1rem; border-radius: var(--radius-md, 12px); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 6px;">
+                            <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary);">Two-Factor Authentication (2FA)</span>
+                            <span style="font-size: 0.74rem; font-weight: 600; color: ${is2FAEnabled ? 'var(--color-primary, #10b981)' : '#f59e0b'};">
+                                ${is2FAEnabled ? `${remainingBackupCount} backup codes left` : 'Recommended for Google accounts'}
+                            </span>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 1rem;">
+                            ${is2FAEnabled
+                                ? 'Your Google account is protected with free RFC 6238 TOTP (Google Authenticator, Apple Passwords, Authy, 1Password).'
+                                : 'Add free 2FA to your Google account with zero SMS fees. A 6-digit authenticator code will be required when signing in.'}
+                        </p>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            ${is2FAEnabled ? `
+                                <button type="button" class="btn btn-secondary btn-sm" id="profile-reconfigure-2fa-btn">
+                                    🔄 Re-enable / New Key
+                                </button>
+                                <button type="button" class="btn btn-danger btn-sm" id="profile-disable-2fa-btn">
+                                    Disable 2FA
+                                </button>
+                            ` : `
+                                <button type="button" class="btn btn-primary btn-sm" id="profile-enable-2fa-btn">
+                                    🛡️ Enable Free 2FA for Google Account
+                                </button>
+                            `}
+                        </div>
+                    </div>
+
+                    <div class="card-actions" style="margin-top: 1.5rem">
                         <button class="btn btn-secondary btn-sm" id="logout-btn">${t('logout')}</button>
                     </div>
                 </div>
@@ -150,6 +192,18 @@ export function renderProfile() {
         store.logout().then(() => {
             window.location.hash = '/login';
         });
+    });
+
+    container.querySelector('#profile-enable-2fa-btn')?.addEventListener('click', () => {
+        open2FASetupModal(() => renderProfile());
+    });
+
+    container.querySelector('#profile-reconfigure-2fa-btn')?.addEventListener('click', () => {
+        open2FASetupModal(() => renderProfile());
+    });
+
+    container.querySelector('#profile-disable-2fa-btn')?.addEventListener('click', () => {
+        open2FADisableModal(() => renderProfile());
     });
 
     container.querySelector('#start-trial-btn')?.addEventListener('click', () => {
