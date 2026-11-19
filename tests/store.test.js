@@ -3,6 +3,7 @@ import assert from 'node:assert';
 import { translations } from '../src/i18n.js';
 
 const storage = new Map();
+const sessionMap = new Map();
 
 // Mock localStorage
 global.localStorage = {
@@ -16,7 +17,15 @@ global.localStorage = {
 global.window = {
   location: { origin: 'https://nfc.novu.works' },
   addEventListener: mock.fn(),
-  removeEventListener: mock.fn()
+  removeEventListener: mock.fn(),
+  sessionStorage: {
+    getItem: (k) => sessionMap.get(k) ?? null,
+    setItem: (k, v) => sessionMap.set(k, String(v)),
+    removeItem: (k) => sessionMap.delete(k),
+    get length() { return sessionMap.size; },
+    key: (i) => Array.from(sessionMap.keys())[i] ?? null,
+    clear: () => sessionMap.clear()
+  }
 };
 
 global.document = {
@@ -34,13 +43,20 @@ describe('Store & Telemetry Engine', async () => {
     beforeEach(() => {
         store.reset();
         storage.clear();
+        sessionMap.clear();
         global.localStorage.setItem.mock.resetCalls();
     });
 
-    test('should create and update a link', () => {
+    test('should create and update a link with normalized ownerEmail', () => {
+        store.updateSettings({ user: { id: 'uid-owner', email: 'Owner@Example.com' }, isAuthenticated: true });
         const link = store.createLink({ title: 'Test Link', url: 'http://test.com' });
         assert.strictEqual(store.links.length, 1);
         assert.strictEqual(link.title, 'Test Link');
+        assert.strictEqual(link.ownerEmail, 'owner@example.com');
+
+        store.updateSettings({ user: { id: 'uid-owner', email: 'OWNER@example.com' }, isAuthenticated: true });
+        assert.strictEqual(store.links.length, 1);
+        assert.ok(store.getLink(link.id));
 
         store.updateLink(link.id, { title: 'Updated Link' });
         const updated = store.getLink(link.id);
@@ -56,6 +72,67 @@ describe('Store & Telemetry Engine', async () => {
         assert.strictEqual(assignedUrl, 'https://nfc.novu.works/#/r/custom-tag-01');
         assert.strictEqual(store.stats.activeTags, 1);
         assert.ok(store.stats.recentActivity[0].description.includes('Table 1'));
+    });
+
+    test('should create bulk tags with ownerEmail, location, isLocked, and status', () => {
+        store.updateSettings({ user: { id: 'uid-bulk', email: 'Bulk@Example.com' }, isAuthenticated: true });
+        const tags = store.createBulkTags('Table', 2, 10);
+        assert.strictEqual(tags.length, 2);
+        assert.strictEqual(tags[0].label, 'Table 10');
+        assert.strictEqual(tags[0].ownerEmail, 'bulk@example.com');
+        assert.strictEqual(tags[0].location, null);
+        assert.strictEqual(tags[0].isLocked, false);
+        assert.strictEqual(tags[0].status, 'active');
+    });
+
+    test('should isolate security2FA by user.uid so Account A never locks out Account B', () => {
+        const secretA = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
+        store.updateSettings({
+            user: { id: 'uid-account-a', email: 'a@example.com' },
+            isAuthenticated: true
+        });
+        store.enable2FA(secretA, ['AAAA-1111']);
+        assert.strictEqual(store.is2FAEnabled, true);
+        assert.strictEqual(store.isSession2FAVerified(), true);
+
+        // Switch to Account B
+        store.updateSettings({
+            user: { id: 'uid-account-b', email: 'b@example.com' },
+            isAuthenticated: true
+        });
+        assert.strictEqual(store.is2FAEnabled, false);
+        assert.strictEqual(store.security2FA, null);
+        assert.strictEqual(store.isSession2FAVerified(), false);
+
+        // Switch back to Account A -> Account A retains its 2FA config
+        store.updateSettings({
+            user: { id: 'uid-account-a', email: 'a@example.com' },
+            isAuthenticated: true
+        });
+        assert.strictEqual(store.is2FAEnabled, true);
+        assert.strictEqual(store.security2FA.secret, secretA);
+    });
+
+    test('should reset analytics and security2FA cleanly', () => {
+        store.updateSettings({ user: { id: 'uid-a', email: 'a@example.com' }, isAuthenticated: true });
+        store.enable2FA('GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ', ['ABCD-1234']);
+        store.simulateTap();
+        assert.strictEqual(store.analytics.length, 1);
+
+        store.reset();
+        assert.strictEqual(store.analytics.length, 0);
+        assert.strictEqual(store.is2FAEnabled, false);
+        assert.strictEqual(store.user, null);
+    });
+
+    test('should neutralize CSV formula injection in exportToCSV()', () => {
+        const link = store.createLink({ title: '=CMD("calc")', url: 'https://example.com' });
+        const tag = store.createTag({ label: '@SUM(A1)' });
+        store.incrementClicks(link.id, tag.id);
+
+        const csv = store.exportToCSV();
+        assert.ok(csv.includes('"\'=CMD(""calc"")"'), 'Leading = must be escaped with leading quote');
+        assert.ok(csv.includes('"\'@SUM(A1)"'), 'Leading @ must be escaped with leading quote');
     });
 
     test('should simulate contactless 0.4s NFC tap and increment telemetry', () => {

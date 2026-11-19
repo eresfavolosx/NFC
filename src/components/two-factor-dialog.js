@@ -6,19 +6,26 @@ import QRCode from 'qrcode';
 import { store } from '../store.js';
 import { openModal, closeModal } from './modal.js';
 import { showToast } from './toast.js';
+import { escapeHTML } from '../utils/sanitize.js';
 import {
     generateTotpSecret,
     buildOtpAuthUri,
     verifyTotpCode,
     generateBackupCodes,
-    verifyAndConsumeBackupCode,
     getTotpSecondsRemaining
 } from '../utils/totp.js';
 
-/**
- * Prompt the user for their 6-digit Authenticator code (or backup code) upon login.
- */
-export function prompt2FALogin(onSuccess, onCancel) {
+function open2FAVerificationModal({
+    title,
+    heading,
+    description,
+    submitLabel,
+    cancelLabel = 'Cancel',
+    dismissible = true,
+    warningBanner = '',
+    onVerified,
+    onCancel = null,
+}) {
     let isBackupMode = false;
     let timer = null;
 
@@ -26,6 +33,7 @@ export function prompt2FALogin(onSuccess, onCancel) {
         const sec = getTotpSecondsRemaining();
         if (isBackupMode) {
             return `
+            ${warningBanner}
             <div style="text-align: center; margin-bottom: 1.5rem;">
                 <div style="width: 56px; height: 56px; border-radius: 16px; background: rgba(59, 130, 246, 0.15); color: #3b82f6; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 12px;">🛡️</div>
                 <h4 style="margin: 0 0 6px 0; font-size: 1.15rem;">Emergency Backup Code</h4>
@@ -42,10 +50,11 @@ export function prompt2FALogin(onSuccess, onCancel) {
         }
 
         return `
+        ${warningBanner}
         <div style="text-align: center; margin-bottom: 1.5rem;">
             <div style="width: 56px; height: 56px; border-radius: 16px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 12px;">🔒</div>
-            <h4 style="margin: 0 0 6px 0; font-size: 1.15rem;">Two-Factor Authentication</h4>
-            <p style="margin: 0; font-size: 0.85rem; opacity: 0.7;">Enter the 6-digit code from Google Authenticator, Apple Passwords, Authy, or 1Password.</p>
+            <h4 style="margin: 0 0 6px 0; font-size: 1.15rem;">${escapeHTML(heading)}</h4>
+            <p style="margin: 0; font-size: 0.85rem; opacity: 0.7;">${escapeHTML(description)}</p>
         </div>
         <div class="form-group">
             <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 6px; opacity: 0.8;">
@@ -75,14 +84,19 @@ export function prompt2FALogin(onSuccess, onCancel) {
     };
 
     openModal({
-        title: 'Two-Factor Authentication',
+        title,
         content: renderBody(),
-        submitLabel: 'Verify & Enter',
-        cancelLabel: 'Sign Out',
+        submitLabel,
+        cancelLabel,
         showCancel: true,
-        dismissible: false,
+        dismissible,
+        onCleanup: () => {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+        },
         onClose: () => {
-            clearInterval(timer);
             if (onCancel) onCancel();
         },
         onSubmit: async (e) => {
@@ -101,10 +115,8 @@ export function prompt2FALogin(onSuccess, onCancel) {
                     if (errEl) { errEl.textContent = 'Invalid or already used backup code'; errEl.style.display = 'block'; }
                     return;
                 }
-                clearInterval(timer);
-                closeModal();
-                store.markSession2FAVerified();
-                if (onSuccess) onSuccess();
+                closeModal(true);
+                if (onVerified) onVerified();
                 return;
             }
 
@@ -120,10 +132,8 @@ export function prompt2FALogin(onSuccess, onCancel) {
                 return;
             }
 
-            clearInterval(timer);
-            closeModal();
-            store.markSession2FAVerified();
-            if (onSuccess) onSuccess();
+            closeModal(true);
+            if (onVerified) onVerified();
         }
     });
 
@@ -138,9 +148,44 @@ export function prompt2FALogin(onSuccess, onCancel) {
 }
 
 /**
- * Open interactive 2FA Setup Wizard in Tocaito / NFC Tag Manager.
+ * Prompt the user for their 6-digit Authenticator code (or backup code) upon login.
  */
-export async function open2FASetupModal(onActivated) {
+export function prompt2FALogin(onSuccess, onCancel) {
+    open2FAVerificationModal({
+        title: 'Two-Factor Authentication',
+        heading: 'Two-Factor Authentication',
+        description: 'Enter the 6-digit code from Google Authenticator, Apple Passwords, Authy, or 1Password.',
+        submitLabel: 'Verify & Enter',
+        cancelLabel: 'Sign Out',
+        dismissible: false,
+        onVerified: () => {
+            store.markSession2FAVerified();
+            if (onSuccess) onSuccess();
+        },
+        onCancel
+    });
+}
+
+/**
+ * Open interactive 2FA Setup Wizard in Tocaito / NFC Tag Manager.
+ * Requires verifying the current TOTP/backup code first if 2FA is already enabled.
+ */
+export async function open2FASetupModal(onActivated, { skipCurrentVerification = false } = {}) {
+    if (store.is2FAEnabled && !skipCurrentVerification) {
+        open2FAVerificationModal({
+            title: 'Verify Current 2FA',
+            heading: 'Confirm Current 2FA Code',
+            description: 'Verify your current 6-digit authenticator code (or backup code) before replacing your 2FA key.',
+            submitLabel: 'Continue',
+            cancelLabel: 'Cancel',
+            dismissible: true,
+            onVerified: () => {
+                open2FASetupModal(onActivated, { skipCurrentVerification: true });
+            }
+        });
+        return;
+    }
+
     const secret = generateTotpSecret(32);
     const backupCodes = generateBackupCodes(8);
     const email = store.user?.email || 'admin@tocaito.com';
@@ -168,7 +213,7 @@ export async function open2FASetupModal(onActivated) {
         <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.78rem;">Or Enter Secret Key Manually:</label>
             <div style="display: flex; gap: 8px;">
-                <input class="form-input" type="text" readonly value="${secret}" style="font-family: monospace; font-size: 0.85rem; letter-spacing: 0.1em; background: rgba(0,0,0,0.2);">
+                <input class="form-input" type="text" readonly value="${escapeHTML(secret)}" style="font-family: monospace; font-size: 0.85rem; letter-spacing: 0.1em; background: rgba(0,0,0,0.2);">
                 <button type="button" class="btn btn-secondary" id="copySecretKeyBtn" style="white-space: nowrap; font-size: 0.8rem;">Copy Key</button>
             </div>
         </div>
@@ -179,7 +224,7 @@ export async function open2FASetupModal(onActivated) {
                 <button type="button" class="btn-ghost" id="copyBackupCodesBtn" style="font-size: 0.75rem; text-decoration: underline; padding: 0;">Copy All Codes</button>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-family: monospace; font-size: 0.8rem; text-align: center;">
-                ${backupCodes.map(c => `<div style="padding: 3px; background: rgba(0,0,0,0.25); border-radius: 4px;">${c}</div>`).join('')}
+                ${backupCodes.map(c => `<div style="padding: 3px; background: rgba(0,0,0,0.25); border-radius: 4px;">${escapeHTML(c)}</div>`).join('')}
             </div>
         </div>
 
@@ -220,31 +265,42 @@ export async function open2FASetupModal(onActivated) {
         }
     });
 
-    document.getElementById('copySecretKeyBtn')?.addEventListener('click', () => {
-        navigator.clipboard.writeText(secret);
-        showToast('Secret key copied to clipboard!', 'success');
+    document.getElementById('copySecretKeyBtn')?.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(secret);
+            showToast('Secret key copied to clipboard!', 'success');
+        } catch {
+            showToast('Failed to copy secret key. Please copy it manually.', 'error');
+        }
     });
 
-    document.getElementById('copyBackupCodesBtn')?.addEventListener('click', () => {
+    document.getElementById('copyBackupCodesBtn')?.addEventListener('click', async () => {
         const text = `Tocaito Backup Codes (${email}):\n\n` + backupCodes.join('\n');
-        navigator.clipboard.writeText(text);
-        showToast('Emergency backup codes copied!', 'success');
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('Emergency backup codes copied!', 'success');
+        } catch {
+            showToast('Failed to copy backup codes. Please copy them manually.', 'error');
+        }
     });
 }
 
 /**
- * Prompt to disable 2FA with confirmation modal.
+ * Prompt to disable 2FA — requires verifying current TOTP or backup code first.
  */
 export function open2FADisableModal(onDisabled) {
-    openModal({
+    if (!store.is2FAEnabled) return;
+
+    open2FAVerificationModal({
         title: 'Disable Two-Factor Authentication?',
-        content: '<p>Are you sure you want to disable 2FA? Your account will only be protected by your Google sign-in credentials. You can re-enable 2FA anytime with a fresh key.</p>',
-        submitLabel: 'Yes, Disable 2FA',
-        showCancel: true,
-        onSubmit: (e) => {
-            e?.preventDefault();
+        heading: 'Verify to Disable 2FA',
+        description: 'Enter your current 6-digit authenticator code (or backup code) to confirm disabling 2FA.',
+        submitLabel: 'Verify & Disable 2FA',
+        cancelLabel: 'Cancel',
+        dismissible: true,
+        warningBanner: '<p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">Disabling 2FA leaves your account protected only by your Google sign-in credentials. You can re-enable 2FA anytime with a fresh key.</p>',
+        onVerified: () => {
             store.disable2FA();
-            closeModal();
             showToast('Two-Factor Authentication has been disabled.', 'info');
             if (onDisabled) onDisabled();
         }

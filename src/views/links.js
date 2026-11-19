@@ -1,4 +1,5 @@
 import { store } from '../store.js';
+import { navigate } from '../router.js';
 import { renderHeader } from '../components/header.js';
 import { openModal, closeModal, getModalFormData } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
@@ -35,8 +36,8 @@ function linkFormContent(link = null) {
       <label class="form-label" for="linkCategory">Category</label>
       <select class="form-select" id="linkCategory" name="category">
         ${CATEGORIES.map(c => `
-          <option value="${c.value}" ${link?.category === c.value ? 'selected' : ''}>
-            ${c.icon} ${c.label}
+          <option value="${escapeHTML(c.value)}" ${link?.category === c.value ? 'selected' : ''}>
+            ${escapeHTML(c.icon)} ${escapeHTML(c.label)}
           </option>
         `).join('')}
       </select>
@@ -46,12 +47,10 @@ function linkFormContent(link = null) {
 
 export function renderLinks() {
     const container = document.getElementById('page-content');
-    const links = store.links;
-    const tags = store.tags;
-    const t = (k) => store.t(k);
+    if (!container) return;
 
-    // ⚡ Bolt: Pre-fetch tagsByLinkId map
-    // Why: Pre-fetching the map avoids N+1 getter calls inside the map loop, preventing O(N) bottlenecks when rendering many links.
+    const links = store.links;
+    const t = (k) => store.t(k);
     const tagsByLinkId = store.tagsByLinkId;
 
     container.innerHTML = `
@@ -93,23 +92,24 @@ function renderLinkCard(link, assignedTags, index, t) {
     const cat = getCategoryInfo(link.category);
     const assignedTagsCount = assignedTags.length;
     const searchString = escapeHTML((link.title + ' ' + link.url).toLowerCase());
+    const escapedId = escapeHTML(link.id);
 
     return `
-    <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${link.id}" data-search="${searchString}" data-category="${escapeHTML(link.category)}">
+    <div class="link-card card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${escapedId}" data-search="${searchString}" data-category="${escapeHTML(link.category)}">
       <div class="link-card-header">
-        <span class="link-icon" aria-hidden="true">${cat.icon}</span>
+        <span class="link-icon" aria-hidden="true">${escapeHTML(cat.icon)}</span>
         <div class="link-card-actions">
-          <button class="btn btn-ghost btn-icon copy-link" data-url="${escapeHTML(link.url)}" title="${t('copy_link')}" aria-label="${t('copy_link')} ${escapeHTML(link.title)}">📋</button>
-          <button class="btn btn-ghost btn-icon edit-link" data-id="${link.id}" title="${t('edit')}" aria-label="${t('edit')} ${escapeHTML(link.title)}">✏️</button>
-          <button class="btn btn-ghost btn-icon delete-link" data-id="${link.id}" title="${t('delete')}" aria-label="${t('delete')} ${escapeHTML(link.title)}">🗑️</button>
+          <button class="btn btn-ghost btn-icon copy-link" data-url="${escapeHTML(link.url)}" title="${escapeHTML(t('copy_link'))}" aria-label="${escapeHTML(t('copy_link'))} ${escapeHTML(link.title)}">📋</button>
+          <button class="btn btn-ghost btn-icon edit-link" data-id="${escapedId}" title="${escapeHTML(t('edit'))}" aria-label="${escapeHTML(t('edit'))} ${escapeHTML(link.title)}">✏️</button>
+          <button class="btn btn-ghost btn-icon delete-link" data-id="${escapedId}" title="${escapeHTML(t('delete'))}" aria-label="${escapeHTML(t('delete'))} ${escapeHTML(link.title)}">🗑️</button>
         </div>
       </div>
       <h3 class="link-title">${escapeHTML(link.title)}</h3>
-      <a class="link-url truncate" href="${isValidUrl(link.url) ? escapeHTML(link.url) : '#'}" ${!isValidUrl(link.url) ? 'onclick="return false;"' : 'target="_blank" rel="noopener"'}>${escapeHTML(link.url)}</a>
+      <a class="link-url truncate" href="${isValidUrl(link.url) ? escapeHTML(link.url) : '#'}" ${!isValidUrl(link.url) ? 'onclick="return false;"' : 'target="_blank" rel="noopener noreferrer"'}>${escapeHTML(link.url)}</a>
       <div class="link-meta">
-        <span class="badge badge-primary">${cat.label}</span>
+        <span class="badge badge-primary">${escapeHTML(cat.label)}</span>
         ${assignedTagsCount > 0 ? `<span class="badge badge-success">🏷️ ${assignedTagsCount} tag${assignedTagsCount > 1 ? 's' : ''}</span>` : ''}
-        <span class="link-clicks">👆 ${link.clicks} tap${link.clicks !== 1 ? 's' : ''}</span>
+        <span class="link-clicks">👆 ${Number(link.clicks) || 0} tap${link.clicks !== 1 ? 's' : ''}</span>
       </div>
     </div>
   `;
@@ -146,6 +146,7 @@ function initLinksEvents() {
 
     document.getElementById('addLinkBtn')?.addEventListener('click', openAddLinkModal);
     document.getElementById('emptyAddLink')?.addEventListener('click', openAddLinkModal);
+    document.getElementById('templateBtn')?.addEventListener('click', () => navigate('/templates'));
 
     // Event delegation for card actions
     document.getElementById('linksGrid')?.addEventListener('click', async (e) => {
@@ -184,7 +185,7 @@ function initLinksEvents() {
                     try {
                         store.updateLink(link.id, data);
                         closeModal();
-                        showToast(`Link updated!`, 'success');
+                        showToast('Link updated!', 'success');
                         renderLinks();
                     } catch (err) {
                         showToast(err.message, 'error');
@@ -206,7 +207,7 @@ function initLinksEvents() {
                 onSubmit: () => {
                     store.deleteLink(link.id);
                     closeModal();
-                    showToast(`Link deleted`, 'info');
+                    showToast('Link deleted', 'info');
                     renderLinks();
                 },
             });
@@ -217,26 +218,20 @@ function initLinksEvents() {
     // Debounce search input to minimize expensive DOM manipulations on keystroke
     let filterTimeout;
     const runFilter = () => {
-        filterLinks(document.getElementById('linkSearch')?.value.toLowerCase() || '', document.getElementById('categoryFilter')?.value);
+        filterLinks(document.getElementById('linkSearch')?.value.toLowerCase() || '');
     };
 
-    // Search
     document.getElementById('linkSearch')?.addEventListener('input', () => {
         if (filterTimeout) clearTimeout(filterTimeout);
         filterTimeout = setTimeout(runFilter, 300);
     });
-
-    // Category filter
-    document.getElementById('categoryFilter')?.addEventListener('change', runFilter);
 }
 
-function filterLinks(search, category) {
+function filterLinks(search) {
     const cards = document.querySelectorAll('.link-card');
 
     cards.forEach(card => {
         const matchSearch = !search || card.dataset.search.includes(search);
-        const matchCategory = !category || card.dataset.category === category;
-
-        card.style.display = matchSearch && matchCategory ? '' : 'none';
+        card.style.display = matchSearch ? '' : 'none';
     });
 }

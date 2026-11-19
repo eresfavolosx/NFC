@@ -21,11 +21,19 @@ import { renderProfile } from './views/profile.js';
 import { renderRedirect } from './views/redirect.js';
 import { renderAdmin } from './views/admin.js';
 import { nfc } from './nfc.js';
-import { showToast, renderHeader, escapeHTML } from './utils.js';
-import { openModal, closeModal, getModalFormData } from './components/modal.js';
+import { showToast } from './components/toast.js';
+import { escapeHTML } from './utils/sanitize.js';
+import { openModal, closeModal } from './components/modal.js';
 import { prompt2FALogin } from './components/two-factor-dialog.js';
 
-console.log('Main.js loading...');
+function applyTheme(theme = 'system') {
+  const normalized = ['light', 'dark', 'system'].includes(theme) ? theme : 'system';
+  document.documentElement.setAttribute('data-theme', normalized);
+  const meta = document.querySelector('meta[name="color-scheme"]');
+  if (meta) {
+    meta.setAttribute('content', normalized === 'system' ? 'light dark' : normalized);
+  }
+}
 
 // ── Authentication & 2FA Verification Helper ──
 function verifyAuthAnd2FA(onVerified) {
@@ -36,8 +44,8 @@ function verifyAuthAnd2FA(onVerified) {
   if (store.is2FAEnabled && !store.isSession2FAVerified()) {
     prompt2FALogin(
       () => onVerified(),
-      () => {
-        store.logout();
+      async () => {
+        await store.logout();
         navigate('/login');
       }
     );
@@ -52,11 +60,11 @@ function authGuard(renderFn) {
     if (verifyAuthAnd2FA(() => {
       ensureAppLayout();
       updateSidebarActive(getCurrentRoute());
-      renderFn();
+      return renderFn();
     })) {
       ensureAppLayout();
       updateSidebarActive(getCurrentRoute());
-      renderFn();
+      return renderFn();
     }
   };
 }
@@ -71,7 +79,7 @@ function premiumGuard(renderFn) {
       }
       ensureAppLayout();
       updateSidebarActive(getCurrentRoute());
-      renderFn();
+      return renderFn();
     })) {
       if (!store.isPremium()) {
         navigate('/profile');
@@ -80,7 +88,7 @@ function premiumGuard(renderFn) {
       }
       ensureAppLayout();
       updateSidebarActive(getCurrentRoute());
-      renderFn();
+      return renderFn();
     }
   };
 }
@@ -95,7 +103,7 @@ function adminGuard(renderFn) {
       }
       ensureAppLayout();
       updateSidebarActive(getCurrentRoute());
-      renderFn();
+      return renderFn();
     })) {
       if (!store.isSuperAdmin()) {
         navigate('/dashboard');
@@ -104,7 +112,7 @@ function adminGuard(renderFn) {
       }
       ensureAppLayout();
       updateSidebarActive(getCurrentRoute());
-      renderFn();
+      return renderFn();
     }
   };
 }
@@ -138,7 +146,6 @@ function initializeGlobalFAB() {
     const app = document.getElementById('app');
     if (!app || document.getElementById('global-fab-root')) return;
 
-    // ONLY the Super Admin can see the global "Write" button
     if (!store.isSuperAdmin()) return;
 
     const fabRoot = document.createElement('div');
@@ -162,7 +169,6 @@ function initializeGlobalFAB() {
  * NFC Write Wizard — Simplifies the programming logic
  */
 function openWriteWizard() {
-    // STEP 1: Content Picker
     const showStep1 = () => {
         const links = store.links;
 
@@ -176,14 +182,14 @@ function openWriteWizard() {
                     <label class="form-label" for="wizard-link-id">Existing Links</label>
                     <select class="form-select" id="wizard-link-id">
                         <option value="">— Select a saved link —</option>
-                        ${links.map(l => `<option value="${l.id}">${l.icon} ${escapeHTML(l.title)}</option>`).join('')}
+                        ${links.map(l => `<option value="${escapeHTML(l.id)}">${escapeHTML(l.icon || '🔗')} ${escapeHTML(l.title)}</option>`).join('')}
                     </select>
                 </div>
                 <div style="text-align: center; margin: var(--space-md) 0; position: relative;">
                     <hr style="border: none; border-top: 1px solid var(--border-color);">
                     <span style="position: absolute; top:50%; left:50%; transform: translate(-50%, -50%); background: var(--bg-surface-elevated); padding: 0 10px; font-size: 0.75rem; color: var(--text-muted);">OR</span>
                 </div>
-                <button class="btn btn-secondary w-full" id="wiz-create-new-btn">
+                <button type="button" class="btn btn-secondary w-full" id="wiz-create-new-btn">
                     <span>➕</span> Create New External Link
                 </button>
             `,
@@ -221,14 +227,17 @@ function openWriteWizard() {
                 const title = document.getElementById('wiz-link-title').value;
                 const url = document.getElementById('wiz-link-url').value;
                 if (!title || !url) return;
-                
-                const newLink = store.createLink({ title, url, category: 'general' });
-                showStep2(newLink.id);
+
+                try {
+                    const newLink = store.createLink({ title, url, category: 'general' });
+                    showStep2(newLink.id);
+                } catch (err) {
+                    showToast(err.message, 'error');
+                }
             }
         });
     };
 
-    // STEP 2: Tag Selection
     const showStep2 = (linkId) => {
         const tags = store.tags;
         openModal({
@@ -239,7 +248,7 @@ function openWriteWizard() {
                     <label class="form-label" for="wizard-tag-id">Available Tags</label>
                     <select class="form-select" id="wizard-tag-id">
                         <option value="">— Write Generic / Guest Tag —</option>
-                        ${tags.map(t => `<option value="${t.id}">${escapeHTML(t.label)}</option>`).join('')}
+                        ${tags.map(t => `<option value="${escapeHTML(t.id)}">${escapeHTML(t.label)}</option>`).join('')}
                     </select>
                 </div>
                 <div class="form-group" style="margin-top: var(--space-md)">
@@ -259,12 +268,11 @@ function openWriteWizard() {
         });
     };
 
-    // STEP 3: Writing Activation
     const showStep3 = (linkId, tagId, lock) => {
         const link = store.getLink(linkId);
+        if (!link) return;
         const compat = store.nfcCompat;
-        
-        // Final URL Logic: Admin ALWAYS writes a redirect link if a Tag ID is selected
+
         let finalUrl = link.url;
         if (tagId) {
             finalUrl = `${window.location.origin}/#/r/${tagId}`;
@@ -284,7 +292,7 @@ function openWriteWizard() {
                         <div style="text-align: left; background: var(--bg-surface-elevated); padding: var(--space-md); border-radius: var(--radius-md); margin-bottom: var(--space-lg); border: 1px solid var(--border-color);">
                             <ol style="padding-left: 1.25rem; font-size: 0.85rem; line-height: 1.6; color: var(--text-primary);">
                                 <li>Copy the <strong>Target URL</strong> below.</li>
-                                <li>Download/Open <a href="https://apps.apple.com/app/nfc-tools/id1252962749" target="_blank" style="color: var(--color-primary); font-weight: 600;">NFC Tools</a> from the App Store.</li>
+                                <li>Download/Open <a href="https://apps.apple.com/app/nfc-tools/id1252962749" target="_blank" rel="noopener noreferrer" style="color: var(--color-primary); font-weight: 600;">NFC Tools</a> from the App Store.</li>
                                 <li>In NFC Tools: Tap <strong>Write</strong> → <strong>Add a record</strong> → <strong>URL/URI</strong>.</li>
                                 <li><strong>Paste</strong> the URL and tap <strong>OK</strong> → <strong>Write</strong>.</li>
                             </ol>
@@ -305,7 +313,7 @@ function openWriteWizard() {
                         showToast('URL Copied to clipboard!', 'success');
                         closeModal();
                     } catch (e) {
-                         showToast('Failed to copy. Please manually select and copy.', 'error');
+                        showToast('Failed to copy. Please manually select and copy.', 'error');
                     }
                 }
             });
@@ -328,9 +336,11 @@ function openWriteWizard() {
                 }
             });
 
-            // Start hardware interaction
             nfc.writeTag(finalUrl, { lock }).then(() => {
-                if (tagId) store.assignLinkToTag(tagId, linkId);
+                if (tagId) {
+                    store.assignLinkToTag(tagId, linkId);
+                    if (lock) store.updateTag(tagId, { isLocked: true });
+                }
                 showToast('Tag Written Successfully!', 'success');
                 openModal({
                     title: '✅ Success',
@@ -353,21 +363,32 @@ function openWriteWizard() {
     showStep1();
 }
 
+function redirectIfAuthenticated() {
+  if (store.isAuthenticated && (!store.is2FAEnabled || store.isSession2FAVerified())) {
+    const pendingTagId = typeof sessionStorage !== 'undefined'
+      ? sessionStorage.getItem('pending_tag_activation')
+      : null;
+    if (pendingTagId) {
+      sessionStorage.removeItem('pending_tag_activation');
+      navigate(`/r/${pendingTagId}`);
+      return true;
+    }
+    navigate('/dashboard');
+    return true;
+  }
+  return false;
+}
+
 // ── Register Routes ──
 registerRoute('/login', () => {
-  if (store.isAuthenticated && (!store.is2FAEnabled || store.isSession2FAVerified())) {
-    navigate('/dashboard');
-    return;
-  }
+  if (redirectIfAuthenticated()) return;
   const app = document.getElementById('app');
   app.classList.remove('app-layout');
   return renderLogin();
 });
 
 registerRoute('', () => {
-  if (store.isAuthenticated && (!store.is2FAEnabled || store.isSession2FAVerified())) {
-    navigate('/dashboard');
-  } else {
+  if (!redirectIfAuthenticated()) {
     navigate('/login');
   }
 });
@@ -397,58 +418,128 @@ registerRoute('/404', () => {
   `;
 });
 
-// ── Boot ──
-console.log('App initialization started...');
-store.init().then(async () => {
-  console.log('Store initialized. Checking nfcCompat...');
-  // Ensure nfcCompat is updated on boot
-  if (!store.nfcCompat || store.nfcCompat.platform === 'loading') {
-      try {
-          await store.refreshNfcCompat();
-      } catch (e) {
-          console.error('Failed to get compatibility info:', e);
+function renderBiometricGate(onUnlocked) {
+  const appEl = document.getElementById('app');
+  if (!appEl) return;
+  appEl.removeAttribute('aria-busy');
+  appEl.classList.remove('app-layout');
+  appEl.innerHTML = `
+    <div class="login-page">
+      <div class="login-card card-glass animate-scale-in" style="max-width: 400px; padding: 2.5rem; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+        <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Authentication Required</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 1.75rem; font-size: 0.9rem;">
+          Verify with FaceID/TouchID or sign out to re-authenticate.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <button type="button" class="btn btn-primary w-full" id="biometricRetryBtn">Unlock with Biometrics</button>
+          <button type="button" class="btn btn-secondary w-full" id="biometricSignOutBtn">Sign Out</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('biometricRetryBtn')?.addEventListener('click', async () => {
+    try {
+      const ok = await nfc.authenticateWithBiometrics();
+      if (ok) {
+        onUnlocked();
+      } else {
+        showToast('Biometric authentication failed. Please try again.', 'error');
       }
-  }
-  
-  console.log('Checking biometrics...');
-  // Biometric Auth check
-  const settings = store.settings;
-  if (settings.useBiometrics && nfc.isNative()) {
-      try {
-          const available = await nfc.isBiometricAvailable();
-          if (available) {
-              const success = await nfc.authenticateWithBiometrics();
-              if (!success) {
-                  console.warn('Biometric authentication failed or canceled.');
-              }
-          }
-      } catch (e) {
-          console.error('Biometric check error:', e);
-      }
-  }
-  console.log('Starting router...');
-  
-  // Apply initial theme
-  document.documentElement.setAttribute('data-theme', store.settings.theme);
-  store.subscribe((state) => {
-    document.documentElement.setAttribute('data-theme', state.settings.theme);
+    } catch {
+      showToast('Biometric authentication failed. Please try again.', 'error');
+    }
   });
 
-  startRouter();
-}).catch(err => {
-    console.error('App boot failure:', err);
-    const appEl = document.getElementById('app');
-    appEl?.removeAttribute('aria-busy');
-    appEl.innerHTML = `<div style="padding: 2rem; color: white;">Critical Error: <span></span></div>`;
-    appEl.querySelector('span').textContent = err.message;
-});
-
-// ── PWA: Register Service Worker ──
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Service worker registration is optional
-    });
+  document.getElementById('biometricSignOutBtn')?.addEventListener('click', async () => {
+    await store.logout();
+    navigate('/login');
+    onUnlocked();
   });
 }
-// Utilities moved to ./utils.js
+
+// ── Boot ──
+export async function bootApp() {
+  try {
+    await store.init();
+    if (!store.nfcCompat || store.nfcCompat.platform === 'loading') {
+      try {
+        await store.refreshNfcCompat();
+      } catch (e) {
+        console.error('Failed to get compatibility info:', e);
+      }
+    }
+
+    applyTheme(store.settings.theme);
+    if (store.settings.brandName) {
+      document.title = store.settings.brandName;
+    }
+
+    // Wait for Firebase Auth initial state before routing
+    await store.waitForAuthReady();
+
+    let wasAuthenticated = store.isAuthenticated;
+    store.subscribe((state) => {
+      applyTheme(state.settings.theme);
+      if (state.settings.brandName) {
+        document.title = state.settings.brandName;
+      }
+
+      const isNowAuthenticated = Boolean(state.settings.user);
+      if (wasAuthenticated && !isNowAuthenticated) {
+        const currentRoute = getCurrentRoute() || '/';
+        const normalized = currentRoute.startsWith('/') ? currentRoute : `/${currentRoute}`;
+        if (normalized !== '/login' && normalized !== '/404' && !normalized.startsWith('/r/')) {
+          closeModal(true);
+          navigate('/login');
+        }
+      }
+      wasAuthenticated = isNowAuthenticated;
+    });
+
+    const settings = store.settings;
+    if (settings.useBiometrics && nfc.isNative()) {
+      let biometricPassed = false;
+      try {
+        const available = await nfc.isBiometricAvailable();
+        if (!available) {
+          biometricPassed = true;
+        } else {
+          biometricPassed = await nfc.authenticateWithBiometrics();
+        }
+      } catch (e) {
+        console.error('Biometric check error:', e);
+        biometricPassed = false;
+      }
+
+      if (!biometricPassed) {
+        renderBiometricGate(() => startRouter());
+        return;
+      }
+    }
+
+    startRouter();
+  } catch (err) {
+    console.error('App boot failure:', err);
+    const appEl = document.getElementById('app');
+    if (appEl) {
+      appEl.removeAttribute('aria-busy');
+      appEl.innerHTML = `<div style="padding: 2rem; color: white;">Critical Error: <span></span></div>`;
+      appEl.querySelector('span').textContent = err.message;
+    }
+  }
+}
+
+if (typeof document !== 'undefined' && typeof window !== 'undefined') {
+  bootApp();
+
+  // ── PWA: Register Service Worker ──
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // Service worker registration is optional
+      });
+    });
+  }
+}

@@ -26,8 +26,11 @@ test('escapeHTML', async (t) => {
     assert.strictEqual(escapeHTML(undefined), '');
   });
 
-  await t.test('should handle numbers', () => {
+  await t.test('should handle numbers and booleans without stripping falsy values', () => {
     assert.strictEqual(escapeHTML(123), '123');
+    assert.strictEqual(escapeHTML(0), '0');
+    assert.strictEqual(escapeHTML(false), 'false');
+    assert.strictEqual(escapeHTML(''), '');
   });
 });
 

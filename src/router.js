@@ -2,6 +2,9 @@
    NFC Tag Manager — Hash Router
    ═══════════════════════════════════════════════════════════ */
 
+import { navigate } from './utils.js';
+import { closeModal } from './components/modal.js';
+
 const routes = {};
 let currentCleanup = null;
 
@@ -9,7 +12,6 @@ export function registerRoute(path, handler) {
     routes[path] = handler;
 }
 
-import { navigate } from './utils.js';
 export { navigate };
 
 export function getCurrentRoute() {
@@ -20,22 +22,22 @@ export function getCurrentRoute() {
 export function startRouter() {
     const handleRoute = async () => {
         let hash = getCurrentRoute();
-        
+
         // Normalize hash: ensure leading slash, remove trailing slash
         if (!hash.startsWith('/')) hash = '/' + hash;
         if (hash.length > 1 && hash.endsWith('/')) hash = hash.slice(0, -1);
         if (hash === '') hash = '/';
 
         console.log(`[Router] Navigating to: ${hash}`);
-        
+
         let handler = null;
         let params = {};
 
         // 1. Try Exact Match first (highest priority)
         if (routes[hash]) {
             handler = routes[hash];
-        } 
-        // 2. Try Parameterzed Match
+        }
+        // 2. Try Parameterized Match
         else {
             for (const path in routes) {
                 if (path.includes(':')) {
@@ -62,7 +64,11 @@ export function startRouter() {
 
         if (currentCleanup && typeof currentCleanup === 'function') {
             currentCleanup();
+            currentCleanup = null;
         }
+
+        // Close any active modal/timers when navigating between routes
+        closeModal(true);
 
         if (handler) {
             currentCleanup = await handler(params);

@@ -5,40 +5,47 @@
 import { store } from '../store.js';
 import { isValidUrl, escapeHTML } from '../utils/sanitize.js';
 import { navigate } from '../router.js';
-import { showToast } from '../utils.js';
+import { showToast } from '../components/toast.js';
 import { openModal, closeModal } from '../components/modal.js';
 
 /**
  * Renders the redirection or activation screen for a tag scan.
  * Logic:
- * 1. If tag is active (has link) AND owned by the user -> Redirect Immediately.
- * 2. If tag is provisioned/unclaimed -> Show Activation Screen.
- * 3. On Activation Screen, if link exists -> Show "Continue to Destination" option.
+ * 1. If tag is active (has link) AND owned by the user -> Show interstitial with auto-redirect & cleanup.
+ * 2. If scanned by a public visitor / non-owner -> Redirect immediately if destination exists, or deny if provisioned without destination.
+ * 3. If unclaimed or owner activating -> Show Activation Screen without duplicating existing tags.
  */
 export function renderRedirect({ id }) {
     const container = document.getElementById('app');
+    if (!container) return;
+
     const t = (key) => store.t(key);
-    
-    // Tag lookup (raw data lookup)
-    const tag = store.getTag(id);
-    
+    const tag = store.getPublicTag(id);
+
     if (!tag) {
-        container.innerHTML = `<div class="p-4 text-center">Tag not found</div>`;
+        container.innerHTML = `
+            <div class="login-page">
+                <div class="card-glass animate-fade-up" style="text-align:center; padding: 2.5rem; max-width: 450px">
+                    <h1 style="font-size: 1.5rem; margin-bottom: 0.75rem;">Tag not found</h1>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">${t('tag_id')}: <code>${escapeHTML(id)}</code></p>
+                    <a href="#/dashboard" class="btn btn-primary w-full">${t('dashboard')}</a>
+                </div>
+            </div>
+        `;
         return;
     }
 
     const isAuth = store.isAuthenticated;
-    const currentUserEmail = store.user?.email?.toLowerCase().trim();
-    const tagOwnerEmail = tag.ownerEmail?.toLowerCase().trim();
-    const isOwner = tagOwnerEmail && tagOwnerEmail === currentUserEmail;
-    const hasDestination = tag.assignedLinkId;
-    const link = hasDestination ? store.getLink(tag.assignedLinkId) : null;
+    const currentUserEmail = store.user?.email?.toLowerCase().trim() || '';
+    const tagOwnerEmail = tag.ownerEmail?.toLowerCase().trim() || '';
+    const isOwner = Boolean(tagOwnerEmail && currentUserEmail && tagOwnerEmail === currentUserEmail);
+    const hasDestination = Boolean(tag.assignedLinkId);
+    const link = hasDestination ? store.getPublicLink(tag.assignedLinkId) : null;
 
     // ── SCENARIO 1: Tag is fully claimed and owned ──
-    // If it's already their tag and it's active, show interstitial with auto-redirect
     if (isOwner && hasDestination && link && isValidUrl(link.url)) {
-        store.incrementClicks(link.id);
-        
+        store.incrementClicks(link.id, tag.id);
+
         container.innerHTML = `
             <div class="login-page">
                 <div class="card-glass animate-fade-up" style="text-align:center; padding: 2.5rem; max-width: 450px">
@@ -63,33 +70,31 @@ export function renderRedirect({ id }) {
 
         let timeLeft = 3;
         const countdownEl = document.getElementById('redirect-countdown');
-        
+
         const autoRedirect = setInterval(() => {
             timeLeft--;
-            if (countdownEl) countdownEl.textContent = timeLeft;
+            if (countdownEl) countdownEl.textContent = String(timeLeft);
             if (timeLeft <= 0) {
                 clearInterval(autoRedirect);
-                window.location.href = link.url;
+                if (isValidUrl(link.url)) {
+                    window.location.href = link.url;
+                }
             }
         }, 1000);
 
         document.getElementById('edit-destination-btn')?.addEventListener('click', () => {
-            clearInterval(autoRedirect); // Stop the countdown
+            clearInterval(autoRedirect);
             openLinkPickerForTag(tag.id);
         });
 
-        return;
+        return () => clearInterval(autoRedirect);
     }
 
-    // ── SCENARIO 2: Access Control for provisioned tags ──
-    const isProvisionedToSomeoneElse = tagOwnerEmail && tagOwnerEmail !== currentUserEmail && !store.isSuperAdmin();
-    if (isProvisionedToSomeoneElse) {
-        // BUT if it has a destination, let them go anyway? 
-        // No, typically premium tags shouldn't be "scanned" by others if private.
-        // However, the user said "already claimed... redirect automatically".
-        // If it's claimed by someone else, but redirected...
+    // ── SCENARIO 2: Public scan or provisioned to another user ──
+    const isOtherOrPublic = !isOwner && !store.isSuperAdmin();
+    if (isOtherOrPublic && tagOwnerEmail) {
         if (hasDestination && link && isValidUrl(link.url)) {
-            store.incrementClicks(link.id);
+            store.incrementClicks(link.id, tag.id);
             window.location.href = link.url;
             return;
         }
@@ -109,6 +114,12 @@ export function renderRedirect({ id }) {
         return;
     }
 
+    if (isOtherOrPublic && !tagOwnerEmail && hasDestination && link && isValidUrl(link.url)) {
+        store.incrementClicks(link.id, tag.id);
+        window.location.href = link.url;
+        return;
+    }
+
     // ── SCENARIO 3: Activation / Provisioned Screen ──
     container.innerHTML = `
         <div class="login-page">
@@ -119,8 +130,8 @@ export function renderRedirect({ id }) {
                     ${isOwner ? t('provisioned_welcome') : t('new_tag_detected')}
                 </h1>
                 <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.95rem;">
-                    ${isOwner 
-                        ? t('provisioned_desc') 
+                    ${isOwner
+                        ? t('provisioned_desc')
                         : (isAuth ? t('unclaimed_desc') : t('login_to_activate'))}
                 </p>
 
@@ -137,10 +148,11 @@ export function renderRedirect({ id }) {
 
                     ${link && isValidUrl(link.url) ? `
                         <a href="${escapeHTML(link.url)}" id="skip-to-destination" class="btn btn-outline w-full" style="border-color: var(--border-color); color: var(--text-secondary);">
-                            ➡️ ${t('cancel')} & ${t('dashboard')}
+                            ${t('go_now')}
                         </a>
+                        <a href="#/dashboard" style="font-size: 0.85rem; color: var(--text-muted);">${t('cancel')} & ${t('dashboard')}</a>
                     ` : `
-                        <a href="#/dashboard" style="font-size: 0.85rem; color: var(--text-muted);">${t('dashboard')}</a>
+                        <a href="#/dashboard" style="font-size: 0.85rem; color: var(--text-muted);">${t('cancel')} & ${t('dashboard')}</a>
                     `}
                 </div>
                 
@@ -151,12 +163,18 @@ export function renderRedirect({ id }) {
         </div>
     `;
 
-    // Events
     document.getElementById('activate-tag-btn')?.addEventListener('click', () => {
         try {
-            const newTag = store.createTag({ id, label: isOwner ? 'Provisioned Tag' : 'New Tocaito Tag' });
+            const updates = {
+                status: 'active',
+                ...(tagOwnerEmail ? {} : { ownerEmail: currentUserEmail || null }),
+            };
+            const updatedTag = store.updateTag(tag.id, updates);
+            if (!updatedTag) {
+                throw new Error(t('error'));
+            }
             showToast(t('tag_registered'), 'success');
-            openLinkPickerForTag(newTag.id);
+            openLinkPickerForTag(updatedTag.id);
         } catch (e) {
             showToast(e.message, 'error');
         }
@@ -168,14 +186,14 @@ export function renderRedirect({ id }) {
     });
 
     document.getElementById('skip-to-destination')?.addEventListener('click', () => {
-        if (link) store.incrementClicks(link.id);
+        if (link) store.incrementClicks(link.id, tag.id);
     });
 }
 
 function openLinkPickerForTag(tagId) {
     const links = store.links;
     const t = (key) => store.t(key);
-    
+
     openModal({
         title: `🔗 ${t('link_assigned')}`,
         content: `
@@ -194,12 +212,9 @@ function openLinkPickerForTag(tagId) {
             if (linkId) {
                 store.assignLinkToTag(tagId, linkId);
                 showToast(t('link_assigned'), 'success');
-                closeModal();
-                navigate('/tags');
-            } else {
-                closeModal();
-                navigate('/tags');
             }
+            closeModal();
+            navigate('/tags');
         }
     });
 }

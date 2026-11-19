@@ -2,16 +2,17 @@
    NFC Tag Manager — Toast Component
    ═══════════════════════════════════════════════════════════ */
 
-import { escapeHTML } from '../utils/sanitize.js';
-
 let toastContainer = null;
 
 function getContainer() {
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container';
-        toastContainer.id = 'toast-container';
-        document.body.appendChild(toastContainer);
+    if (!toastContainer || !document.body.contains(toastContainer)) {
+        toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container';
+            toastContainer.id = 'toast-container';
+            document.body.appendChild(toastContainer);
+        }
     }
     return toastContainer;
 }
@@ -31,18 +32,17 @@ export function showToast(message, type = 'info', duration = 3500) {
     toast.setAttribute('role', type === 'error' || type === 'warning' ? 'alert' : 'status');
     toast.setAttribute('aria-live', type === 'error' || type === 'warning' ? 'assertive' : 'polite');
 
-    // 🛡️ Sentinel: Prevent XSS by using textContent for user-controlled message
     toast.innerHTML = `
-    <span class="toast-icon" aria-hidden="true">${ICONS[type]}</span>
-    <span class="toast-message">${escapeHTML(message)}</span>
+    <span class="toast-icon" aria-hidden="true">${ICONS[type] || ICONS.info}</span>
+    <span class="toast-message"></span>
     <button class="toast-close" aria-label="Close">✕</button>
   `;
-    // Use textContent instead of innerHTML interpolation to prevent DOM-based XSS
-    toast.querySelector('.toast-message').textContent = message;
+    toast.querySelector('.toast-message').textContent = String(message ?? '');
 
     container.appendChild(toast);
 
     const dismiss = () => {
+        if (!toast.parentElement) return;
         toast.style.animation = 'fadeInUp 0.3s ease reverse';
         setTimeout(() => toast.remove(), 280);
     };

@@ -49,11 +49,8 @@
 	<true/>
 	<key>NFCReaderUsageDescription</key>
 	<string>We need access to NFC to program your restaurant table tags.</string>
-	<key>com.apple.developer.nfc.readersession.formats</key>
-	<array>
-		<string>NDEF</string>
-		<string>TAG</string>
-	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We use your location to record where NFC tags are programmed.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use FaceID to securely access your tag management settings.</string>
 </dict>

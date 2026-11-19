@@ -105,22 +105,38 @@ select {
 }
 
 /* ── Scrollbar ── */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+:root,
+:where(*) {
+    --scrollbar-thumb: var(--scrollbar-thumb-token);
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
-::-webkit-scrollbar-track {
-    background: transparent;
-}
+@supports not (scrollbar-color: auto) {
+    :root,
+    :where(*) {
+        /* Reset scrollbar-width so browsers supporting scrollbar-width without
+           scrollbar-color do not suppress ::-webkit-scrollbar styling */
+        scrollbar-width: auto;
+    }
 
-::-webkit-scrollbar-thumb {
-    background: var(--border-color-hover);
-    border-radius: var(--radius-full);
-}
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
 
-::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb);
+        border-radius: var(--radius-full);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+    }
 }
 
 /* ── App Layout ── */

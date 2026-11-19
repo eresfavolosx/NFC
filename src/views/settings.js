@@ -7,10 +7,11 @@ import { renderHeader } from '../components/header.js';
 import { showToast } from '../components/toast.js';
 import { escapeHTML } from '../utils/sanitize.js';
 import { open2FASetupModal, open2FADisableModal } from '../components/two-factor-dialog.js';
-import { openModal, closeModal } from '../components/modal.js';
 
 export function renderSettings() {
     const container = document.getElementById('page-content');
+    if (!container) return;
+
     const settings = store.settings;
     const is2FAEnabled = store.is2FAEnabled;
     const security2FA = store.security2FA;
@@ -57,16 +58,14 @@ export function renderSettings() {
 
           <div class="form-group-row">
             <div class="form-info">
-              <label class="form-label" for="useBiometrics">Biometric Authentication</label>
+              <span class="form-label" id="biometricsLabel">Biometric Authentication</span>
               <p class="form-desc" id="biometricsDesc">Use FaceID or TouchID to unlock administrative settings.</p>
             </div>
             <label class="switch">
-              <input type="checkbox" id="useBiometrics" aria-describedby="biometricsDesc" ${settings.useBiometrics ? 'checked' : ''}>
+              <input type="checkbox" id="useBiometrics" aria-labelledby="biometricsLabel" aria-describedby="biometricsDesc" ${settings.useBiometrics ? 'checked' : ''}>
               <span class="slider round"></span>
             </label>
           </div>
-
-
 
           <div class="settings-actions">
             <button class="btn btn-primary" id="saveSettingsBtn">Save Changes</button>
@@ -112,7 +111,6 @@ export function renderSettings() {
 }
 
 function initSettingsEvents() {
-    const restaurantSettings = document.getElementById('restaurantSettings');
     const saveBtn = document.getElementById('saveSettingsBtn');
     const enable2faBtn = document.getElementById('enable2faBtn');
     const reconfigure2faBtn = document.getElementById('reconfigure2faBtn');
@@ -144,8 +142,7 @@ function initSettingsEvents() {
         });
 
         showToast('Settings saved successfully!', 'success');
-        
-        // Update document title if brand name changed
+
         if (brandName) {
             document.title = brandName;
         }

@@ -7,9 +7,22 @@ import { navigate } from '../router.js';
 import { showToast } from '../components/toast.js';
 import { prompt2FALogin } from '../components/two-factor-dialog.js';
 
+function navigatePostLogin() {
+    const pendingTagId = typeof sessionStorage !== 'undefined'
+        ? sessionStorage.getItem('pending_tag_activation')
+        : null;
+    if (pendingTagId) {
+        sessionStorage.removeItem('pending_tag_activation');
+        navigate(`/r/${pendingTagId}`);
+        return;
+    }
+    navigate('/dashboard');
+}
+
 export function renderLogin() {
     const app = document.getElementById('app');
-    app?.removeAttribute('aria-busy');
+    if (!app) return;
+    app.removeAttribute('aria-busy');
 
     const t = (key) => store.t(key);
 
@@ -53,16 +66,16 @@ export function renderLogin() {
                     prompt2FALogin(
                         () => {
                             showToast('Welcome back!', 'success');
-                            navigate('/dashboard');
+                            navigatePostLogin();
                         },
-                        () => {
-                            store.logout();
+                        async () => {
+                            await store.logout();
                             showToast('Sign-in cancelled.', 'info');
                         }
                     );
                 } else {
                     showToast('Welcome back!', 'success');
-                    navigate('/dashboard');
+                    navigatePostLogin();
                 }
             }
         } catch (error) {

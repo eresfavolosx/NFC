@@ -7,15 +7,36 @@ import { escapeHTML } from '../utils/sanitize.js';
 let modalContainer = null;
 let activeEscHandler = null;
 let activeOnClose = null;
+let activeOnCleanup = null;
 let closeTimer = null;
 
 function getContainer() {
-    if (!modalContainer) {
-        modalContainer = document.createElement('div');
-        modalContainer.id = 'modal-container';
-        document.body.appendChild(modalContainer);
+    if (!modalContainer || !document.body.contains(modalContainer)) {
+        modalContainer = document.getElementById('modal-container');
+        if (!modalContainer) {
+            modalContainer = document.createElement('div');
+            modalContainer.id = 'modal-container';
+            document.body.appendChild(modalContainer);
+        }
     }
     return modalContainer;
+}
+
+function runActiveTeardown() {
+    if (activeEscHandler) {
+        document.removeEventListener('keydown', activeEscHandler);
+        activeEscHandler = null;
+    }
+    if (activeOnCleanup) {
+        const cleanupFn = activeOnCleanup;
+        activeOnCleanup = null;
+        try {
+            cleanupFn();
+        } catch (err) {
+            console.warn('Modal cleanup failed:', err);
+        }
+    }
+    activeOnClose = null;
 }
 
 export function openModal({
@@ -23,6 +44,7 @@ export function openModal({
     content,
     onSubmit,
     onClose = null,
+    onCleanup = null,
     submitLabel = 'Save',
     cancelLabel = 'Cancel',
     showCancel = true,
@@ -32,12 +54,11 @@ export function openModal({
         clearTimeout(closeTimer);
         closeTimer = null;
     }
-    if (activeEscHandler) {
-        document.removeEventListener('keydown', activeEscHandler);
-        activeEscHandler = null;
-    }
+    // Tear down any previously active modal before replacing it
+    runActiveTeardown();
 
     activeOnClose = typeof onClose === 'function' ? onClose : null;
+    activeOnCleanup = typeof onCleanup === 'function' ? onCleanup : null;
     const container = getContainer();
 
     container.innerHTML = `
@@ -60,7 +81,6 @@ export function openModal({
     </div>
   `;
 
-    // Security: Use textContent for user-provided strings
     const titleEl = container.querySelector('#modalTitle');
     if (titleEl) titleEl.textContent = title;
 
@@ -73,12 +93,10 @@ export function openModal({
     document.body.style.overflow = 'hidden';
 
     const handleCancelClose = () => {
-        if (activeOnClose) {
-            const fn = activeOnClose;
-            activeOnClose = null;
-            fn();
-        }
-        closeModal();
+        const closeFn = activeOnClose;
+        runActiveTeardown();
+        if (closeFn) closeFn();
+        closeModal(true);
     };
 
     document.getElementById('modalClose')?.addEventListener('click', handleCancelClose);
@@ -96,12 +114,10 @@ export function openModal({
         }
     });
 
-    // Focus first input
     setTimeout(() => {
         container.querySelector('input, select, textarea')?.focus();
     }, 100);
 
-    // ESC key
     activeEscHandler = (e) => {
         if (dismissible && e.key === 'Escape') {
             handleCancelClose();
@@ -110,19 +126,19 @@ export function openModal({
     document.addEventListener('keydown', activeEscHandler);
 }
 
-export function closeModal() {
-    if (activeEscHandler) {
-        document.removeEventListener('keydown', activeEscHandler);
-        activeEscHandler = null;
-    }
-    activeOnClose = null;
+export function closeModal(immediate = false) {
+    runActiveTeardown();
 
     const container = getContainer();
     const modal = container.querySelector('.modal');
 
-    if (modal) {
+    if (closeTimer) {
+        clearTimeout(closeTimer);
+        closeTimer = null;
+    }
+
+    if (modal && !immediate) {
         modal.style.animation = 'scaleIn 0.2s ease reverse';
-        if (closeTimer) clearTimeout(closeTimer);
         closeTimer = setTimeout(() => {
             closeTimer = null;
             container.innerHTML = '';

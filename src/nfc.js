@@ -4,28 +4,43 @@
 
 import { Capacitor } from '@capacitor/core';
 import { CapacitorNfc } from '@capgo/capacitor-nfc';
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
-import { Geolocation } from '@capacitor/geolocation';
+import { Haptics, NotificationType } from '@capacitor/haptics';
+
+const NDEF_URI_PREFIXES = [
+    '', 'http://www.', 'https://www.', 'http://', 'https://',
+    'tel:', 'mailto:', 'ftp://anonymous:anonymous@', 'ftp://ftp.',
+    'ftps://', 'sftp://', 'smb://', 'nfs://', 'ftp://',
+    'dav://', 'news:', 'telnet://', 'imap:', 'rtsp://',
+    'urn:', 'pop:', 'sip:', 'sips:', 'tftp:',
+    'btspp://', 'btl2cap://', 'btgoep://', 'tcpobex://', 'irdaobex://',
+    'file://', 'urn:epc:id:', 'urn:epc:tag:', 'urn:epc:pat:',
+    'urn:epc:raw:', 'urn:nfc:wkt:', 'urn:nfc:ext:'
+];
+
+const NATIVE_NFC_TIMEOUT_MS = 30000;
 
 export const nfc = {
+    _deps: { Capacitor, CapacitorNfc, Haptics },
+
     isNative() {
-        return Capacitor.isNativePlatform();
+        return this._deps.Capacitor.isNativePlatform();
     },
 
     async isSupported() {
         if (this.isNative()) {
             try {
-                const { supported } = await CapacitorNfc.isSupported();
+                const { supported } = await this._deps.CapacitorNfc.isSupported();
                 return supported;
             } catch {
                 return false;
             }
         }
-        return 'NDEFReader' in window;
+        return typeof window !== 'undefined' && 'NDEFReader' in window;
     },
 
     isIOS() {
-        if (this.isNative()) return Capacitor.getPlatform() === 'ios';
+        if (this.isNative()) return this._deps.Capacitor.getPlatform() === 'ios';
+        if (typeof navigator === 'undefined' || typeof window === 'undefined') return false;
         return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     },
 
@@ -34,12 +49,12 @@ export const nfc = {
             return this._writeTagNative(url, options);
         }
 
-        if (!('NDEFReader' in window)) {
+        if (typeof window === 'undefined' || !('NDEFReader' in window)) {
             throw new Error('Web NFC is not supported in this browser. Please use Chrome on Android.');
         }
 
         try {
-            const ndef = new NDEFReader();
+            const ndef = new window.NDEFReader();
             await ndef.write({
                 records: [
                     { recordType: 'url', data: url },
@@ -57,76 +72,117 @@ export const nfc = {
         }
     },
 
-    async _writeTagNative(url) {
-        try {
-            // 1. Start scanning (shows system sheet on iOS)
-            await CapacitorNfc.startScanning({
-                alertMessage: 'Hold your NFC tag near the phone to write.',
-                invalidateAfterFirstRead: true
-            });
+    async _runNativeNfcSession(alertMessage, timeoutMessage, onTagEvent) {
+        const { CapacitorNfc: nfcPlugin } = this._deps;
+        let listenerHandle = null;
+        let timeoutId = null;
+        let settled = false;
 
-            // 2. Wait for a tag to be discovered
-            return new Promise((resolve, reject) => {
-                const listener = CapacitorNfc.addListener('nfcEvent', async (event) => {
-                    try {
-                        // Found a tag! Now write.
-                        const record = this._createUrlRecord(url);
-                        await CapacitorNfc.write({ records: [record] });
-                        
-                        // Handle Locking
-                        if (options.lock) {
-                            await CapacitorNfc.makeReadOnly();
-                        }
+        const cleanup = async () => {
+            if (timeoutId !== null) {
+                clearTimeout(timeoutId);
+                timeoutId = null;
+            }
+            if (listenerHandle) {
+                const handle = listenerHandle;
+                listenerHandle = null;
+                try {
+                    await handle.remove();
+                } catch {
+                    // Ignore listener cleanup errors
+                }
+            }
+            try {
+                await nfcPlugin.stopScanning();
+            } catch {
+                // Ignore stopScanning cleanup errors
+            }
+        };
 
-                        // Success haptics
-                        if (Capacitor.isNativePlatform()) {
-                            await Haptics.notification({ type: NotificationType.Success });
+        return new Promise((resolve, reject) => {
+            (async () => {
+                try {
+                    listenerHandle = await nfcPlugin.addListener('nfcEvent', async (event) => {
+                        if (settled) return;
+                        settled = true;
+                        try {
+                            const result = await onTagEvent(event);
+                            await cleanup();
+                            resolve(result);
+                        } catch (err) {
+                            await cleanup();
+                            reject(err);
                         }
+                    });
 
-                        listener.remove();
-                        await CapacitorNfc.stopScanning();
-                        resolve({ success: true, url });
-                    } catch (err) {
-                        if (Capacitor.isNativePlatform()) {
-                            await Haptics.notification({ type: NotificationType.Error });
-                        }
-                        listener.remove();
-                        await CapacitorNfc.stopScanning();
+                    if (settled) {
+                        await cleanup();
+                        return;
+                    }
+
+                    timeoutId = setTimeout(async () => {
+                        if (settled) return;
+                        settled = true;
+                        await cleanup();
+                        reject(new Error(timeoutMessage));
+                    }, NATIVE_NFC_TIMEOUT_MS);
+
+                    await nfcPlugin.startScanning({
+                        alertMessage,
+                        invalidateAfterFirstRead: true
+                    });
+                } catch (err) {
+                    if (!settled) {
+                        settled = true;
+                        await cleanup();
                         reject(err);
                     }
-                });
+                }
+            })();
+        });
+    },
 
-                // Timeout
-                setTimeout(async () => {
-                    listener.remove();
-                    await CapacitorNfc.stopScanning();
-                    reject(new Error('NFC write timed out.'));
-                }, 30000);
-            });
+    async _writeTagNative(url, options = {}) {
+        const { Capacitor: cap, CapacitorNfc: nfcPlugin, Haptics: haptics } = this._deps;
+        try {
+            return await this._runNativeNfcSession(
+                'Hold your NFC tag near the phone to write.',
+                'NFC write timed out.',
+                async () => {
+                    try {
+                        const record = this._createUrlRecord(url);
+                        await nfcPlugin.write({ records: [record] });
+
+                        if (options.lock) {
+                            await nfcPlugin.makeReadOnly();
+                        }
+
+                        if (cap.isNativePlatform()) {
+                            await haptics.notification({ type: NotificationType.Success }).catch(() => {});
+                        }
+
+                        return { success: true, url };
+                    } catch (err) {
+                        if (cap.isNativePlatform()) {
+                            await haptics.notification({ type: NotificationType.Error }).catch(() => {});
+                        }
+                        throw err;
+                    }
+                }
+            );
         } catch (err) {
             throw new Error(`Native NFC write failed: ${err.message}`);
         }
     },
 
     _createUrlRecord(url) {
-        const prefixes = [
-            '', 'http://www.', 'https://www.', 'http://', 'https://',
-            'tel:', 'mailto:', 'ftp://anonymous:anonymous@', 'ftp://ftp.',
-            'ftps://', 'sftp://', 'smb://', 'nfs://', 'ftp://',
-            'dav://', 'news:', 'telnet://', 'imap:', 'rtsp://',
-            'urn:', 'pop:', 'sip:', 'sips:', 'tftp:',
-            'btspp://', 'btl2cap://', 'btgoep://', 'tcpobex://', 'irdaobex://',
-            'file://', 'urn:epc:id:', 'urn:epc:tag:', 'urn:epc:pat:',
-            'urn:epc:raw:', 'urn:nfc:wkt:', 'urn:nfc:ext:'
-        ];
-
         let prefixIndex = 0;
         let urlWithoutPrefix = url;
 
-        for (let i = 1; i < prefixes.length; i++) {
-            if (url.startsWith(prefixes[i])) {
+        for (let i = 1; i < NDEF_URI_PREFIXES.length; i++) {
+            if (url.startsWith(NDEF_URI_PREFIXES[i])) {
                 prefixIndex = i;
-                urlWithoutPrefix = url.substring(prefixes[i].length);
+                urlWithoutPrefix = url.substring(NDEF_URI_PREFIXES[i].length);
                 break;
             }
         }
@@ -148,18 +204,18 @@ export const nfc = {
             return this._readTagNative();
         }
 
-        if (!('NDEFReader' in window)) {
+        if (typeof window === 'undefined' || !('NDEFReader' in window)) {
             throw new Error('Web NFC is not supported in this browser. Please use Chrome on Android.');
         }
 
         return new Promise((resolve, reject) => {
-            const ndef = new NDEFReader();
+            const ndef = new window.NDEFReader();
             const ac = new AbortController();
 
             const timeout = setTimeout(() => {
                 ac.abort();
                 reject(new Error('NFC scan timed out. Please try again.'));
-            }, 30000);
+            }, NATIVE_NFC_TIMEOUT_MS);
 
             ndef.scan({ signal: ac.signal }).then(() => {
                 ndef.addEventListener('reading', ({ serialNumber, message }) => {
@@ -192,25 +248,18 @@ export const nfc = {
 
     async _readTagNative() {
         try {
-            await CapacitorNfc.startScanning({
-                alertMessage: 'Hold your NFC tag near the phone to read.',
-                invalidateAfterFirstRead: true
-            });
-
-            return new Promise((resolve, reject) => {
-                const listener = CapacitorNfc.addListener('nfcEvent', async (event) => {
-                    listener.remove();
-                    await CapacitorNfc.stopScanning();
-
-                    const tag = event.tag;
+            return await this._runNativeNfcSession(
+                'Hold your NFC tag near the phone to read.',
+                'NFC read timed out.',
+                async (event) => {
+                    const tag = event?.tag || {};
                     let url = null;
 
                     if (tag.ndefMessage) {
                         for (const record of tag.ndefMessage) {
-                            if (record.type.length === 1 && record.type[0] === 85) { // 'U'
+                            if (record.type?.length === 1 && record.type[0] === 85) { // 'U'
                                 const prefixIndex = record.payload[0];
-                                const prefixes = ['', 'http://www.', 'https://www.', 'http://', 'https://', 'tel:', 'mailto:', 'ftp://anonymous:anonymous@', 'ftp://ftp.', 'ftps://', 'sftp://', 'smb://', 'nfs://', 'ftp://', 'dav://', 'news:', 'telnet://', 'imap:', 'rtsp://', 'urn:', 'pop:', 'sip:', 'sips:', 'tftp:', 'btspp://', 'btl2cap://', 'btgoep://', 'tcpobex://', 'irdaobex://', 'file://', 'urn:epc:id:', 'urn:epc:tag:', 'urn:epc:pat:', 'urn:epc:raw:', 'urn:nfc:wkt:', 'urn:nfc:ext:'];
-                                const prefix = prefixes[prefixIndex] || '';
+                                const prefix = NDEF_URI_PREFIXES[prefixIndex] || '';
                                 const payloadData = record.payload.slice(1);
                                 const decoder = new TextDecoder();
                                 url = prefix + decoder.decode(new Uint8Array(payloadData));
@@ -219,19 +268,13 @@ export const nfc = {
                         }
                     }
 
-                    resolve({
+                    return {
                         serialNumber: tag.id ? tag.id.map(b => b.toString(16).padStart(2, '0')).join(':') : null,
                         url,
                         records: tag.ndefMessage
-                    });
-                });
-
-                setTimeout(async () => {
-                    listener.remove();
-                    await CapacitorNfc.stopScanning();
-                    reject(new Error('NFC read timed out.'));
-                }, 30000);
-            });
+                    };
+                }
+            );
         } catch (err) {
             throw new Error(`Native NFC read failed: ${err.message}`);
         }
@@ -259,9 +302,8 @@ export const nfc = {
                 readNote: 'Your iPhone reads NDEF tags automatically. To enable writing, run this app as a native iOS application.',
             };
         }
-        // ... rest stays similar
 
-        const ua = navigator.userAgent.toLowerCase();
+        const ua = (typeof navigator !== 'undefined' ? navigator.userAgent : '').toLowerCase();
         if (/firefox|safari/.test(ua) && !/chrome/.test(ua)) {
             return {
                 supported: false,
@@ -288,15 +330,15 @@ export const nfc = {
         };
     },
 
-    // Legacy compat
-    getCompatibilityMessage() {
-        return this.getCompatibilityInfo().message;
+    async getCompatibilityMessage() {
+        const info = await this.getCompatibilityInfo();
+        return info.message;
     },
 
     async getNativeBiometric() {
         if (!this.isNative()) return null;
         try {
-            const mod = await import('capacitor-native-biometric');
+            const mod = await import('@capgo/capacitor-native-biometric');
             return mod.NativeBiometric || null;
         } catch {
             return null;

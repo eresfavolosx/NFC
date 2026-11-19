@@ -8,7 +8,7 @@
  * @returns {string} The escaped string.
  */
 export function escapeHTML(str) {
-  if (!str) return '';
+  if (str === null || str === undefined) return '';
   return String(str).replace(/[&<>"']/g, function(m) {
     switch (m) {
       case '&': return '&amp;';

@@ -10,6 +10,8 @@ import { escapeHTML } from '../utils/sanitize.js';
 
 export function renderWriter() {
   const container = document.getElementById('page-content');
+  if (!container) return;
+
   const links = store.links;
   const tags = store.tags;
   const compatInfo = store.nfcCompat;
@@ -131,7 +133,7 @@ function renderIOSGuide(links) {
   `;
 }
 
-function initIOSEvents(links) {
+function initIOSEvents() {
   const select = document.getElementById('iosCopySelect');
   const preview = document.getElementById('iosCopyPreview');
   const urlEl = document.getElementById('iosCopyUrl');
@@ -159,7 +161,6 @@ function initIOSEvents(links) {
         copyBtn.innerHTML = '<span aria-hidden="true">📋</span> Copy URL';
       }, 2000);
     } catch {
-      // Fallback for older browsers
       const ta = document.createElement('textarea');
       ta.value = url;
       ta.style.position = 'fixed';
@@ -197,7 +198,7 @@ function renderWriterUI(links, tags, compatInfo) {
         <div class="writer-step card animate-fade-up" style="animation-delay: 0.1s">
           <div class="writer-step-header">
             <span class="writer-step-num">1</span>
-            <h2>Select Link & Tag</h2>
+            <h2>Select Link</h2>
           </div>
 
           <div class="writer-link-selector">
@@ -206,41 +207,26 @@ function renderWriterUI(links, tags, compatInfo) {
                 <p class="empty-state-desc">No links available. Create a link first from the Links page.</p>
               </div>
             ` : `
-              <select class="form-input" id="linkSelect">
-                  ${links.map(l => `<option value="${l.id}">${l.icon} ${escapeHTML(l.title)}</option>`).join('')}
-              </select>
-            </div>
-
-            <div class="form-group-row" style="margin-top: var(--space-md)">
-                <div class="form-info">
-                    <label class="form-label">Lock Tag (Permanent)</label>
-                    <div class="form-group animate-fade-up" style="animation-delay: 0.1s">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem">
-                        <label class="form-label" style="margin-bottom:0">Lock Tag (Read-Only)</label>
-                        <span class="badge ${store.isPremium() ? 'badge-info' : 'badge-secondary'}">${store.isPremium() ? 'Pro' : 'Pro Feature'}</span>
-                    </div>
-                    <label class="toggle-switch ${!store.isPremium() ? 'disabled' : ''}">
-                        <input type="checkbox" id="lock-tag-toggle" ${!store.isPremium() ? 'disabled' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="text-sm text-muted" style="margin-top: 0.5rem">Permanent. Once locked, the tag cannot be erased or rewritten.</p>
-                </div>
-                </div>
-            </div>
-
-            <div class="writer-actions">
-                <label class="form-label">Assign to Registered Tag (Optional)</label>
-                <select class="form-select" id="writerTagSelect" aria-label="Select a registered tag">
-                  <option value="">— Select a tag —</option>
-                  ${tags.map(t => `<option value="${t.id}">${escapeHTML(t.label)} ${t.assignedLinkId ? '(Assigned)' : '(Unassigned)'}</option>`).join('')}
+              <div class="form-group">
+                <label class="form-label" for="writerLinkSelect">Destination Link</label>
+                <select class="form-select" id="writerLinkSelect">
+                  <option value="">— Select a link —</option>
+                  ${links.map(l => `<option value="${escapeHTML(l.id)}">${escapeHTML(l.icon || '🔗')} ${escapeHTML(l.title)}</option>`).join('')}
                 </select>
               </div>
 
-              <div class="form-group" style="margin-top: -var(--space-sm)">
-                <label class="checkbox-container" style="display: flex; align-items: center; gap: var(--space-sm); font-size: var(--font-size-sm); cursor: pointer;">
-                  <input type="checkbox" id="sequentialMode">
-                  <span><strong>Sequential Mode</strong> (Auto-advance to next tag after writing)</span>
-                </label>
+              <div class="form-group-row" style="margin-top: var(--space-md)">
+                <div class="form-info">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem">
+                    <label class="form-label" for="lockTagToggle" style="margin-bottom:0">Lock Tag (Read-Only)</label>
+                    <span class="badge ${store.isPremium() ? 'badge-info' : 'badge-secondary'}">${store.isPremium() ? 'Pro' : 'Pro Feature'}</span>
+                  </div>
+                  <label class="toggle-switch ${!store.isPremium() ? 'disabled' : ''}">
+                    <input type="checkbox" id="lockTagToggle" ${!store.isPremium() ? 'disabled' : ''}>
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <p class="text-sm text-muted" style="margin-top: 0.5rem">Permanent. Once locked, the tag cannot be erased or rewritten.</p>
+                </div>
               </div>
 
               <div class="writer-link-preview" id="writerLinkPreview" style="display: none;">
@@ -258,10 +244,20 @@ function renderWriterUI(links, tags, compatInfo) {
             <h2>Assign to Tag (Optional)</h2>
           </div>
 
-          <select class="form-select" id="writerTagSelect" aria-label="Assign to a tag">
-            <option value="">— No specific tag —</option>
-            ${tags.map(t => `<option value="${t.id}">${escapeHTML(t.label)}${t.serialNumber ? ` (${escapeHTML(t.serialNumber)})` : ''}</option>`).join('')}
-          </select>
+          <div class="form-group">
+            <label class="form-label" for="writerTagSelect">Registered Tag</label>
+            <select class="form-select" id="writerTagSelect" aria-label="Assign to a tag">
+              <option value="">— No specific tag —</option>
+              ${tags.map(t => `<option value="${escapeHTML(t.id)}">${escapeHTML(t.label)}${t.serialNumber ? ` (${escapeHTML(t.serialNumber)})` : ''} ${t.assignedLinkId ? '(Assigned)' : '(Unassigned)'}</option>`).join('')}
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-top: calc(var(--space-sm) * -1)">
+            <label class="checkbox-container" style="display: flex; align-items: center; gap: var(--space-sm); font-size: var(--font-size-sm); cursor: pointer;">
+              <input type="checkbox" id="sequentialMode">
+              <span><strong>Sequential Mode</strong> (Auto-advance to next tag after writing)</span>
+            </label>
+          </div>
         </div>
 
         <!-- Step 3: Write -->
@@ -305,7 +301,7 @@ function initWriterEvents() {
   // Link selection preview
   linkSelect?.addEventListener('change', () => {
     const link = store.getLink(linkSelect.value);
-    if (link && preview) {
+    if (link && preview && previewUrl) {
       preview.style.display = 'block';
       previewUrl.textContent = link.url;
     } else if (preview) {
@@ -322,82 +318,92 @@ function initWriterEvents() {
     }
 
     const link = store.getLink(linkId);
-    if (!link) return;
+    if (!link) {
+      showToast('Selected link not found', 'error');
+      return;
+    }
 
     // Show writing state
     writeBtn.disabled = true;
     writeBtn.innerHTML = '<span class="spinner"></span> Hold tag near device...';
-    tapTarget.classList.add('active');
-    statusEl.style.display = 'block';
-    statusEl.className = 'writer-status status-writing';
-    statusEl.innerHTML = '<span class="spinner"></span> Waiting for NFC tag... Hold the tag near your device.';
+    tapTarget?.classList.add('active');
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.className = 'writer-status status-writing';
+      statusEl.innerHTML = '<span class="spinner"></span> Waiting for NFC tag... Hold the tag near your device.';
+    }
 
     try {
       const tagId = tagSelect?.value;
-      const selectLinkId = linkSelect?.value;
       const lock = document.getElementById('lockTagToggle')?.checked || false;
+      const tag = tagId ? store.getTag(tagId) : null;
 
-      const tag = store.getTag(tagId);
-      const link = store.getLink(selectLinkId);
-
-      if (!link) throw new Error('Selected link not found');
-
-      statusEl.className = 'writer-status info animate-pulse';
-      statusEl.innerHTML = `<span>📡</span> Preparing to program <strong>${escapeHTML(tag?.label || 'tag')}</strong>...`;
-      
-      // Assign in store (updates redirect logic)
-      if (tagId) {
-          const successStore = store.assignLinkToTag(tagId, selectLinkId);
-          if (!successStore) throw new Error('Failed to update tag in database');
+      if (statusEl) {
+        statusEl.className = 'writer-status info animate-pulse';
+        statusEl.innerHTML = `<span>📡</span> Preparing to program <strong>${escapeHTML(tag?.label || 'tag')}</strong>...`;
       }
 
-      // Determine URL
+      // Compute URL before hardware write; persist store assignment ONLY after writeTag succeeds
       const settings = store.settings;
       let finalUrl = link.url;
       if (settings.dynamicRedirection && tagId) {
-          finalUrl = `${window.location.origin}/#/r/${tagId}`;
+        finalUrl = `${window.location.origin}/#/r/${tagId}`;
       }
 
       await nfc.writeTag(finalUrl, { lock });
 
+      if (tagId) {
+        const successStore = store.assignLinkToTag(tagId, linkId);
+        if (!successStore) throw new Error('Failed to update tag in database');
+        if (lock) {
+          store.updateTag(tagId, { isLocked: true });
+        }
+      }
+
       // Success!
-      statusEl.className = 'writer-status status-success';
-      statusEl.innerHTML = `
-        <span class="status-icon">✅</span>
-        <div>
-          <strong>Tag written successfully!</strong>
-          <p>URL: ${escapeHTML(finalUrl)}</p>
-        </div>
-      `;
+      if (statusEl) {
+        statusEl.className = 'writer-status status-success';
+        statusEl.innerHTML = `
+          <span class="status-icon">✅</span>
+          <div>
+            <strong>Tag written successfully!</strong>
+            <p>URL: ${escapeHTML(finalUrl)}</p>
+          </div>
+        `;
+      }
 
       // Sequential Mode: Advance to next tag
       const sequentialMode = document.getElementById('sequentialMode')?.checked;
       if (sequentialMode && tagSelect) {
-          const nextIndex = tagSelect.selectedIndex + 1;
-          if (nextIndex < tagSelect.options.length) {
-              tagSelect.selectedIndex = nextIndex;
-              const nextTag = store.getTag(tagSelect.value);
-              statusEl.innerHTML += `<p style="margin-top: var(--space-sm); color: var(--color-primary-light);"><strong>Ready for next: ${escapeHTML(nextTag?.label || 'Next Tag')}</strong></p>`;
-          } else {
-              showToast('All tags in list programmed!', 'success');
+        const nextIndex = tagSelect.selectedIndex + 1;
+        if (nextIndex < tagSelect.options.length) {
+          tagSelect.selectedIndex = nextIndex;
+          const nextTag = store.getTag(tagSelect.value);
+          if (statusEl) {
+            statusEl.innerHTML += `<p style="margin-top: var(--space-sm); color: var(--color-primary-light);"><strong>Ready for next: ${escapeHTML(nextTag?.label || 'Next Tag')}</strong></p>`;
           }
+        } else {
+          showToast('All tags in list programmed!', 'success');
+        }
       }
 
       showToast('NFC tag written successfully!', 'success');
     } catch (err) {
-      statusEl.className = 'writer-status status-error';
-      statusEl.innerHTML = `
-        <span class="status-icon">❌</span>
-        <div>
-          <strong>Write failed</strong>
-          <p>${escapeHTML(err.message)}</p>
-        </div>
-      `;
-      showToast(escapeHTML(err.message), 'error');
+      if (statusEl) {
+        statusEl.className = 'writer-status status-error';
+        statusEl.innerHTML = `
+          <span class="status-icon">❌</span>
+          <div>
+            <strong>Write failed</strong>
+            <p>${escapeHTML(err.message)}</p>
+          </div>
+        `;
+      }
+      showToast(err.message, 'error');
     } finally {
       writeBtn.disabled = false;
       writeBtn.innerHTML = '<span>📡</span> Write to Tag';
-      tapTarget.classList.remove('active');
+      tapTarget?.classList.remove('active');
     }
   });
 }

@@ -18,6 +18,25 @@ test('TOTP Engine (RFC 6238)', async (t) => {
     assert.match(secret, /^[A-Z2-7]{32}$/);
   });
 
+  await t.test('generateTotpSecret and generateBackupCodes fail closed without crypto.getRandomValues', () => {
+    const originalCrypto = globalThis.crypto;
+    Object.defineProperty(globalThis, 'crypto', {
+      value: undefined,
+      configurable: true,
+      writable: true
+    });
+    try {
+      assert.throws(() => generateTotpSecret(), /getRandomValues/i);
+      assert.throws(() => generateBackupCodes(), /getRandomValues/i);
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', {
+        value: originalCrypto,
+        configurable: true,
+        writable: true
+      });
+    }
+  });
+
   await t.test('generateTotpCode matches RFC 6238 SHA-1 test vector at T=59s', async () => {
     const code = await generateTotpCode(RFC6238_SECRET, 59_000);
     assert.strictEqual(code, '287082');
@@ -55,12 +74,16 @@ test('TOTP Engine (RFC 6238)', async (t) => {
     assert.deepStrictEqual(res2.remainingCodes, ['EFGH-5678']);
   });
 
-  await t.test('buildOtpAuthUri produces a valid otpauth:// URI', () => {
+  await t.test('buildOtpAuthUri produces a valid otpauth:// URI and handles null email/issuer safely', () => {
     const uri = buildOtpAuthUri(RFC6238_SECRET, 'user@tocaito.com', 'Tocaito');
     assert.ok(uri.startsWith('otpauth://totp/Tocaito:user%40tocaito.com?'));
     assert.ok(uri.includes(`secret=${RFC6238_SECRET}`));
     assert.ok(uri.includes('issuer=Tocaito'));
     assert.ok(uri.includes('digits=6'));
     assert.ok(uri.includes('period=30'));
+
+    const fallbackUri = buildOtpAuthUri(RFC6238_SECRET, null, null);
+    assert.ok(fallbackUri.startsWith('otpauth://totp/Tocaito:user?'));
+    assert.ok(fallbackUri.includes('issuer=Tocaito'));
   });
 });

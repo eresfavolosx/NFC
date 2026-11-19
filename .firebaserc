@@ -1,5 +1,7 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "nfc-manager-fv96"
+  },
   "targets": {},
   "etags": {}
 }

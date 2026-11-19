@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
 import { auth, provider, signInWithPopup, signOut, onAuthStateChanged } from './firebase.js';
 import { nfc } from './nfc.js';
 import { translations } from './i18n.js';
@@ -36,7 +38,7 @@ const defaultData = {
     dynamicRedirection: true,
     theme: 'system',
     language: 'es', // Default to Spanish
-    security2FA: null,
+    security2FA: {},
   },
   subscription: {
     tier: 'free', // 'free' or 'pro'
@@ -51,26 +53,44 @@ const defaultData = {
   clients: [],   // [email1, email2, ...] (Explicit client registry)
 };
 
+function sanitizeCsvCell(value) {
+  const str = String(value ?? '');
+  const safe = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+  return `"${safe.replace(/"/g, '""')}"`;
+}
+
 function loadData() {
+  const base = structuredClone(defaultData);
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      return {
-        ...defaultData,
+      const merged = {
+        ...base,
         ...parsed,
-        settings: { ...defaultData.settings, ...(parsed?.settings || {}) },
-        subscription: { ...defaultData.subscription, ...(parsed?.subscription || {}) },
+        settings: { ...base.settings, ...(parsed?.settings || {}) },
+        subscription: { ...base.subscription, ...(parsed?.subscription || {}) },
+        links: Array.isArray(parsed?.links) ? parsed.links : [],
+        tags: Array.isArray(parsed?.tags) ? parsed.tags : [],
+        activity: Array.isArray(parsed?.activity) ? parsed.activity : [],
+        analytics: Array.isArray(parsed?.analytics) ? parsed.analytics : [],
+        clients: Array.isArray(parsed?.clients) ? parsed.clients : [],
       };
+
+      const raw2FA = merged.settings.security2FA;
+      if (!raw2FA || typeof raw2FA !== 'object' || Array.isArray(raw2FA)) {
+        merged.settings.security2FA = {};
+      } else if ('enabled' in raw2FA && 'secret' in raw2FA) {
+        // Migrate legacy single-account security2FA object to UID-keyed map
+        const uid = merged.settings.user?.id;
+        merged.settings.security2FA = uid ? { [uid]: raw2FA } : {};
+      }
+      return merged;
     }
   } catch (e) {
     console.warn('Failed to load store data:', e);
   }
-  return {
-    ...defaultData,
-    settings: { ...defaultData.settings },
-    subscription: { ...defaultData.subscription },
-  };
+  return base;
 }
 
 function saveData(dataToSave) {
@@ -86,10 +106,16 @@ const listeners = new Set();
 let debounceTimer;
 const DEBOUNCE_DELAY = 500;
 
-function saveDataDebounced(data) {
+let authReady = false;
+let resolveAuthReady;
+const authReadyPromise = new Promise((resolve) => {
+  resolveAuthReady = resolve;
+});
+
+function saveDataDebounced(dataToSave) {
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
-    saveData(data);
+    saveData(dataToSave);
     debounceTimer = null;
   }, DEBOUNCE_DELAY);
 }
@@ -104,13 +130,6 @@ if (typeof window !== 'undefined') {
 }
 
 export const store = {
-  // ⚡ Bolt: Lazy Cache for O(1) Lookups
-  // Why: Repeated Array.find() and Array.filter() calls in getters were
-  // causing O(N^2) bottlenecks during UI renders, significantly degrading performance
-  // on large datasets (e.g. 10,000+ items).
-  // Impact: Transforms O(N) array scans into O(1) Map lookups. Speeds up rendering
-  // and list filtering operations by ~30x for large arrays.
-  // Measurement: Time complexity for getters dropped from O(N) to O(1).
   _cache: {},
 
   // ── Subscriptions ──
@@ -120,85 +139,120 @@ export const store = {
   },
 
   _notify() {
-    this._cache = {}; // ⚡ Bolt: Invalidate cache when state updates
+    this._cache = {};
     saveDataDebounced(data);
     listeners.forEach(fn => fn(data));
   },
 
   // ── Auth ──
   get isAuthenticated() { return !!data.settings.user; },
+  get isAuthReady() { return authReady; },
+
+  waitForAuthReady() {
+    return authReadyPromise;
+  },
 
   async loginWithGoogle() {
     try {
-        const result = await signInWithPopup(auth, provider);
-        data.settings.isAuthenticated = true;
-        data.settings.user = {
-            id: result.user.uid,
-            email: result.user.email,
-            displayName: result.user.displayName,
-            photoURL: result.user.photoURL
-        };
-        this._notify();
-        return true;
+      const result = await signInWithPopup(auth, provider);
+      data.settings.isAuthenticated = true;
+      data.settings.user = {
+        id: result.user.uid,
+        email: result.user.email,
+        displayName: result.user.displayName,
+        photoURL: result.user.photoURL
+      };
+      this._notify();
+      return true;
     } catch (error) {
-        console.error('Google Sign-In Error:', error);
-        throw error;
+      console.error('Google Sign-In Error:', error);
+      throw error;
     }
   },
 
   async logout() {
+    const prevUid = data.settings.user?.id || null;
     try {
       await signOut(auth);
-      data.settings.isAuthenticated = false;
-      data.settings.user = null;
-      clearSession2FAVerification();
-      this._notify();
     } catch (error) {
       console.error('Logout Error:', error);
+    } finally {
+      data.settings.isAuthenticated = false;
+      data.settings.user = null;
+      clearSession2FAVerification(prevUid);
+      this._notify();
     }
   },
 
-  // ── Two-Factor Authentication (2FA) ──
-  get is2FAEnabled() {
-    return Boolean(data.settings.security2FA?.enabled && data.settings.security2FA?.secret);
-  },
+  // ── Two-Factor Authentication (2FA, isolated per user.uid) ──
   get security2FA() {
-    return data.settings.security2FA || null;
+    const uid = data.settings.user?.id;
+    if (!uid) return null;
+    const map = data.settings.security2FA;
+    if (!map || typeof map !== 'object' || Array.isArray(map)) return null;
+    return map[uid] || null;
   },
+
+  get is2FAEnabled() {
+    const entry = this.security2FA;
+    return Boolean(entry?.enabled && entry?.secret);
+  },
+
   enable2FA(secret, backupCodes) {
-    data.settings.security2FA = {
+    const uid = data.settings.user?.id;
+    if (!uid) {
+      throw new Error('Cannot enable 2FA without an authenticated user.');
+    }
+    if (!data.settings.security2FA || typeof data.settings.security2FA !== 'object' || Array.isArray(data.settings.security2FA) || 'secret' in data.settings.security2FA) {
+      data.settings.security2FA = {};
+    }
+    data.settings.security2FA[uid] = {
       enabled: true,
       secret,
-      backupCodes: Array.isArray(backupCodes) ? backupCodes : [],
+      backupCodes: Array.isArray(backupCodes) ? [...backupCodes] : [],
       enabledAt: new Date().toISOString()
     };
-    markSession2FAVerified();
+    markSession2FAVerified(uid);
     this._notify();
   },
+
   disable2FA() {
-    data.settings.security2FA = null;
-    clearSession2FAVerification();
+    const uid = data.settings.user?.id;
+    if (uid && data.settings.security2FA && typeof data.settings.security2FA === 'object') {
+      delete data.settings.security2FA[uid];
+    }
+    clearSession2FAVerification(uid || null);
     this._notify();
   },
+
   async verify2FACode(code) {
-    if (!this.is2FAEnabled) return false;
-    return await verifyTotpCode(data.settings.security2FA.secret, code);
+    const entry = this.security2FA;
+    if (!entry?.enabled || !entry?.secret) return false;
+    return await verifyTotpCode(entry.secret, code);
   },
+
   verify2FABackupCode(code) {
-    if (!this.is2FAEnabled) return false;
-    const res = verifyAndConsumeBackupCode(code, data.settings.security2FA.backupCodes || []);
+    const entry = this.security2FA;
+    if (!entry?.enabled || !entry?.secret) return false;
+    const res = verifyAndConsumeBackupCode(code, entry.backupCodes || []);
     if (res.valid) {
-      data.settings.security2FA.backupCodes = res.remainingCodes;
+      entry.backupCodes = res.remainingCodes;
       this._notify();
       return true;
     }
     return false;
   },
+
   isSession2FAVerified() {
-    return isSession2FAVerified();
+    const uid = data.settings.user?.id;
+    if (!uid) return false;
+    return isSession2FAVerified(uid);
   },
+
   markSession2FAVerified() {
-    markSession2FAVerified();
+    const uid = data.settings.user?.id;
+    if (!uid) return;
+    markSession2FAVerified(uid);
   },
 
   get user() { return data.settings.user; },
@@ -215,8 +269,8 @@ export const store = {
 
   setLanguage(lang) {
     if (['es', 'en'].includes(lang)) {
-        data.settings.language = lang;
-        this._notify();
+      data.settings.language = lang;
+      this._notify();
     }
   },
 
@@ -226,16 +280,15 @@ export const store = {
   },
 
   async init() {
-    // Legacy cleanup: remove PIN-related settings
     if (data.settings.adminPin) {
       delete data.settings.adminPin;
     }
-    
+
     try {
-        await this.refreshNfcCompat();
+      await this.refreshNfcCompat();
     } catch (e) {
-        console.error('Store init: failed to refresh nfcCompat', e);
-        data.settings.nfcCompat = { supported: false, platform: 'error', message: 'NFC support check failed' };
+      console.error('Store init: failed to refresh nfcCompat', e);
+      data.settings.nfcCompat = { supported: false, platform: 'error', message: 'NFC support check failed' };
     }
     this._notify();
   },
@@ -276,24 +329,29 @@ export const store = {
   },
 
   // ── Links CRUD ──
-  get links() { 
+  get links() {
     if (!this._cache.links) {
       if (this.isSuperAdmin()) {
         this._cache.links = [...data.links];
       } else {
-        this._cache.links = data.links.filter(l => l.ownerEmail === this.user?.email || !l.ownerEmail);
+        const userEmail = this.user?.email?.toLowerCase();
+        this._cache.links = data.links.filter(
+          l => l.ownerEmail?.toLowerCase() === userEmail || !l.ownerEmail
+        );
       }
     }
     return this._cache.links;
   },
 
-  getLink(id) { 
-    // ⚡ Bolt: Replace O(N) Array.find() with O(1) Map lookup
-    // Why: getLink is frequently called in loops (e.g. filterLinks in views/links.js)
-    // causing O(N^2) search bottlenecks when filtering DOM nodes on large datasets.
+  getLink(id) {
     const link = this.linksById.get(id);
-    if (this.isSuperAdmin()) return link;
-    return (link && (link.ownerEmail === this.user?.email || !link.ownerEmail)) ? link : null;
+    if (this.isSuperAdmin()) return link || null;
+    const userEmail = this.user?.email?.toLowerCase();
+    return (link && (link.ownerEmail?.toLowerCase() === userEmail || !link.ownerEmail)) ? link : null;
+  },
+
+  getPublicLink(id) {
+    return this.linksById.get(id) || null;
   },
 
   // ── Subscription Logic ──
@@ -301,18 +359,13 @@ export const store = {
 
   isPremium() {
     return true; // User requested to unlock premium for everyone for now
-    // if (data.subscription.tier === 'pro') return true;
-    // if (data.subscription.trialEndsAt) {
-    //   return new Date(data.subscription.trialEndsAt) > new Date();
-    // }
-    // return false;
   },
 
   startTrial() {
     if (data.subscription.trialStartedAt) return;
     const now = new Date();
     const ends = new Date();
-    ends.setDate(now.getDate() + 14); // 14-day trial
+    ends.setDate(now.getDate() + 14);
     data.subscription.trialStartedAt = now.toISOString();
     data.subscription.trialEndsAt = ends.toISOString();
     this._addActivity('trial_started', 'Started 14-day premium trial');
@@ -343,7 +396,7 @@ export const store = {
       clicks: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      ownerEmail: this.user?.email,
+      ownerEmail: this.user?.email?.toLowerCase() || null,
     };
     data.links.unshift(link);
     this._addActivity('link_created', `Created link "${title}"`);
@@ -371,7 +424,6 @@ export const store = {
     const link = data.links.find(l => l.id === id);
     if (!link) return false;
     data.links = data.links.filter(l => l.id !== id);
-    // Unassign any tags pointing to this link
     data.tags.forEach(t => {
       if (t.assignedLinkId === id) t.assignedLinkId = null;
     });
@@ -380,40 +432,51 @@ export const store = {
     return true;
   },
 
-  incrementClicks(linkId) {
+  incrementClicks(linkId, tagId = null) {
     const link = data.links.find(l => l.id === linkId);
     if (link) {
-      link.clicks++;
+      link.clicks = (link.clicks || 0) + 1;
+      data.analytics.unshift({
+        linkId: link.id,
+        tagId,
+        timestamp: new Date().toISOString(),
+      });
       this._notify();
     }
   },
 
   // ── Tags CRUD ──
-  get tags() { 
+  get tags() {
     if (!this._cache.tags) {
       if (this.isSuperAdmin()) {
         this._cache.tags = [...data.tags];
       } else {
         const userEmail = this.user?.email?.toLowerCase();
-        this._cache.tags = data.tags.filter(t => t.ownerEmail?.toLowerCase() === userEmail || !t.ownerEmail);
+        this._cache.tags = data.tags.filter(
+          t => t.ownerEmail?.toLowerCase() === userEmail || !t.ownerEmail
+        );
       }
     }
     return this._cache.tags;
   },
 
-  getTag(id) { 
-    // ⚡ Bolt: Replace O(N) Array.find() with O(1) Map lookup
-    // Why: getTag is frequently called in loops (e.g. during search in views/tags.js)
-    // causing O(N^2) bottlenecks when searching thousands of tags.
+  getTag(id) {
     const tag = this.tagsById.get(id);
-    if (this.isSuperAdmin()) return tag;
-    return (tag && (tag.ownerEmail?.toLowerCase() === this.user?.email?.toLowerCase() || !tag.ownerEmail)) ? tag : null;
+    if (this.isSuperAdmin()) return tag || null;
+    const userEmail = this.user?.email?.toLowerCase();
+    return (tag && (tag.ownerEmail?.toLowerCase() === userEmail || !tag.ownerEmail)) ? tag : null;
+  },
+
+  getPublicTag(id) {
+    return this.tagsById.get(id) || null;
   },
 
   createTag({ id = null, label, serialNumber = null, ownerEmail = null }) {
     if (!this.isSuperAdmin() && !this.canCreateTag()) {
-        throw new Error('Tag limit reached. Upgrade to Pro for unlimited tags.');
+      throw new Error('Tag limit reached. Upgrade to Pro for unlimited tags.');
     }
+    const normalizedOwner = ownerEmail?.toLowerCase?.().trim() || null;
+    const resolvedOwner = normalizedOwner || (this.isSuperAdmin() ? null : (this.user?.email?.toLowerCase() || null));
     const tag = {
       id: id || crypto.randomUUID(),
       label,
@@ -423,8 +486,8 @@ export const store = {
       location: null,
       isLocked: false,
       createdAt: new Date().toISOString(),
-      ownerEmail: ownerEmail || (this.isSuperAdmin() ? null : this.user?.email), // Admin can leave it unassigned
-      status: ownerEmail ? 'provisioned' : 'active'
+      ownerEmail: resolvedOwner,
+      status: normalizedOwner ? 'provisioned' : 'active'
     };
     data.tags.unshift(tag);
     this._addActivity('tag_created', `Registered tag "${label}"`);
@@ -433,34 +496,42 @@ export const store = {
   },
 
   assignTagToUser(tagId, email) {
-      if (!this.isSuperAdmin()) throw new Error('Unauthorized');
-      const tag = this.getTag(tagId);
-      if (tag) {
-          tag.ownerEmail = email;
-          tag.status = 'provisioned';
-          this._notify();
-          return true;
-      }
-      return false;
+    if (!this.isSuperAdmin()) throw new Error('Unauthorized');
+    const tag = this.getTag(tagId);
+    if (tag) {
+      tag.ownerEmail = email.toLowerCase().trim();
+      tag.status = 'provisioned';
+      this._notify();
+      return true;
+    }
+    return false;
   },
 
-  createBulkTags(prefix, count, startNum = 1) {
-    if (!this.isPremium() && data.tags.length + count > 3) {
-        throw new Error('Bulk creation exceeds limit. Upgrade to Pro for more tags.');
+  createBulkTags(prefix, count, startNum = 1, ownerEmail = null) {
+    if (!this.isSuperAdmin() && !this.isPremium() && data.tags.length + count > 3) {
+      throw new Error('Bulk creation exceeds limit. Upgrade to Pro for more tags.');
     }
     const createdTags = [];
     const nowIso = new Date().toISOString();
+    const normalizedOwner = ownerEmail?.toLowerCase?.().trim() || null;
+    const resolvedOwner = normalizedOwner || (this.isSuperAdmin() ? null : (this.user?.email?.toLowerCase() || null));
+    const status = normalizedOwner ? 'provisioned' : 'active';
+
     for (let i = 0; i < count; i++) {
-        const num = startNum + i;
-        const tag = {
-            id: crypto.randomUUID(),
-            label: `${prefix} ${num}`,
-            serialNumber: null,
-            assignedLinkId: null,
-            lastWritten: null,
-            createdAt: nowIso,
-        };
-        createdTags.push(tag);
+      const num = startNum + i;
+      const tag = {
+        id: crypto.randomUUID(),
+        label: `${prefix} ${num}`,
+        serialNumber: null,
+        assignedLinkId: null,
+        lastWritten: null,
+        location: null,
+        isLocked: false,
+        createdAt: nowIso,
+        ownerEmail: resolvedOwner,
+        status,
+      };
+      createdTags.push(tag);
     }
     data.tags = createdTags.slice().reverse().concat(data.tags);
     this._addActivity('tag_created', `Registered ${count} bulk tags starting with "${prefix}"`);
@@ -482,31 +553,28 @@ export const store = {
     if (!tag) return false;
     tag.assignedLinkId = linkId;
     tag.lastWritten = new Date().toISOString();
-    
-    // Generate the URL to be written
+
     let urlToWrite = link?.url;
     if (data.settings.dynamicRedirection) {
-        const base = typeof window !== 'undefined' && window.location ? window.location.origin : 'https://nfc.novu.works';
-        urlToWrite = `${base}/#/r/${tag.id}`;
+      const base = typeof window !== 'undefined' && window.location ? window.location.origin : 'https://nfc.novu.works';
+      urlToWrite = `${base}/#/r/${tag.id}`;
     }
 
-    // Capture location if on native Capacitor runtime
-    if (typeof globalThis.Capacitor !== 'undefined' && globalThis.Capacitor?.isNativePlatform?.() && typeof globalThis.Geolocation !== 'undefined') {
-        try {
-            globalThis.Geolocation.getCurrentPosition().then(pos => {
-                tag.location = {
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude
-                };
-                this._notify();
-            });
-        } catch (e) {
-            console.warn('Geolocation failed:', e);
-        }
+    if (Capacitor.isNativePlatform()) {
+      Geolocation.getCurrentPosition()
+        .then(pos => {
+          tag.location = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          };
+          this._notify();
+        })
+        .catch(err => {
+          console.warn('Geolocation failed:', err);
+        });
     }
 
     this._addActivity('tag_assigned', `Assigned "${link?.title || 'link'}" to tag "${tag.label}"`);
-    
     this._notify();
     return urlToWrite || true;
   },
@@ -553,6 +621,26 @@ export const store = {
   // ── Analytics ──
   get analytics() { return [...data.analytics]; },
 
+  exportToCSV() {
+    const events = this.analytics;
+    if (events.length === 0) return '';
+
+    const headers = ['Timestamp', 'Link Title', 'Link URL', 'Tag Label', 'Tag ID'];
+    const rows = events.map(event => {
+      const link = this.getLink(event.linkId) || this.getPublicLink(event.linkId);
+      const tag = event.tagId ? (this.getTag(event.tagId) || this.getPublicTag(event.tagId)) : null;
+      return [
+        event.timestamp,
+        link?.title || 'Unknown',
+        link?.url || '',
+        tag?.label || 'Direct Link',
+        event.tagId || ''
+      ].map(sanitizeCsvCell).join(',');
+    });
+
+    return [headers.map(sanitizeCsvCell).join(','), ...rows].join('\n');
+  },
+
   // ── Activity Log ──
   get activity() { return [...data.activity].slice(0, 50); },
 
@@ -564,7 +652,6 @@ export const store = {
       description: message,
       timestamp: new Date().toISOString(),
     });
-    // Keep only the latest 100
     if (data.activity.length > 100) {
       data.activity = data.activity.slice(0, 100);
     }
@@ -574,21 +661,14 @@ export const store = {
   get allClientEmails() {
     if (!this._cache.allClientEmails) {
       const emails = new Set();
-      
-      // 1. From explicit registry
+
       data.clients.forEach(e => emails.add(e.toLowerCase().trim()));
-      
-      // 2. From tags (Provisioned or Active)
       data.tags.forEach(t => {
         if (t.ownerEmail) emails.add(t.ownerEmail.toLowerCase().trim());
       });
-      
-      // 3. From links (Owner filtering)
       data.links.forEach(l => {
         if (l.ownerEmail) emails.add(l.ownerEmail.toLowerCase().trim());
       });
-
-      // 4. From current user session
       if (data.settings.user?.email) {
         emails.add(data.settings.user.email.toLowerCase().trim());
       }
@@ -603,7 +683,7 @@ export const store = {
     if (!this._cache.stats) {
       const userTags = this.tags;
       const userLinks = this.links;
-      
+
       this._cache.stats = {
         totalTags: userTags.length,
         totalLinks: userLinks.length,
@@ -617,37 +697,39 @@ export const store = {
 
   // ── Reset ──
   reset() {
-    data = {
-      ...defaultData,
-      settings: { ...defaultData.settings },
-      subscription: { ...defaultData.subscription },
-      links: [],
-      tags: [],
-      activity: []
-    };
+    data = structuredClone(defaultData);
     clearSession2FAVerification();
     this._notify();
   },
 };
 
-// Listen for auth state changes to keep store in sync
 onAuthStateChanged(auth, (user) => {
-    const prevUid = data.settings.user?.id;
-    if (user) {
-        if (prevUid && prevUid !== user.uid) {
-            clearSession2FAVerification();
-        }
-        data.settings.isAuthenticated = true;
-        data.settings.user = {
-            id: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL
-        };
-    } else {
-        data.settings.isAuthenticated = false;
-        data.settings.user = null;
-        clearSession2FAVerification();
+  const prevUid = data.settings.user?.id || null;
+  let changed = false;
+
+  if (user) {
+    if (prevUid && prevUid !== user.uid) {
+      clearSession2FAVerification(prevUid);
     }
+    data.settings.isAuthenticated = true;
+    data.settings.user = {
+      id: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL
+    };
+    changed = true;
+  } else if (data.settings.user || data.settings.isAuthenticated) {
+    data.settings.isAuthenticated = false;
+    data.settings.user = null;
+    clearSession2FAVerification(prevUid);
+    changed = true;
+  }
+
+  authReady = true;
+  resolveAuthReady(user || null);
+
+  if (changed) {
     store._notify();
+  }
 });

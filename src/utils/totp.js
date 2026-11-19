@@ -7,16 +7,20 @@
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 const SESSION_2FA_KEY = 'nfc_2fa_session_verified';
 
+function getSecureRandomBytes(length) {
+    if (typeof globalThis === 'undefined' || !globalThis.crypto?.getRandomValues) {
+        throw new Error('Cryptographically secure random generator (crypto.getRandomValues) is unavailable.');
+    }
+    const random = new Uint8Array(length);
+    globalThis.crypto.getRandomValues(random);
+    return random;
+}
+
 /**
  * Generate a cryptographically secure Base32 secret (32 chars = 160 bits).
  */
 export function generateTotpSecret(length = 32) {
-    const random = new Uint8Array(length);
-    if (typeof globalThis !== 'undefined' && globalThis.crypto?.getRandomValues) {
-        globalThis.crypto.getRandomValues(random);
-    } else {
-        for (let i = 0; i < length; i++) random[i] = Math.floor(Math.random() * 256);
-    }
+    const random = getSecureRandomBytes(length);
     let out = '';
     for (let i = 0; i < length; i++) {
         out += BASE32_ALPHABET[random[i] % BASE32_ALPHABET.length];
@@ -28,7 +32,7 @@ export function generateTotpSecret(length = 32) {
  * Decode an RFC 4648 Base32 secret into raw bytes.
  */
 export function base32ToBytes(secret = '') {
-    const clean = String(secret).toUpperCase().replace(/[^A-Z2-7]/g, '');
+    const clean = String(secret ?? '').toUpperCase().replace(/[^A-Z2-7]/g, '');
     const bytes = [];
     let bits = 0;
     let value = 0;
@@ -111,12 +115,7 @@ export async function verifyTotpCode(secret, inputCode, windowSteps = 1, timesta
 export function generateBackupCodes(count = 8) {
     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     const codes = [];
-    const random = new Uint8Array(count * 8);
-    if (typeof globalThis !== 'undefined' && globalThis.crypto?.getRandomValues) {
-        globalThis.crypto.getRandomValues(random);
-    } else {
-        for (let i = 0; i < random.length; i++) random[i] = Math.floor(Math.random() * 256);
-    }
+    const random = getSecureRandomBytes(count * 8);
 
     for (let i = 0; i < count; i++) {
         let part1 = '';
@@ -156,9 +155,9 @@ export function verifyAndConsumeBackupCode(inputCode, availableCodes = []) {
  * Build standard otpauth:// URI for Authenticator Apps.
  */
 export function buildOtpAuthUri(secret, accountEmail = 'user', issuer = 'Tocaito') {
-    const cleanSecret = String(secret).toUpperCase().replace(/[^A-Z2-7]/g, '');
-    const cleanIssuer = issuer.trim() || 'Tocaito';
-    const cleanAccount = accountEmail.trim() || 'user';
+    const cleanSecret = String(secret ?? '').toUpperCase().replace(/[^A-Z2-7]/g, '');
+    const cleanIssuer = String(issuer ?? '').trim() || 'Tocaito';
+    const cleanAccount = String(accountEmail ?? '').trim() || 'user';
     const label = `${encodeURIComponent(cleanIssuer)}:${encodeURIComponent(cleanAccount)}`;
     const params = new URLSearchParams({
         secret: cleanSecret,
@@ -178,25 +177,38 @@ export function getTotpSecondsRemaining(timestampMs = Date.now()) {
     return 30 - elapsed;
 }
 
-export function isSession2FAVerified() {
-    if (typeof window === 'undefined') return false;
+function getSessionKey(uid) {
+    return uid ? `${SESSION_2FA_KEY}:${uid}` : SESSION_2FA_KEY;
+}
+
+export function isSession2FAVerified(uid = null) {
+    if (typeof window === 'undefined' || !window.sessionStorage) return false;
     try {
-        return sessionStorage.getItem(SESSION_2FA_KEY) === 'true';
+        return window.sessionStorage.getItem(getSessionKey(uid)) === 'true';
     } catch {
         return false;
     }
 }
 
-export function markSession2FAVerified() {
-    if (typeof window === 'undefined') return;
+export function markSession2FAVerified(uid = null) {
+    if (typeof window === 'undefined' || !window.sessionStorage) return;
     try {
-        sessionStorage.setItem(SESSION_2FA_KEY, 'true');
+        window.sessionStorage.setItem(getSessionKey(uid), 'true');
     } catch {}
 }
 
-export function clearSession2FAVerification() {
-    if (typeof window === 'undefined') return;
+export function clearSession2FAVerification(uid = null) {
+    if (typeof window === 'undefined' || !window.sessionStorage) return;
     try {
-        sessionStorage.removeItem(SESSION_2FA_KEY);
+        if (uid) {
+            window.sessionStorage.removeItem(getSessionKey(uid));
+        } else {
+            for (let i = window.sessionStorage.length - 1; i >= 0; i--) {
+                const key = window.sessionStorage.key(i);
+                if (key === SESSION_2FA_KEY || key?.startsWith(`${SESSION_2FA_KEY}:`)) {
+                    window.sessionStorage.removeItem(key);
+                }
+            }
+        }
     } catch {}
 }

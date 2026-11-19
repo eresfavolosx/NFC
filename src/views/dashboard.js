@@ -4,15 +4,17 @@
 
 import { store } from '../store.js';
 import { navigate } from '../router.js';
-import { renderHeader, escapeHTML, showToast } from '../utils.js';
+import { renderHeader } from '../components/header.js';
+import { showToast } from '../components/toast.js';
+import { escapeHTML } from '../utils/sanitize.js';
 
 export function renderDashboard() {
     const main = document.getElementById('page-content');
     if (!main) return;
-    
+
     const stats = store.stats;
     const t = (key) => store.t(key);
-    
+
     main.innerHTML = `
       ${renderHeader(t('dashboard'), t('welcome_back'))}
       

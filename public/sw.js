@@ -23,15 +23,31 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Fetch — network first, fallback to cache
+// Fetch — network first, fallback to cache (same-origin HTTP(S) GET only)
 self.addEventListener('fetch', (event) => {
+    const req = event.request;
+    if (req.method !== 'GET') return;
+
+    let url;
+    try {
+        url = new URL(req.url);
+    } catch {
+        return;
+    }
+
+    if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.origin !== self.location.origin) {
+        return;
+    }
+
     event.respondWith(
-        fetch(event.request)
+        fetch(req)
             .then((response) => {
-                const clone = response.clone();
-                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                if (response && response.ok && response.type === 'basic') {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+                }
                 return response;
             })
-            .catch(() => caches.match(event.request))
+            .catch(() => caches.match(req))
     );
 });

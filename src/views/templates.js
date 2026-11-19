@@ -3,7 +3,10 @@
    ═══════════════════════════════════════════════════════════ */
 
 import { store } from '../store.js';
-import { navigate, renderHeader, escapeHTML, showToast } from '../utils.js';
+import { navigate } from '../router.js';
+import { renderHeader } from '../components/header.js';
+import { showToast } from '../components/toast.js';
+import { escapeHTML } from '../utils/sanitize.js';
 
 const TEMPLATES = [
     {
@@ -41,37 +44,33 @@ const TEMPLATES = [
 export function renderTemplates() {
     const container = document.getElementById('page-content');
     if (!container) return;
-    
-    container.innerHTML = '';
-    container.innerHTML = `
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Business Templates</h1>
-                <p class="page-subtitle">Quickly set up your NFC tags with industry presets</p>
-            </div>
-        </div>
 
-        <div class="templates-grid">
-            ${TEMPLATES.map(t => `
-                <div class="card-glass template-card animate-fade-up">
-                    <div class="template-header">
-                        <h2 class="template-title">${t.name}</h2>
-                        <p class="template-desc">${t.description}</p>
+    container.innerHTML = `
+        ${renderHeader('Business Templates', 'Quickly set up your NFC tags with industry presets')}
+
+        <div class="page-container">
+            <div class="templates-grid">
+                ${TEMPLATES.map(t => `
+                    <div class="card-glass template-card animate-fade-up">
+                        <div class="template-header">
+                            <h2 class="template-title">${escapeHTML(t.name)}</h2>
+                            <p class="template-desc">${escapeHTML(t.description)}</p>
+                        </div>
+                        <div class="template-preview">
+                            ${t.links.map(l => `
+                                <div class="template-link-pill">
+                                    <span>${escapeHTML(l.icon)}</span> ${escapeHTML(l.title)}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="template-footer" style="margin-top: auto;">
+                            <button class="btn btn-primary template-apply-btn w-full" data-id="${escapeHTML(t.id)}">
+                                Use Template
+                            </button>
+                        </div>
                     </div>
-                    <div class="template-preview">
-                        ${t.links.map(l => `
-                            <div class="template-link-pill">
-                                <span>${l.icon}</span> ${l.title}
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="template-footer" style="margin-top: auto;">
-                        <button class="btn btn-primary template-apply-btn w-full" data-id="${t.id}">
-                            Use Template
-                        </button>
-                    </div>
-                </div>
-            `).join('')}
+                `).join('')}
+            </div>
         </div>
     `;
 
@@ -80,7 +79,7 @@ export function renderTemplates() {
         btn.addEventListener('click', () => {
             const templateId = btn.getAttribute('data-id');
             const template = TEMPLATES.find(t => t.id === templateId);
-            
+
             if (template) {
                 if (confirm(`Apply "${template.name}" template? This will add 3 pre-configured links.`)) {
                     template.links.forEach(l => {

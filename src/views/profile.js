@@ -1,6 +1,8 @@
 import { store } from '../store.js';
-import { renderHeader, escapeHTML, showToast } from '../utils.js';
-import { isValidUrl } from '../utils/sanitize.js';
+import { navigate } from '../router.js';
+import { renderHeader } from '../components/header.js';
+import { showToast } from '../components/toast.js';
+import { escapeHTML, isValidUrl } from '../utils/sanitize.js';
 import { open2FASetupModal, open2FADisableModal } from '../components/two-factor-dialog.js';
 
 export function renderProfile() {
@@ -18,6 +20,20 @@ export function renderProfile() {
     const trialEnds = sub.trialEndsAt ? new Date(sub.trialEndsAt).toLocaleDateString() : null;
     const t = (key) => store.t(key);
 
+    const planBadgeLabel = sub.tier === 'pro'
+        ? 'Professional'
+        : (trialEnds && isPro)
+            ? t('pro_trial')
+            : isPro
+                ? 'Pro Access'
+                : t('free_tier');
+
+    const planRenewalText = sub.tier === 'pro'
+        ? 'Renews on next billing cycle'
+        : trialEnds
+            ? `Trial ends on <strong>${escapeHTML(trialEnds)}</strong>`
+            : 'Full Pro access enabled';
+
     container.innerHTML = `
         ${renderHeader(t('profile'), t('profile_sub'))}
 
@@ -33,7 +49,7 @@ export function renderProfile() {
                     </div>
                     <div class="profile-info">
                         <div class="profile-avatar">
-                            ${user?.photoURL && isValidUrl(user.photoURL) ? `<img src="${escapeHTML(user.photoURL)}" alt="Avatar">` : `<div class="avatar-placeholder">${user?.displayName?.[0] || 'U'}</div>`}
+                            ${user?.photoURL && isValidUrl(user.photoURL) ? `<img src="${escapeHTML(user.photoURL)}" alt="Avatar">` : `<div class="avatar-placeholder">${escapeHTML(user?.displayName?.[0] || 'U')}</div>`}
                         </div>
                         <div class="profile-details">
                             <div class="profile-name">${escapeHTML(user?.displayName || 'Tocaito User')}</div>
@@ -83,7 +99,7 @@ export function renderProfile() {
                     <div class="card-header">
                         <h3 class="card-title">${t('current_plan')}</h3>
                         <span class="badge ${isPro ? 'badge-primary' : 'badge-secondary'}">
-                            ${sub.tier === 'pro' ? 'Professional' : sub.trialEndsAt && isPro ? t('pro_trial') : t('free_tier')}
+                            ${escapeHTML(planBadgeLabel)}
                         </span>
                     </div>
                     
@@ -111,7 +127,7 @@ export function renderProfile() {
                                 <li class="feat-enabled">Biometric Security</li>
                             </ul>
                             <p class="text-sm text-muted" style="margin-top: 1rem">
-                                ${sub.tier === 'pro' ? 'Renews on next billing cycle' : `Trial ends on <strong>${trialEnds}</strong>`}
+                                ${planRenewalText}
                             </p>
                             <div class="card-actions" style="margin-top: 1.5rem">
                                 <button class="btn btn-secondary w-full" id="manage-sub-btn">Manage Subscription (Stripe)</button>
@@ -130,7 +146,7 @@ export function renderProfile() {
                             ${t('refer_desc')}
                         </p>
                         <div class="form-group" style="display: flex; gap: var(--space-sm);">
-                            <input class="form-input" style="flex:1;" type="text" readonly id="referralLink" value="https://nfc-manager-fv96.web.app/?ref=${user?.id || 'early-tester'}">
+                            <input class="form-input" style="flex:1;" type="text" readonly id="referralLink" value="https://nfc-manager-fv96.web.app/?ref=${escapeHTML(user?.id || 'early-tester')}">
                             <button class="btn btn-primary" id="copyReferralBtn">${t('copy_link')}</button>
                         </div>
                     </div>
@@ -188,10 +204,9 @@ export function renderProfile() {
     `;
 
     // Events
-    container.querySelector('#logout-btn')?.addEventListener('click', () => {
-        store.logout().then(() => {
-            window.location.hash = '/login';
-        });
+    container.querySelector('#logout-btn')?.addEventListener('click', async () => {
+        await store.logout();
+        navigate('/login');
     });
 
     container.querySelector('#profile-enable-2fa-btn')?.addEventListener('click', () => {

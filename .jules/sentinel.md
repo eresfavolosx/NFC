@@ -29,3 +29,14 @@
 **Vulnerability:** Found unescaped template string interpolations of user-controlled inputs (`tag.serialNumber`, `tag.ownerEmail`) within the Admin view in `src/views/admin.js`. If an attacker provisions an NFC tag with malicious payloads in these fields, the Admin UI executes the payloads when rendering the tag list.
 **Learning:** Even though some fields (`tag.label`) were escaped, others were missed. This indicates a pattern of inconsistent escaping. Secondary identifying properties like serial numbers or emails must also be treated as untrusted user input, especially in administrative consoles which might be targeted for privilege escalation.
 **Prevention:** Audit all properties of objects being rendered in lists. Enforce a rule that *all* object properties interpolated into HTML strings must be wrapped in `escapeHTML()`, not just the primary names or titles.
+
+## 2025-02-18 - Prevent DOM-based XSS in Toast notifications
+**Vulnerability:** The `showToast` function in `src/utils.js` (and similarly previously in `src/components/toast.js`) was interpolating user-controlled message strings directly into `innerHTML`, creating a critical DOM-based Cross-Site Scripting (XSS) vulnerability.
+**Learning:** This existed because standard string interpolation (``) was used within `innerHTML` to construct the toast component, missing the escaping layer.
+**Prevention:** Always use `textContent` to inject user-provided text into dynamically created DOM nodes, or ensure robust escaping via regex-based `escapeHTML` if HTML formatting is strictly required.
+
+## 2025-02-20 - Unescaped HTML Interpolation in Modal Component String Templates
+
+**Vulnerability:** User-controlled data properties (`link.id`, `link.icon`, `link.title`) were directly interpolated into string templates that were then passed to a generic modal component (`openModal`) without escaping, leading to potential DOM-based Cross-Site Scripting (XSS).
+**Learning:** `openModal` sets its content argument directly to `.innerHTML`. When generic views like the "redirect" activation screen create `<select>` dropdowns using dynamic content from the store (`store.links`), this dynamic content acts as an attack vector.
+**Prevention:** Always use the utility `escapeHTML` to wrap any dynamic, user-provided string properties when building string templates intended for insertion into `.innerHTML` or `.content` properties of generic view components.

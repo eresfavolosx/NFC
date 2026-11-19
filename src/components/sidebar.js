@@ -6,10 +6,12 @@ import { navigate, getCurrentRoute } from '../router.js';
 import { store } from '../store.js';
 import { escapeHTML } from '../utils/sanitize.js';
 
+let unsubscribeBrandListener = null;
+
 export function renderBottomNav() {
     const currentPath = getCurrentRoute();
     const t = (key) => store.t(key);
-    
+
     const nav = document.createElement('nav');
     nav.id = 'bottom-nav';
     nav.className = 'bottom-nav';
@@ -21,7 +23,7 @@ export function renderBottomNav() {
         { path: '/templates', icon: '📋', label: t('templates') },
         { path: '/profile', icon: '👤', label: t('profile') },
     ];
-    
+
     if (store.isSuperAdmin()) {
         items.splice(3, 0, { path: '/admin', icon: '🛡️', label: t('admin') });
     }
@@ -33,7 +35,7 @@ export function renderBottomNav() {
                    class="bottom-nav-item ${currentPath === item.path ? 'active' : ''}" 
                    data-path="${item.path}">
                     <span class="bottom-nav-icon" aria-hidden="true">${item.icon}</span>
-                    <span class="bottom-nav-label">${item.label}</span>
+                    <span class="bottom-nav-label">${escapeHTML(item.label)}</span>
                 </a>
             `).join('')}
         </div>
@@ -68,7 +70,7 @@ export function renderSidebar() {
       <div class="sidebar-brand-icon">🍊</div>
       <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px;">
         <span class="sidebar-brand-text">${escapeHTML(brandLabel)}</span>
-        ${store.isSuperAdmin() ? `<span class="beta-badge-label">🛡️ ${t('admin').toUpperCase()}</span>` : ''}
+        ${store.isSuperAdmin() ? `<span class="beta-badge-label">🛡️ ${escapeHTML(t('admin').toUpperCase())}</span>` : ''}
       </div>
       <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
         <span class="toggle-icon">◀</span>
@@ -82,7 +84,7 @@ export function renderSidebar() {
            data-path="${item.path}"
            ${item.premium && !store.isPremium() ? 'aria-disabled="true" tabindex="-1"' : ''}>
           <span class="nav-icon" aria-hidden="true">${item.icon}</span>
-          <span class="nav-label">${item.label}</span>
+          <span class="nav-label">${escapeHTML(item.label)}</span>
         </a>
       `).join('')}
       ${store.isSuperAdmin() ? `
@@ -91,7 +93,7 @@ export function renderSidebar() {
            class="sidebar-nav-item ${currentPath === '/admin' ? 'active' : ''}"
            data-path="/admin">
           <span class="nav-icon">🛡️</span>
-          <span class="nav-label">${t('admin_console')}</span>
+          <span class="nav-label">${escapeHTML(t('admin_console'))}</span>
         </a>
       ` : ''}
     </nav>
@@ -103,7 +105,7 @@ export function renderSidebar() {
       </div>
       <button class="sidebar-nav-item" id="logoutBtn">
         <span class="nav-icon">🚪</span>
-        <span class="nav-label">${t('logout')}</span>
+        <span class="nav-label">${escapeHTML(t('logout'))}</span>
       </button>
     </div>
   `;
@@ -120,6 +122,14 @@ export function initSidebarEvents() {
     const mainContent = document.querySelector('.main-content');
     const langEs = document.getElementById('lang-es');
     const langEn = document.getElementById('lang-en');
+
+    unsubscribeBrandListener?.();
+    unsubscribeBrandListener = store.subscribe((state) => {
+        const brandEl = document.querySelector('.sidebar-brand-text');
+        if (brandEl) {
+            brandEl.textContent = state.settings?.brandName || 'Tocaito';
+        }
+    });
 
     if (toggle) {
         toggle.addEventListener('click', () => {
@@ -138,13 +148,13 @@ export function initSidebarEvents() {
     if (langEs) {
         langEs.addEventListener('click', () => {
             store.setLanguage('es');
-            location.reload(); // Refresh to apply translations
+            location.reload();
         });
     }
     if (langEn) {
         langEn.addEventListener('click', () => {
             store.setLanguage('en');
-            location.reload(); // Refresh to apply translations
+            location.reload();
         });
     }
 }

@@ -10,15 +10,10 @@ import { navigate } from '../router.js';
 import { escapeHTML } from '../utils/sanitize.js';
 import { nfc } from '../nfc.js';
 
-function formatDate(dateStr) {
-    if (!dateStr) return 'Never';
-    return new Date(dateStr).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
-}
-
 export function renderTags() {
     const container = document.getElementById('page-content');
+    if (!container) return;
+
     const tags = store.tags;
     const links = store.links;
     const t = (k) => store.t(k);
@@ -30,7 +25,7 @@ export function renderTags() {
       <div class="links-toolbar">
         <div class="search-bar">
           <span class="search-icon" aria-hidden="true">🔍</span>
-          <input class="form-input" type="text" id="tagSearch" placeholder="${t('search_tags')}" aria-label="${t('search_tags')}">
+          <input class="form-input" type="text" id="tagSearch" placeholder="${escapeHTML(t('search_tags'))}" aria-label="${escapeHTML(t('search_tags'))}">
         </div>
         <button class="btn btn-primary" id="addTagBtn">
           <span aria-hidden="true">➕</span> ${t('register_tag')}
@@ -58,9 +53,10 @@ export function renderTags() {
 function renderTagRow(tag, index, t) {
     const assignedLink = tag.assignedLinkId ? store.getLink(tag.assignedLinkId) : null;
     const searchString = escapeHTML((tag.label + ' ' + (tag.serialNumber || '')).toLowerCase());
+    const escapedId = escapeHTML(tag.id);
 
     return `
-    <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${tag.id}" data-search="${searchString}">
+    <div class="tag-row card animate-fade-up" style="animation-delay: ${0.05 * index}s" data-id="${escapedId}" data-search="${searchString}">
       <div class="tag-row-main">
         <div class="tag-icon-wrap">
           <span class="tag-icon-big" aria-hidden="true">🏷️</span>
@@ -82,13 +78,13 @@ function renderTagRow(tag, index, t) {
         </div>
       </div>
       <div class="tag-row-actions">
-        <button class="btn btn-secondary assign-link-btn" data-id="${tag.id}">
+        <button class="btn btn-secondary assign-link-btn" data-id="${escapedId}">
           ${assignedLink ? `🔄 ${t('reassign')}` : `🔗 ${t('assign_link')}`}
         </button>
-        <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${tag.id}" title="Write to this tag" aria-label="Write to tag ${escapeHTML(tag.label)}">
+        <button class="btn btn-ghost btn-icon write-tag-btn" data-id="${escapedId}" title="Write to this tag" aria-label="Write to tag ${escapeHTML(tag.label)}">
           📡
         </button>
-        <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${tag.id}" title="Delete tag" aria-label="Delete tag ${escapeHTML(tag.label)}">
+        <button class="btn btn-ghost btn-icon delete-tag-btn" data-id="${escapedId}" title="Delete tag" aria-label="Delete tag ${escapeHTML(tag.label)}">
           🗑️
         </button>
       </div>
@@ -98,8 +94,8 @@ function renderTagRow(tag, index, t) {
 
 function initTagsEvents(links) {
     const t = (k) => store.t(k);
-    const openRegisterModal = () => {
-        const isSupported = nfc.isSupported();
+    const openRegisterModal = async () => {
+        const isSupported = await nfc.isSupported();
 
         openModal({
             title: t('register_tag'),
@@ -125,10 +121,14 @@ function initTagsEvents(links) {
                     showToast('Please enter a tag name', 'warning');
                     return;
                 }
-                store.createTag(data);
-                closeModal();
-                showToast(`Tag "${data.label}" registered!`, 'success');
-                renderTags();
+                try {
+                    store.createTag(data);
+                    closeModal();
+                    showToast(`Tag "${data.label}" registered!`, 'success');
+                    renderTags();
+                } catch (err) {
+                    showToast(err.message, 'error');
+                }
             },
         });
 
@@ -149,7 +149,7 @@ function initTagsEvents(links) {
                         scanBtn.innerHTML = '✅ Scanned';
                         showToast('Tag scanned successfully!', 'success');
                     } else {
-                         throw new Error('No serial number found on tag');
+                        throw new Error('No serial number found on tag');
                     }
                 } catch (err) {
                     scanBtn.innerHTML = originalText;
@@ -184,7 +184,7 @@ function initTagsEvents(links) {
             <select class="form-select" name="linkId">
               <option value="">— Choose a link —</option>
               ${links.map(l => `
-                <option value="${l.id}" ${tag.assignedLinkId === l.id ? 'selected' : ''}>
+                <option value="${escapeHTML(l.id)}" ${tag.assignedLinkId === l.id ? 'selected' : ''}>
                   ${escapeHTML(l.title)} — ${escapeHTML(l.url)}
                 </option>
               `).join('')}
@@ -198,10 +198,14 @@ function initTagsEvents(links) {
                         showToast('Please select a link', 'warning');
                         return;
                     }
-                    store.assignLinkToTag(tag.id, data.linkId);
-                    closeModal();
-                    showToast(`Link assigned to "${tag.label}"`, 'success');
-                    renderTags();
+                    try {
+                        store.assignLinkToTag(tag.id, data.linkId);
+                        closeModal();
+                        showToast(`Link assigned to "${tag.label}"`, 'success');
+                        renderTags();
+                    } catch (err) {
+                        showToast(err.message, 'error');
+                    }
                 },
             });
             return;
@@ -232,7 +236,6 @@ function initTagsEvents(links) {
         }
     });
 
-    // Debounce search input to minimize expensive DOM manipulations on keystroke
     let searchTimeout;
     document.getElementById('tagSearch')?.addEventListener('input', (e) => {
         if (searchTimeout) clearTimeout(searchTimeout);
